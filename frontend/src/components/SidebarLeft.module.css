@@ -1,0 +1,86 @@
+/* Sidebar styles */
+.sidebarLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f2a2d2; /* Màu nền hồng */
+    padding: 20px;
+}
+
+/* Logo styles */
+.logo {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center; /* Đặt logo ở giữa theo chiều ngang */
+    align-items: center;
+}
+
+.logoImage {
+    width: auto;
+    height: auto;
+}
+
+/* Search bar styles */
+.searchBar {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* Navigation styles */
+.navigation {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Đặt các nút điều hướng ở giữa theo chiều ngang */
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    /*justify-content: space-between;*/
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 10px;
+
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 90%; /* Đặt chiều rộng của nút để phù hợp với chiều rộng sidebar */
+}
+
+.navItem:hover {
+    background-color: #e4e4e4;
+}
+
+.icon {
+    font-size: 18px;
+}
+
+.label {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+    /*text-align: center;*/
+    margin-left: 10px;
+}
+
+.badge {
+    background-color: #dcdafe;
+    color: #5555ff;
+    border-radius: 50%;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: bold;
+}

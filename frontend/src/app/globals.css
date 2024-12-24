@@ -1,21 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/*frontend/src/app/globals.css*/
+/* globals.css */
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  font-family: Arial, sans-serif;
 }
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  height: 100vh;
+}
+
+.sidebar-left, .sidebar-right {
+  background-color: #f2a2d2;
+  text-align: center;
+}
+
+.main-content {
+  background-color: #a2d2f2;
+  padding: 20px;
+  text-align: center;
+}
+
