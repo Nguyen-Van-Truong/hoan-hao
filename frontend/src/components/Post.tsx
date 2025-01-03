@@ -66,12 +66,16 @@ export default function Post({
                     alt="User Avatar"
                     className={styles.avatar}
                 />
-                <div>
-                    <p className={styles.author}>{author}</p>
-                    <p className={styles.role}>{role}</p>
+                <div className={styles.headerInfo}>
+                    <div>
+                        <p className={styles.author}>{author}</p>
+                        <p className={styles.role}>{role}</p>
+                    </div>
+                    <p className={styles.time}>{time}</p>
                 </div>
                 <div className={styles.moreOptions}>⋮</div>
             </div>
+
 
             {/* Content */}
             <div className={styles.content}>

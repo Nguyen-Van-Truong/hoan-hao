@@ -12,7 +12,7 @@
 .header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 10px; /* Khoảng cách giữa avatar và thông tin */
     margin-bottom: 15px;
 }
 
@@ -20,7 +20,13 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    margin-right: 10px;
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Căn giữa thông tin theo chiều dọc */
+    flex-grow: 1;
 }
 
 .author {
@@ -32,13 +38,22 @@
 .role {
     font-size: 12px;
     color: #777;
+    margin: 0;
+}
+
+.time {
+    font-size: 12px;
+    color: #777;
+    margin-top: 5px;
 }
 
 .moreOptions {
     cursor: pointer;
     font-size: 20px;
     color: #777;
+    margin-left: auto; /* Đẩy nút ⋮ về phía bên phải */
 }
+
 
 .content {
     margin-bottom: 15px;
@@ -170,4 +185,10 @@
     justify-content: center;
     align-items: center;
     border-radius: 10px;
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
