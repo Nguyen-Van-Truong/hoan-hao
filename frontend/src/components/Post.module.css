@@ -1,0 +1,173 @@
+/* frontend/src/components/Post.module.css */
+
+.post {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.author {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0;
+}
+
+.role {
+    font-size: 12px;
+    color: #777;
+}
+
+.moreOptions {
+    cursor: pointer;
+    font-size: 20px;
+    color: #777;
+}
+
+.content {
+    margin-bottom: 15px;
+}
+
+.hashtags {
+    color: #5555ff;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.hashtag {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.postImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #555;
+}
+
+.action {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 5px;
+}
+
+.commentBox {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.commentInput {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.commentButton {
+    margin-left: 10px;
+    padding: 10px;
+    border: none;
+    background-color: #5555ff;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.toggleButton {
+    background: none;
+    border: none;
+    color: #5555ff;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 5px;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.toggleButton:hover {
+    color: #3333cc;
+}
+
+/* Single image */
+.singleImageWrapper {
+    width: 100%;
+}
+
+.singlePostImage {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+}
+
+/* Grid layout for multiple images */
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Hai cột */
+    gap: 10px; /* Khoảng cách giữa các ảnh */
+}
+
+/* Wrapper for each image */
+.imageWrapper {
+    position: relative;
+    width: 100%;
+    /*aspect-ratio: 1; !* Đảm bảo ảnh luôn vuông *!*/
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+/* Post image */
+.postImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đảm bảo ảnh không bị méo */
+    border-radius: 10px;
+}
+
+/* Overlay for additional images */
+.overlay {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+}

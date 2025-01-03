@@ -1,7 +1,14 @@
 // frontend/src/components/SidebarRight.tsx
+import { useState } from "react";
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
     return (
         <div className={styles.sidebarRight}>
             {/* Logo người dùng */}
@@ -10,7 +17,22 @@ export default function SidebarRight() {
                     src="/user-logo.png"
                     alt="User Profile"
                     className={styles.userImage}
+                    onClick={toggleMenu} /* Xử lý click để mở menu */
                 />
+                {isMenuOpen && (
+                    <div className={styles.userMenu}>
+                        <ul>
+                            <li>
+                                <span className={styles.menuIcon}>👤</span>
+                                Trang cá nhân
+                            </li>
+                            <li>
+                                <span className={styles.menuIcon}>🚪</span>
+                                Đăng xuất
+                            </li>
+                        </ul>
+                    </div>
+                )}
             </div>
 
             {/* Quảng cáo */}

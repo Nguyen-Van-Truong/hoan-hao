@@ -5,6 +5,13 @@
     align-items: center;
     background-color: #f2a2d2; /* Màu nền hồng */
     padding: 20px;
+    overflow-y: auto;
+}
+
+@media (max-width: 1025px) {
+    .sidebarLeft {
+        display: none;
+    }
 }
 
 /* Logo styles */

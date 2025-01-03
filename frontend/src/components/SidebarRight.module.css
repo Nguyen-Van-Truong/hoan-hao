@@ -5,8 +5,13 @@
     flex-direction: column;
     background-color: #f2a2d2; /* Màu nền hồng */
     padding: 20px;
-    height: 100vh;
     overflow-y: auto;
+}
+
+@media (max-width: 1025px) {
+    .sidebarRight {
+        display: none;
+    }
 }
 
 /* Logo người dùng */
@@ -19,8 +24,16 @@
 .userImage {
     width: 60px;
     height: 60px;
-    border-radius: 50%;
+    border-radius: 50%; /* Hình tròn */
+    cursor: pointer; /* Hiển thị con trỏ bàn tay khi hover */
+    object-fit: cover;
+    transition: transform 0.2s; /* Thêm hiệu ứng khi hover (tùy chọn) */
 }
+
+.userImage:hover {
+    transform: scale(1.2); /* Phóng to nhẹ khi hover (tùy chọn) */
+}
+
 
 /* Quảng cáo */
 .ads {
@@ -117,3 +130,46 @@
     font-weight: bold;
     cursor: pointer;
 }
+
+/* Menu người dùng */
+.userMenu {
+    position: absolute;
+    top: 70px; /* Điều chỉnh để menu xuất hiện ngay dưới ảnh đại diện */
+    left: 0;
+    right: 0; /* Cho phép menu chiếm hết chiều ngang màn hình */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    text-align: left;
+}
+
+.userMenu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.userMenu li {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px; /* Đệm bên trong menu */
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    width: 100%; /* Đảm bảo mục menu chiếm hết chiều ngang */
+    transition: background-color 0.2s;
+}
+
+.userMenu li:hover {
+    background-color: #f0f0f0; /* Hiệu ứng hover */
+}
+
+/* Biểu tượng menu */
+.menuIcon {
+    margin-right: 10px; /* Tạo khoảng cách giữa biểu tượng và văn bản */
+    font-size: 18px; /* Kích thước biểu tượng */
+    color: #555;
+}
+
