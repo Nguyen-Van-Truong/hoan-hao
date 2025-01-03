@@ -1,24 +1,30 @@
+// frontend/src/components/Post.tsx
 import {useState} from "react";
 import styles from "./Post.module.css";
+import CommentDialog from "./CommentDialog";
 
 export default function Post({
                                  author,
                                  role,
                                  content,
-                                 hashtags,
                                  time,
                                  images = [],
                              }: {
     author: string;
     role: string;
     content: string;
-    hashtags: string[];
     time: string;
     images?: string[];
 }) {
-    const [isExpanded, setIsExpanded] = useState(false);
 
     const MAX_LENGTH = 100; // Số ký tự giới hạn
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [liked, setLiked] = useState(false); // Trạng thái nút Thích
+    const [filledShare, setFilledShare] = useState(false); // Trạng thái nút Chia sẻ
+    const [showDialog, setShowDialog] = useState(false); // Trạng thái hiển thị Dialog
+
+    const toggleLike = () => setLiked(!liked);
+    const toggleShare = () => setFilledShare(!filledShare);
 
     const toggleContent = () => {
         setIsExpanded(!isExpanded);
@@ -91,13 +97,6 @@ export default function Post({
                         {isExpanded ? "Ẩn bớt" : "Xem thêm"}
                     </button>
                 )}
-                <div className={styles.hashtags}>
-                    {hashtags.map((tag, index) => (
-                        <span key={index} className={styles.hashtag}>
-                            #{tag}
-                        </span>
-                    ))}
-                </div>
             </div>
 
             {/* Images */}
@@ -105,26 +104,62 @@ export default function Post({
 
             {/* Actions */}
             <div className={styles.actions}>
-                <div className={styles.action}>
-                    <span>❤️</span> 12 Thích
+                {/* Like Icon */}
+                <div className={styles.action} onClick={toggleLike}>
+                    <img
+                        src={
+                            liked
+                                ? "/icon/heart-like-solid.svg" // Hiển thị icon khi đã thích
+                                : "/icon/heart-like-no-solid.svg" // Hiển thị icon khi chưa thích
+                        }
+                        alt="Like"
+                        className={styles.icon}
+                    />
+                    {liked ? "13 Thích" : "12 Thích"}
                 </div>
-                <div className={styles.action}>
-                    <span>💬</span> 25 Bình luận
+
+                {/* Comment Icon */}
+                <div
+                    className={styles.action}
+                    onClick={() => setShowDialog(true)} // Hiển thị Dialog
+                >
+                    <img src="/icon/comment.svg" alt="Comment" className={styles.icon}/>
+                    25 Bình luận
                 </div>
-                <div className={styles.action}>
-                    <span>🔗</span> 187 Chia sẻ
+
+                {/* Share Icon */}
+                <div className={styles.action} onClick={toggleShare}>
+                    <img
+                        src="/icon/share.svg"
+                        alt="Share"
+                        className={styles.icon}
+                        style={{
+                            fill: filledShare ? "#ec86bf" : "none",
+                            stroke: "#ec86bf",
+                            strokeWidth: "2",
+                        }}
+                    />
+                    187 Chia sẻ
                 </div>
+
             </div>
 
-            {/* Comment Box */}
-            <div className={styles.commentBox}>
-                <input
-                    type="text"
-                    placeholder="Bình luận của bạn"
-                    className={styles.commentInput}
+            {/* Comment Dialog */}
+            {showDialog && (
+                <CommentDialog
+                    author={author}
+                    role={role}
+                    time={time}
+                    images={images}
+                    initialComments={[
+                        "Bài viết rất hay!",
+                        "Mình rất thích nội dung này.",
+                        "Cảm ơn bạn đã chia sẻ!",
+                    ]}
+                    onClose={() => setShowDialog(false)}
                 />
-                <button className={styles.commentButton}>➤</button>
-            </div>
+            )}
+
         </div>
     );
 }
