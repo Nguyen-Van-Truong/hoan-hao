@@ -188,30 +188,37 @@ export default function Post({
                     role={role}
                     time={time}
                     images={images}
-                    initialComments={[
-                        {
-                            avatar: "/user-logo.png",
-                            name: "Nguyễn Văn A",
-                            time: "1 phút trước",
-                            content: "Bình luận có kèm ảnh!",
-                            image: "/logo.png",
-                        },
-                        {
-                            avatar: "/user-logo.png",
-                            name: "Trần Thị B",
-                            time: "5 phút trước",
-                            content: "Mình rất thích nội dung này.",
-                        },
-                        {
-                            avatar: "/user-logo.png",
-                            name: "Lê Văn C",
-                            time: "30 phút trước",
-                            content: "Cảm ơn bạn đã chia sẻ!",
-                            image: "/1234.jpg",
-                        },
-                    ]}
+                    fetchMoreComments={async (currentCount) => {
+                        // API giả lập
+                        await new Promise((res) => setTimeout(res, 1000)); // Đợi 1 giây
+                        return [
+                            {
+                                avatar: "/user-logo.png",
+                                name: `Người dùng ${currentCount + 1}`,
+                                time: "Vừa xong",
+                                content: "Bình luận mới.",
+                                image: currentCount % 2 === 0 ? "/logo.png" : null,
+                            },
+                            {
+                                avatar: "/user-logo.png",
+                                name: `Người dùng ${currentCount + 2}`,
+                                time: "1 phút trước",
+                                content: "Một bình luận nữa.",
+                                image: null,
+                            },
+                            {
+                                avatar: "/user-logo.png",
+                                name: `Người dùng ${currentCount + 3}`,
+                                time: "5 phút trước",
+                                content: "Lại một bình luận mới.",
+                                image: "/1234.jpg",
+                            },
+                        ];
+                    }}
                     onClose={() => setShowDialog(false)}
                 />
+
+
             )}
 
             {/* Image Preview */}

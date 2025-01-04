@@ -50,40 +50,40 @@
     padding: 20px;
 }
 
-.authorInfo {
+/* Phần thông tin bài đăng */
+.postInfo {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    top: 0;
+    padding-bottom: 10px;
 }
 
-.avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+.postAvatar {
+    margin-right: 10px;
 }
 
-.headerInfo {
+.postHeaderInfo {
     display: flex;
     flex-direction: column;
 }
 
-.author {
+.postAuthor {
     font-weight: bold;
     font-size: 16px;
     margin: 0;
+    color: #333;
 }
 
-.role {
+.postRole {
     font-size: 12px;
     color: #777;
     margin: 0;
 }
 
-.time {
+.postTime {
     font-size: 12px;
-    color: #777;
-    margin: 0;
+    color: #555;
+    margin: 5px 0 0;
 }
 
 .actions {
@@ -98,19 +98,11 @@
     cursor: pointer;
 }
 
-.action img {
-    width: 28px;
-    height: 28px;
-}
 
 .commentSection {
     margin-bottom: 20px;
 }
 
-.comment {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
 
 .footer {
     display: flex;
@@ -118,13 +110,6 @@
     padding: 10px 20px;
     border-top: 1px solid #ddd;
     background: white;
-}
-
-.commentInput {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
 }
 
 .commentButton {
@@ -261,39 +246,52 @@
 
 .commentContent {
     flex: 1;
+    background-color: #f9f9f9; /* Nền màu xám nhạt */
+    padding: 10px; /* Khoảng cách giữa nội dung và viền */
+    border-radius: 8px; /* Bo góc */
+    margin-left: 10px; /* Cách avatar */
+    margin-bottom: 10px; /* Khoảng cách giữa các bình luận */
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Hiệu ứng nổi */
 }
+
 
 .commentHeader {
-    display: flex;
-    justify-content: space-between;
     font-size: 14px;
-    color: #555;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px; /* Khoảng cách giữa tên và nội dung bình luận */
 }
-
 .commentName {
     font-weight: bold;
+    color: #555;
+    display: block; /* Đảm bảo tên luôn hiển thị riêng dòng */
 }
 
+
 .commentTime {
-    font-style: italic;
+    font-size: 12px;
     color: #777;
+    margin-top: 10px; /* Khoảng cách với nội dung */
+    display: block; /* Đảm bảo thời gian nằm riêng dòng */
+    text-align: right; /* Canh phải */
 }
 
 .commentText {
-    margin-top: 5px;
     font-size: 14px;
     color: #333;
+    white-space: pre-wrap; /* Đảm bảo nội dung xuống dòng */
+    word-wrap: break-word; /* Ngắt từ nếu quá dài */
 }
+
 
 /* Ảnh bình luận */
 .commentImage {
     max-width: 100%; /* Đảm bảo ảnh không vượt quá chiều rộng vùng chứa */
     max-height: 200px; /* Chiều cao tối đa để ảnh không quá lớn */
-    min-width: 50px; /* Chiều rộng tối thiểu */
-    min-height: 50px; /* Chiều cao tối thiểu */
-    object-fit: cover; /* Giữ tỉ lệ ảnh và cắt nếu cần */
-    border-radius: 5px; /* Tùy chọn: bo góc ảnh */
+    border-radius: 8px; /* Bo góc ảnh */
     margin-top: 10px; /* Khoảng cách giữa ảnh và nội dung bình luận */
+    object-fit: cover; /* Giữ tỉ lệ ảnh */
 }
 
 
@@ -326,4 +324,39 @@
     justify-content: center;
     align-items: center;
     z-index: 1100;
+}
+
+.loadMoreWrapper {
+    text-align: center;
+    margin: 10px 0;
+}
+
+.loadMoreButton {
+    background: #ec86bf;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.loadMoreButton:disabled {
+    background: #d3d3d3;
+    cursor: not-allowed;
+}
+
+.commentTextarea {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    resize: none; /* Vô hiệu hóa thay đổi kích thước */
+    font-size: 14px;
+    line-height: 1.5; /* Tăng khoảng cách giữa các dòng */
+    min-height: 40px; /* Chiều cao tối thiểu */
+    max-height: 120px; /* Chiều cao tối đa */
+    overflow-y: auto; /* Hiển thị thanh cuộn dọc nếu vượt quá chiều cao tối đa */
+    box-sizing: border-box;
+    outline: none;
 }
