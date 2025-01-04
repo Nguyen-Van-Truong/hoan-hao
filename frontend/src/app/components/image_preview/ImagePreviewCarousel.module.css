@@ -1,0 +1,67 @@
+.previewOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+}
+
+.imageWrapper {
+    position: relative; /* Đảm bảo hỗ trợ cho Image fill */
+    width: 80%; /* Giới hạn kích thước ảnh hiển thị */
+    height: 80%; /* Giữ tỉ lệ theo chiều cao */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.previewImage {
+    object-fit: contain; /* Giữ tỉ lệ ảnh */
+    max-width: 100%; /* Đảm bảo không vượt quá container */
+    max-height: 100%; /* Đảm bảo không vượt quá container */
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.closePreviewButton {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    font-size: 30px;
+    color: white;
+    cursor: pointer;
+}
+
+.prevButton,
+.nextButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 30px;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.prevButton {
+    left: 20px;
+}
+
+.nextButton {
+    right: 20px;
+}
+
+.prevButton:hover,
+.nextButton:hover {
+    background: rgba(0, 0, 0, 0.8);
+}

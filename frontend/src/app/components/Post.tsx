@@ -1,7 +1,8 @@
-// frontend/src/components/Post.tsx
-import {useState} from "react";
+import { useState } from "react";
+import Image from "next/image";
 import styles from "./Post.module.css";
 import CommentDialog from "./CommentDialog";
+import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
 
 export default function Post({
                                  author,
@@ -16,19 +17,27 @@ export default function Post({
     time: string;
     images?: string[];
 }) {
-
     const MAX_LENGTH = 100; // Số ký tự giới hạn
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(false); // Trạng thái nút Thích
     const [filledShare, setFilledShare] = useState(false); // Trạng thái nút Chia sẻ
     const [showDialog, setShowDialog] = useState(false); // Trạng thái hiển thị Dialog
+    const [previewIndex, setPreviewIndex] = useState<number | null>(null); // Chỉ số ảnh đang preview
 
     const toggleLike = () => setLiked(!liked);
     const toggleShare = () => setFilledShare(!filledShare);
+    const toggleContent = () => setIsExpanded(!isExpanded);
 
-    const toggleContent = () => {
-        setIsExpanded(!isExpanded);
-
+    const closePreview = () => setPreviewIndex(null); // Đóng preview
+    const showNextImage = () => {
+        if (previewIndex !== null) {
+            setPreviewIndex((prev) => (prev! + 1) % images.length);
+        }
+    };
+    const showPreviousImage = () => {
+        if (previewIndex !== null) {
+            setPreviewIndex((prev) => (prev! - 1 + images.length) % images.length);
+        }
     };
 
     const renderImages = () => {
@@ -39,7 +48,16 @@ export default function Post({
         if (numImages === 1) {
             return (
                 <div className={styles.singleImageWrapper}>
-                    <img src={images[0]} alt="Post Image" className={styles.singlePostImage} />
+                    <Image
+                        src={images[0]}
+                        alt="Post Image"
+                        className={styles.singlePostImage}
+                        width={500}
+                        height={500}
+                        onClick={() => setPreviewIndex(0)} // Mở preview
+                        unoptimized
+                        loading="lazy"
+                    />
                 </div>
             );
         }
@@ -50,8 +68,20 @@ export default function Post({
         return (
             <div className={styles.imageGrid}>
                 {displayImages.map((image, index) => (
-                    <div key={index} className={styles.imageWrapper}>
-                        <img src={image} alt={`Post Image ${index + 1}`} className={styles.postImage} />
+                    <div
+                        key={index}
+                        className={styles.imageWrapper}
+                        onClick={() => setPreviewIndex(index)} // Mở preview
+                    >
+                        <Image
+                            src={image}
+                            alt={`Post Image ${index + 1}`}
+                            className={styles.postImage}
+                            width={200}
+                            height={200}
+                            unoptimized
+                            loading="lazy"
+                        />
                         {isMoreImages && index === 5 && (
                             <div className={styles.overlay}>
                                 <span>+{numImages - 6}</span>
@@ -67,10 +97,14 @@ export default function Post({
         <div className={styles.post}>
             {/* Header */}
             <div className={styles.header}>
-                <img
+                <Image
                     src="/user-logo.png"
                     alt="User Avatar"
                     className={styles.avatar}
+                    width={50}
+                    height={50}
+                    unoptimized
+                    loading="lazy"
                 />
                 <div className={styles.headerInfo}>
                     <div>
@@ -81,7 +115,6 @@ export default function Post({
                 </div>
                 <div className={styles.moreOptions}>⋮</div>
             </div>
-
 
             {/* Content */}
             <div className={styles.content}>
@@ -104,44 +137,48 @@ export default function Post({
 
             {/* Actions */}
             <div className={styles.actions}>
-                {/* Like Icon */}
                 <div className={styles.action} onClick={toggleLike}>
-                    <img
+                    <Image
                         src={
                             liked
-                                ? "/icon/heart-like-solid.svg" // Hiển thị icon khi đã thích
-                                : "/icon/heart-like-no-solid.svg" // Hiển thị icon khi chưa thích
+                                ? "/icon/heart-like-solid.svg"
+                                : "/icon/heart-like-no-solid.svg"
                         }
                         alt="Like"
                         className={styles.icon}
+                        width={28}
+                        height={28}
+                        unoptimized
+                        loading="lazy"
                     />
                     {liked ? "13 Thích" : "12 Thích"}
                 </div>
 
-                {/* Comment Icon */}
-                <div
-                    className={styles.action}
-                    onClick={() => setShowDialog(true)} // Hiển thị Dialog
-                >
-                    <img src="/icon/comment.svg" alt="Comment" className={styles.icon}/>
+                <div className={styles.action} onClick={() => setShowDialog(true)}>
+                    <Image
+                        src="/icon/comment.svg"
+                        alt="Comment"
+                        className={styles.icon}
+                        width={28}
+                        height={28}
+                        unoptimized
+                        loading="lazy"
+                    />
                     25 Bình luận
                 </div>
 
-                {/* Share Icon */}
                 <div className={styles.action} onClick={toggleShare}>
-                    <img
+                    <Image
                         src="/icon/share.svg"
                         alt="Share"
                         className={styles.icon}
-                        style={{
-                            fill: filledShare ? "#ec86bf" : "none",
-                            stroke: "#ec86bf",
-                            strokeWidth: "2",
-                        }}
+                        width={28}
+                        height={28}
+                        unoptimized
+                        loading="lazy"
                     />
                     187 Chia sẻ
                 </div>
-
             </div>
 
             {/* Comment Dialog */}
@@ -152,14 +189,41 @@ export default function Post({
                     time={time}
                     images={images}
                     initialComments={[
-                        "Bài viết rất hay!",
-                        "Mình rất thích nội dung này.",
-                        "Cảm ơn bạn đã chia sẻ!",
+                        {
+                            avatar: "/user-logo.png",
+                            name: "Nguyễn Văn A",
+                            time: "1 phút trước",
+                            content: "Bình luận có kèm ảnh!",
+                            image: "/logo.png",
+                        },
+                        {
+                            avatar: "/user-logo.png",
+                            name: "Trần Thị B",
+                            time: "5 phút trước",
+                            content: "Mình rất thích nội dung này.",
+                        },
+                        {
+                            avatar: "/user-logo.png",
+                            name: "Lê Văn C",
+                            time: "30 phút trước",
+                            content: "Cảm ơn bạn đã chia sẻ!",
+                            image: "/1234.jpg",
+                        },
                     ]}
                     onClose={() => setShowDialog(false)}
                 />
             )}
 
+            {/* Image Preview */}
+            {previewIndex !== null && (
+                <ImagePreviewCarousel
+                    images={images}
+                    currentIndex={previewIndex}
+                    onClose={closePreview}
+                    onNext={showNextImage}
+                    onPrevious={showPreviousImage}
+                />
+            )}
         </div>
     );
 }

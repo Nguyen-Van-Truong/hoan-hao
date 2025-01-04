@@ -5,8 +5,8 @@ export default function MainContent() {
     const posts = [
         // 1 Image
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed id elit scelerisque, dapibus est ut, facilisis neque. 
             Proin tincidunt, libero a tristique suscipit, neque neque volutpat turpis, a tincidunt sapien velit in nulla. 
             Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.\n
@@ -17,8 +17,8 @@ export default function MainContent() {
         },
         // 2 Images
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content: `Hôm nay tôi cảm thấy rất vui vì dự án đang tiến triển rất tốt. 
             Đây là một cơ hội tuyệt vời để học hỏi và làm việc cùng nhau.\n
             Cảm ơn các bạn đã luôn hỗ trợ và đồng hành trong suốt hành trình này!`,
@@ -27,8 +27,8 @@ export default function MainContent() {
         },
         // 3 Images
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content:
                 "Không có gì tuyệt vời hơn việc hoàn thành dự án đúng thời hạn!",
             time: "2 giờ trước",
@@ -36,17 +36,17 @@ export default function MainContent() {
         },
         // 4 Images
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content:
                 "Làm việc nhóm giúp tôi học hỏi được rất nhiều điều từ các đồng nghiệp!",
             time: "3 giờ trước",
-            images: ["/123.jpg", "/1234.jpg", "/123.jpg", "/1234.jpg"], // 4 images
+            images: ["/123.jpg", "/boji2.webp", "/123.jpg", "/1234.jpg"], // 4 images
         },
         // 5 Images
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content:
                 "Hoàn thành dự án này là một cột mốc lớn trong sự nghiệp của tôi.",
             time: "4 giờ trước",
@@ -54,14 +54,14 @@ export default function MainContent() {
         },
         // 6+ Images
         {
-            author: "X_AE_A-13",
-            role: "Product Designer, slothUI",
+            author: "Truong",
+            role: "User",
             content:
                 "Dự án này không chỉ giúp tôi nâng cao kỹ năng mà còn mở rộng các cơ hội hợp tác mới2.",
             time: "5 giờ trước",
             images: [
-                "/1234.jpg", "/123.jpg", "/123.jpg", "/1234.jpg", "/1234.jpg", "/123.jpg",
-                "/1234.jpg"
+                "/1234.jpg", "/123.jpg", "/boji2.webp", "/logo.png", "/next.svg", "/123.jpg",
+                "/1234.jpg", "/boji2.webp", "/logo.png"
             ], // 6+ images
         },
     ];
