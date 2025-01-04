@@ -1,5 +1,6 @@
 // frontend/src/components/SidebarRight.tsx
 import { useState } from "react";
+import Image from "next/image";
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
@@ -13,10 +14,14 @@ export default function SidebarRight() {
         <div className={styles.sidebarRight}>
             {/* Logo người dùng */}
             <div className={styles.userProfile}>
-                <img
+                <Image
                     src="/user-logo.png"
                     alt="User Profile"
                     className={styles.userImage}
+                    width={50}
+                    height={50}
+                    unoptimized
+                    loading="lazy"
                     onClick={toggleMenu} /* Xử lý click để mở menu */
                 />
                 {isMenuOpen && (
@@ -68,10 +73,14 @@ export default function SidebarRight() {
                     ].map((friend, index) => (
                         <div className={styles.friendItem} key={index}>
                             <div className={styles.friendInfo}>
-                                <img
+                                <Image
                                     src="/user-logo.png"
                                     alt={friend.name}
                                     className={styles.friendAvatar}
+                                    width={40}
+                                    height={40}
+                                    unoptimized
+                                    loading="lazy"
                                 />
                                 <div>
                                     <p className={styles.friendName}>{friend.name}</p>

@@ -1,6 +1,7 @@
 // frontend/src/components/SidebarLeft.tsx
 import styles from "./SidebarLeft.module.css";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SidebarLeft() {
     return (
@@ -8,7 +9,15 @@ export default function SidebarLeft() {
             {/* Phần logo */}
             <Link href="/" passHref>
                 <div className={styles.logo}>
-                    <img src="/logo.png" alt="Logo" className={styles.logoImage} />
+                    <Image
+                        src="/logo.png"
+                        alt="Logo"
+                        className={styles.logoImage}
+                        width={100}
+                        height={100}
+                        unoptimized
+                        loading="lazy"
+                    />
                 </div>
             </Link>
 

@@ -13,7 +13,7 @@ export default function MainContent() {
             Nam id orci ut ex vehicula facilisis. Quisque vehicula accumsan odio nec dignissim. Phasellus vitae mauris felis. 
             Integer interdum orci velit, ac consectetur nunc porta vel.`,
             time: "10 phút trước",
-            images: ["/123.jpg"],  // 1 image
+            images: ["/1234.jpg"],  // 1 image
         },
         // 2 Images
         {
