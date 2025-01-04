@@ -45,6 +45,7 @@
     font-size: 12px;
     color: #777;
     margin-top: 5px;
+    cursor: pointer;
 }
 
 .moreOptions {
@@ -170,4 +171,14 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+}
+
+/* Cursor change for all images on hover */
+.postImage,
+.dialogImage,
+.commentAvatar,
+.commentImage,
+.singlePostImage,
+.postAvatar {
+    cursor: pointer; /* Displays pointer cursor (hand) on hover */
 }
