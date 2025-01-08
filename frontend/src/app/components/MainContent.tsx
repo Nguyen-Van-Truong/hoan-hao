@@ -1,8 +1,10 @@
-// frontend/src/components/MainContent.tsx
+import { useEffect, useRef, useState } from "react";
 import Post from "./Post";
+import styles from "./MainContent.module.css";
 
 export default function MainContent() {
-    const posts = [
+    const [posts, setPosts] = useState([
+        // Dữ liệu ban đầu
         // 1 Image
         {
             author: "Truong",
@@ -64,10 +66,75 @@ export default function MainContent() {
                 "/1234.jpg", "/boji2.webp", "/logo.png"
             ], // 6+ images
         },
-    ];
+    ]);
+
+    const [loading, setLoading] = useState(false); // Trạng thái tải bài viết mới
+    const mainContentRef = useRef<HTMLDivElement | null>(null); // Tham chiếu đến phần tử MainContent
+
+    // Giả lập API tải thêm bài viết
+    const fetchMorePosts = async () => {
+        if (loading) return; // Ngăn chặn tải nếu đang trong quá trình
+        setLoading(true);
+
+        await new Promise((res) => setTimeout(res, 1000)); // Giả lập độ trễ 1s
+
+        const newPosts = [
+            {
+                author: "User 1",
+                role: "User",
+                content: "Bài viết mới với 1 hình ảnh.",
+                time: "1 phút trước",
+                images: ["/123.jpg"],
+            },
+            {
+                author: "User 2",
+                role: "User",
+                content: "Bài viết mới không có hình ảnh.",
+                time: "2 phút trước",
+                images: [],
+            },
+            {
+                author: "User 3",
+                role: "User",
+                content: "Bài viết mới với 2 hình ảnh.",
+                time: "3 phút trước",
+                images: ["/123.jpg", "/1234.jpg"],
+            },
+        ];
+
+        setPosts((prevPosts) => [...prevPosts, ...newPosts]); // Thêm bài viết mới
+        setLoading(false); // Kết thúc quá trình tải
+    };
+
+    // Lắng nghe sự kiện cuộn trong MainContent
+    useEffect(() => {
+        const handleScroll = () => {
+            const container = mainContentRef.current;
+            if (container) {
+                const { scrollTop, scrollHeight, clientHeight } = container;
+                if (scrollTop + clientHeight >= scrollHeight - 5 && !loading) {
+                    fetchMorePosts(); // Gọi API khi cuộn đến cuối
+                }
+            }
+        };
+
+        const container = mainContentRef.current;
+        if (container) {
+            container.addEventListener("scroll", handleScroll);
+        }
+
+        return () => {
+            if (container) {
+                container.removeEventListener("scroll", handleScroll);
+            }
+        };
+    }, [loading]);
 
     return (
-        <div className="main-content">
+        <div
+            className={styles.mainContent}
+            ref={mainContentRef} // Tham chiếu đến phần tử MainContent
+        >
             {posts.map((post, index) => (
                 <Post
                     key={index}
@@ -75,9 +142,16 @@ export default function MainContent() {
                     role={post.role}
                     content={post.content}
                     time={post.time}
-                    images={post.images}  // Pass images as an array
+                    images={post.images}
                 />
             ))}
+
+            {loading && (
+                <div className={styles.loadingContainer}>
+                    <div className={styles.spinner} />
+                    <p>Đang tải thêm bài viết...</p>
+                </div>
+            )}
         </div>
     );
 }

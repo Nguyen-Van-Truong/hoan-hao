@@ -18,14 +18,14 @@ body {
     text-align: center;
 }
 
-.main-content {
-    background-color: #a2d2f2;
-    padding: 20px;
-    /*text-align: center;*/
-}
+/*.main-content {*/
+/*    background-color: #a2d2f2;*/
+/*    padding: 20px;*/
+/*    !*text-align: center;*!*/
+/*}*/
 
 
-.sidebar-left, .main-content, .sidebar-right {
+.sidebar-left, .sidebar-right {
     overflow-y: auto; /* Cho phép cuộn độc lập */
     /*height: 100vh; !* Đảm bảo mỗi cột chiếm đủ chiều cao *!*/
 }
@@ -38,9 +38,5 @@ body {
 
     .sidebar-left, .sidebar-right {
         display: none;
-    }
-
-    .main-content {
-        width: 91%;
     }
 }

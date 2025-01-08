@@ -1,0 +1,40 @@
+/*frontend/src/app/components/MainContent.module.css*/
+
+.mainContent {
+    overflow-y: auto;
+    padding: 20px; /* Khoảng cách nội dung */
+    background-color: #a2d2f2; /* Màu nền */
+}
+
+.loadingContainer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center; /* Căn giữa nội dung */
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 1025px) {
+
+    .main-content {
+        width: 91%;
+    }
+}
