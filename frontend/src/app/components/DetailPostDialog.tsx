@@ -1,7 +1,7 @@
-// frontend/src/app/components/CommentDialog.tsx
+// frontend/src/app/components/DetailPostDialog.tsx
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import styles from "./CommentDialog.module.css";
+import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
 
@@ -18,20 +18,20 @@ interface CommentDialogProps {
     role: string;
     time: string;
     images: string[];
-    content: string; // Thêm content
-    fetchMoreComments: (currentCount: number) => Promise<Comment[]>; // API call for comments
+    content: string;
+    hashcodeIDPost: string;
     onClose: () => void;
 }
 
-export default function CommentDialog({
-                                          author,
-                                          role,
-                                          time,
-                                          images,
-                                          content,
-                                          fetchMoreComments,
-                                          onClose,
-                                      }: CommentDialogProps) {
+export default function DetailPostDialog({
+                                             author,
+                                             role,
+                                             time,
+                                             images,
+                                             content,
+                                             hashcodeIDPost,
+                                             onClose,
+                                         }: CommentDialogProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [newCommentImage, setNewCommentImage] = useState<string | null>(null);
@@ -41,16 +41,59 @@ export default function CommentDialog({
     const [liked, setLiked] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false); // Trạng thái xem thêm nội dung bài viết
 
-    const MAX_LENGTH = 100; // Số ký tự giới hạn nội dung
+    const MAX_LENGTH = 100;
 
-    // Load initial comments
+    // Cập nhật URL và tiêu đề khi mở dialog
+    useEffect(() => {
+        const truncatedContent =
+            content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
+        const newUrl = `/${author}/post/${hashcodeIDPost}`;
+        window.history.pushState(null, "", newUrl);
+        document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
+
+        return () => {
+            const defaultUrl = window.location.origin;
+            window.history.pushState(null, "", defaultUrl);
+            document.title = "Hoàn Hảo";
+        };
+    }, [author, content, hashcodeIDPost]);
+
+    // Giả lập tải thêm bình luận
+    const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
+        await new Promise((res) => setTimeout(res, 1000));
+        return [
+            {
+                avatar: "/user-logo.png",
+                name: `Người dùng ${currentCount + 1}`,
+                time: "Vừa xong",
+                content: "Bình luận mới.",
+                image: currentCount % 2 === 0 ? "/logo.png" : null,
+            },
+            {
+                avatar: "/user-logo.png",
+                name: `Người dùng ${currentCount + 2}`,
+                time: "1 phút trước",
+                content: "Một bình luận nữa.",
+                image: null,
+            },
+            {
+                avatar: "/user-logo.png",
+                name: `Người dùng ${currentCount + 3}`,
+                time: "5 phút trước",
+                content: "Lại một bình luận mới.",
+                image: "/1234.jpg",
+            },
+        ];
+    };
+
+    // Tải bình luận ban đầu
     useEffect(() => {
         const loadInitialComments = async () => {
             const initialComments = await fetchMoreComments(0);
             setComments(initialComments);
         };
         loadInitialComments();
-    }, [fetchMoreComments]);
+    }, []);
 
     const toggleContent = () => setIsExpanded(!isExpanded);
 
@@ -108,7 +151,7 @@ export default function CommentDialog({
                         </div>
                     </div>
 
-                    {/* Post content with "See More" */}
+                    {/* Post content */}
                     <div className={styles.postDescription}>
                         <p>
                             {isExpanded
@@ -126,7 +169,9 @@ export default function CommentDialog({
 
                     {/* Post images */}
                     <div
-                        className={images.length === 1 ? styles.singleImageWrapper : styles.imageGrid}
+                        className={
+                            images.length === 1 ? styles.singleImageWrapper : styles.imageGrid
+                        }
                     >
                         {images.map((img, index) => (
                             <div key={index} className={styles.imageWrapper}>
@@ -224,7 +269,7 @@ export default function CommentDialog({
                     </div>
                 </div>
 
-                {/* Footer for adding comments */}
+                {/* Footer */}
                 <div className={styles.footer}>
                     <textarea
                         placeholder="Viết bình luận..."
@@ -263,7 +308,7 @@ export default function CommentDialog({
                     </button>
                 </div>
 
-                {/* Hiển thị ảnh preview */}
+                {/* Image previews */}
                 {newCommentImage && (
                     <div className={styles.previewImageWrapper}>
                         <Image
@@ -280,7 +325,7 @@ export default function CommentDialog({
                 )}
             </div>
 
-            {/* Image preview */}
+            {/* Image carousel */}
             {previewIndex !== null && (
                 <ImagePreviewCarousel
                     images={images}
