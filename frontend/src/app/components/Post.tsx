@@ -1,3 +1,4 @@
+// frontend/src/app/components/Post.tsx
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link"; // Sử dụng Link để chuyển hướng
@@ -32,7 +33,7 @@ export default function Post({
         setShowDialog(true);
 
         // Cập nhật URL
-        const newUrl = `/pages/${author}/post/${hashcodeIDPost}?showComments=true`;
+        const newUrl = `/${author}/post/${hashcodeIDPost}?showComments=true`;
         window.history.pushState(null, "", newUrl);
 
         // Lấy nội dung bài viết tối đa 100 ký tự

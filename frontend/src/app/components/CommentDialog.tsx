@@ -1,3 +1,4 @@
+// frontend/src/app/components/CommentDialog.tsx
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import styles from "./CommentDialog.module.css";
