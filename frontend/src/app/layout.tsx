@@ -1,7 +1,7 @@
 // src/app/layout.tsx
 'use client';
 
-import {Geist, Geist_Mono} from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +14,15 @@ const geistMono = Geist_Mono({
     subsets: ["latin"],
 });
 
-export default function RootLayout({children}: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en" suppressHydrationWarning>
+        <head>
+            {/* Tiêu đề và favicon */}
+            <title>Hoàn Hảo</title>
+            <link rel="icon" href="/h.png" type="image/png" />
+            <meta name="description" content="Trang web tuyệt vời" />
+        </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div className="layout">
             {children}
@@ -24,4 +30,4 @@ export default function RootLayout({children}: { children: React.ReactNode }) {
         </body>
         </html>
     );
-}   
+}

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link"; // Sử dụng Link để chuyển hướng
 import styles from "./Post.module.css";
 import CommentDialog from "./CommentDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
@@ -10,12 +11,14 @@ export default function Post({
                                  content,
                                  time,
                                  images = [],
+                                 hashcodeIDPost, // Nhận thêm hashcodeIDPost từ props
                              }: {
     author: string;
     role: string;
     content: string;
     time: string;
     images?: string[];
+    hashcodeIDPost: string;
 }) {
     const MAX_LENGTH = 100; // Số ký tự giới hạn
     const [isExpanded, setIsExpanded] = useState(false);
@@ -23,6 +26,44 @@ export default function Post({
     const [filledShare, setFilledShare] = useState(false); // Trạng thái nút Chia sẻ
     const [showDialog, setShowDialog] = useState(false); // Trạng thái hiển thị Dialog
     const [previewIndex, setPreviewIndex] = useState<number | null>(null); // Chỉ số ảnh đang preview
+
+    // Khi mở form bình luận, thay đổi URL và tiêu đề trang
+    const openCommentDialog = () => {
+        setShowDialog(true);
+
+        // Cập nhật URL
+        const newUrl = `/pages/${author}/post/${hashcodeIDPost}?showComments=true`;
+        window.history.pushState(null, "", newUrl);
+
+        // Lấy nội dung bài viết tối đa 100 ký tự
+        const truncatedContent = content.length > MAX_LENGTH
+            ? `${content.slice(0, MAX_LENGTH)}...`
+            : content;
+
+        // Cập nhật tiêu đề theo định dạng
+        document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
+    };
+
+    // Đóng form bình luận và reset URL và tiêu đề
+    const closeCommentDialog = () => {
+        setShowDialog(false);
+
+        // Reset URL về tên miền hiện tại
+        const defaultUrl = window.location.origin; // Lấy tên miền hiện tại
+        window.history.pushState(null, "", defaultUrl);
+
+        // Reset tiêu đề về mặc định
+        document.title = "Hoàn Hảo";
+    };
+
+    // Khi tải lại trang, kiểm tra URL để mở form bình luận nếu cần
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const shouldShowComments = params.get("showComments") === "true";
+        if (shouldShowComments) {
+            setShowDialog(true);
+        }
+    }, []);
 
     const toggleLike = () => setLiked(!liked);
     const toggleShare = () => setFilledShare(!filledShare);
@@ -111,7 +152,13 @@ export default function Post({
                         <p className={styles.author}>{author}</p>
                         <p className={styles.role}>{role}</p>
                     </div>
-                    <p className={styles.time}>{time}</p>
+                    {/* Thêm Link tới trang chi tiết bài viết */}
+                    <Link
+                        href={`/pages/${author}/post/${hashcodeIDPost}`}
+                        className={styles.time}
+                    >
+                        {time}
+                    </Link>
                 </div>
                 <div className={styles.moreOptions}>⋮</div>
             </div>
@@ -154,7 +201,7 @@ export default function Post({
                     {liked ? "13 Thích" : "12 Thích"}
                 </div>
 
-                <div className={styles.action} onClick={() => setShowDialog(true)}>
+                <div className={styles.action} onClick={openCommentDialog}>
                     <Image
                         src="/icon/comment.svg"
                         alt="Comment"
@@ -182,12 +229,14 @@ export default function Post({
             </div>
 
             {/* Comment Dialog */}
+            {/* Comment Dialog */}
             {showDialog && (
                 <CommentDialog
                     author={author}
                     role={role}
                     time={time}
                     images={images}
+                    content={content} // Truyền thêm content
                     fetchMoreComments={async (currentCount) => {
                         // API giả lập
                         await new Promise((res) => setTimeout(res, 1000)); // Đợi 1 giây
@@ -215,11 +264,10 @@ export default function Post({
                             },
                         ];
                     }}
-                    onClose={() => setShowDialog(false)}
+                    onClose={closeCommentDialog}
                 />
-
-
             )}
+
 
             {/* Image Preview */}
             {previewIndex !== null && (

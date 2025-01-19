@@ -17,6 +17,7 @@ interface CommentDialogProps {
     role: string;
     time: string;
     images: string[];
+    content: string; // Thêm content
     fetchMoreComments: (currentCount: number) => Promise<Comment[]>; // API call for comments
     onClose: () => void;
 }
@@ -26,6 +27,7 @@ export default function CommentDialog({
                                           role,
                                           time,
                                           images,
+                                          content,
                                           fetchMoreComments,
                                           onClose,
                                       }: CommentDialogProps) {
@@ -36,19 +38,25 @@ export default function CommentDialog({
     const [previewCommentImage, setPreviewCommentImage] = useState<string | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [liked, setLiked] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false); // Trạng thái xem thêm nội dung bài viết
+
+    const MAX_LENGTH = 100; // Số ký tự giới hạn nội dung
 
     // Load initial comments
     useEffect(() => {
         const loadInitialComments = async () => {
-            const initialComments = await fetchMoreComments(0); // Fetch first 3 comments
+            const initialComments = await fetchMoreComments(0);
             setComments(initialComments);
         };
         loadInitialComments();
     }, [fetchMoreComments]);
 
+    const toggleContent = () => setIsExpanded(!isExpanded);
+
     const addComment = () => {
         const trimmedComment = newComment.trim();
-        if (trimmedComment === "") return; // Prevent empty comments
+        if (trimmedComment === "" && !newCommentImage) return;
+
         const newCommentData: Comment = {
             avatar: "/user-logo.png",
             name: "Bạn",
@@ -56,6 +64,7 @@ export default function CommentDialog({
             content: trimmedComment,
             image: newCommentImage,
         };
+
         setComments((prev) => [newCommentData, ...prev]);
         setNewComment("");
         setNewCommentImage(null);
@@ -64,7 +73,7 @@ export default function CommentDialog({
     const loadMoreComments = async () => {
         if (isLoadingMore) return;
         setIsLoadingMore(true);
-        const moreComments = await fetchMoreComments(comments.length); // Fetch more comments
+        const moreComments = await fetchMoreComments(comments.length);
         setComments((prev) => [...prev, ...moreComments]);
         setIsLoadingMore(false);
     };
@@ -87,7 +96,7 @@ export default function CommentDialog({
                             width={50}
                             height={50}
                             className={styles.postAvatar}
-                            style={{borderRadius: "50%"}}
+                            style={{ borderRadius: "50%" }}
                             loading="lazy"
                             unoptimized
                         />
@@ -98,9 +107,26 @@ export default function CommentDialog({
                         </div>
                     </div>
 
+                    {/* Post content with "See More" */}
+                    <div className={styles.postDescription}>
+                        <p>
+                            {isExpanded
+                                ? content
+                                : content.length > MAX_LENGTH
+                                    ? content.slice(0, MAX_LENGTH) + "..."
+                                    : content}
+                        </p>
+                        {content.length > MAX_LENGTH && (
+                            <button onClick={toggleContent} className={styles.toggleButton}>
+                                {isExpanded ? "Ẩn bớt" : "Xem thêm"}
+                            </button>
+                        )}
+                    </div>
 
                     {/* Post images */}
-                    <div className={images.length === 1 ? styles.singleImageWrapper : styles.imageGrid}>
+                    <div
+                        className={images.length === 1 ? styles.singleImageWrapper : styles.imageGrid}
+                    >
                         {images.map((img, index) => (
                             <div key={index} className={styles.imageWrapper}>
                                 <Image
@@ -110,7 +136,7 @@ export default function CommentDialog({
                                     height={200}
                                     className={styles.dialogImage}
                                     onClick={() => setPreviewIndex(index)}
-                                    style={{objectFit: "cover"}}
+                                    style={{ objectFit: "cover" }}
                                     loading="lazy"
                                     unoptimized
                                 />
@@ -159,7 +185,7 @@ export default function CommentDialog({
                                     width={40}
                                     height={40}
                                     className={styles.commentAvatar}
-                                    style={{borderRadius: "50%"}}
+                                    style={{ borderRadius: "50%" }}
                                     loading="lazy"
                                     unoptimized
                                 />
@@ -176,7 +202,7 @@ export default function CommentDialog({
                                             height={100}
                                             className={styles.commentImage}
                                             onClick={() => setPreviewCommentImage(comment.image || null)}
-                                            style={{objectFit: "cover"}}
+                                            style={{ objectFit: "cover" }}
                                             loading="lazy"
                                             unoptimized
                                         />
@@ -185,7 +211,6 @@ export default function CommentDialog({
                                 </div>
                             </div>
                         ))}
-                        {/* Load more comments */}
                         <div className={styles.loadMoreWrapper}>
                             <button
                                 className={styles.loadMoreButton}
@@ -200,18 +225,18 @@ export default function CommentDialog({
 
                 {/* Footer for adding comments */}
                 <div className={styles.footer}>
-          <textarea
-              placeholder="Viết bình luận..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault(); // Prevent new line
-                      addComment(); // Submit comment
-                  }
-              }}
-              className={styles.commentTextarea}
-          />
+                    <textarea
+                        placeholder="Viết bình luận..."
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                addComment();
+                            }
+                        }}
+                        className={styles.commentTextarea}
+                    />
                     <label className={styles.imageUploadLabel}>
                         📷
                         <input
@@ -228,10 +253,30 @@ export default function CommentDialog({
                             className={styles.imageUploadInput}
                         />
                     </label>
-                    <button className={styles.commentButton} onClick={addComment}>
+                    <button
+                        className={styles.commentButton}
+                        onClick={addComment}
+                        disabled={!newComment.trim() && !newCommentImage}
+                    >
                         ➤
                     </button>
                 </div>
+
+                {/* Hiển thị ảnh preview */}
+                {newCommentImage && (
+                    <div className={styles.previewImageWrapper}>
+                        <Image
+                            src={newCommentImage}
+                            alt="Preview Comment Image"
+                            width={100}
+                            height={100}
+                            className={styles.commentPreviewImage}
+                            style={{ objectFit: "cover", borderRadius: "8px" }}
+                            onClick={() => setPreviewCommentImage(newCommentImage)}
+                            unoptimized
+                        />
+                    </div>
+                )}
             </div>
 
             {/* Image preview */}

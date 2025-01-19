@@ -1,3 +1,4 @@
+/*frontend/src/app/components/CommentDialog.module.css*/
 .dialog {
     position: fixed;
     top: 0;
@@ -123,6 +124,10 @@
     cursor: pointer;
 }
 
+.commentButton:disabled {
+    background-color: #d3d3d3; /* Màu xám nhạt */
+    cursor: not-allowed; /* Con trỏ không thể click */
+}
 
 .previewImage {
     max-width: 80%;
@@ -367,4 +372,37 @@
 .commentImage,
 .postAvatar {
     cursor: pointer; /* Changes cursor to a pointer (hand) on hover */
+}
+
+/*anh nho preview binh luan khi chon anh trong may tinh ca nhan*/
+.previewImageWrapper {
+    margin-top: 10px; /* Khoảng cách phía trên */
+    display: flex;
+    justify-content: flex-start;
+}
+
+.commentPreviewImage {
+    cursor: pointer; /* Hiển thị con trỏ tay khi hover */
+    border: 1px solid #ddd; /* Viền ảnh */
+    padding: 2px; /* Padding giữa viền và ảnh */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Hiệu ứng nổi */
+}
+
+.postDescription {
+        margin-bottom: 15px;
+}
+
+.toggleButton {
+    background: none;
+    border: none;
+    color: #5555ff;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 5px;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.toggleButton:hover {
+    color: #3333cc;
 }

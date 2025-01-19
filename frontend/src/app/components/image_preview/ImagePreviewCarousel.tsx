@@ -1,3 +1,4 @@
+// frontend/src/app/components/image_preview/ImagePreviewCarousel.tsx
 import React from "react";
 import Image from "next/image";
 import styles from "./ImagePreviewCarousel.module.css";
