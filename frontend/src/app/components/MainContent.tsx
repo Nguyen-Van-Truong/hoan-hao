@@ -96,7 +96,7 @@ export default function MainContent() {
             className={styles.mainContent}
             ref={mainContentRef}
         >
-            {posts.map((post, index) => (
+            {posts.map((post) => (
                 <Post
                     key={post.hashcodeIDPost}
                     author={post.author}
