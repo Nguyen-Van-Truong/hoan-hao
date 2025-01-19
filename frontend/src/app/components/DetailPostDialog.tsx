@@ -281,8 +281,22 @@ export default function DetailPostDialog({
                                 addComment();
                             }
                         }}
+                        onPaste={(e) => {
+                            const items = e.clipboardData.items;
+                            for (const item of items) {
+                                if (item.type.startsWith("image/")) {
+                                    const file = item.getAsFile();
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onload = () => setNewCommentImage(reader.result as string);
+                                        reader.readAsDataURL(file);
+                                    }
+                                }
+                            }
+                        }}
                         className={styles.commentTextarea}
                     />
+
                     <label className={styles.imageUploadLabel}>
                         📷
                         <input
@@ -311,18 +325,27 @@ export default function DetailPostDialog({
                 {/* Image previews */}
                 {newCommentImage && (
                     <div className={styles.previewImageWrapper}>
-                        <Image
-                            src={newCommentImage}
-                            alt="Preview Comment Image"
-                            width={100}
-                            height={100}
-                            className={styles.commentPreviewImage}
-                            style={{ objectFit: "cover", borderRadius: "8px" }}
-                            onClick={() => setPreviewCommentImage(newCommentImage)}
-                            unoptimized
-                        />
+                        <div style={{ position: "relative", display: "inline-block" }}>
+                            <Image
+                                src={newCommentImage}
+                                alt="Preview Comment Image"
+                                width={100}
+                                height={100}
+                                className={styles.commentPreviewImage}
+                                style={{ objectFit: "cover", borderRadius: "8px" }}
+                                unoptimized
+                            />
+                            <button
+                                className={styles.removeImageButton}
+                                onClick={() => setNewCommentImage(null)}
+                            >
+                                ✖
+                            </button>
+                        </div>
                     </div>
                 )}
+
+
             </div>
 
             {/* Image carousel */}
