@@ -129,7 +129,7 @@ export default function MainContent() {
         const currentPath = window.location.pathname;
         const match = currentPath.match(/\/([^/]+)\/post\/([^/]+)/);
         if (match) {
-            const [_, author, hashcodeIDPost] = match;
+            const [, author, hashcodeIDPost] = match;
             const foundPost = posts.find((post) => post.hashcodeIDPost === hashcodeIDPost);
 
             if (foundPost) {
