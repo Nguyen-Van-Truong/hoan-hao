@@ -1,13 +1,20 @@
-// frontend/src/components/SidebarRight.tsx
-import { useState } from "react";
+// frontend/src/app/components/SidebarRight.tsx
+import {useState} from "react";
 import Image from "next/image";
+import Link from "next/link"; // Import Link từ Next.js
+import {useRouter} from "next/navigation"; // Sử dụng điều hướng
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const router = useRouter();
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
+    };
+
+    const navigateToProfile = (username: string) => {
+        router.push(`/profile/${username}`);
     };
 
     return (
@@ -27,7 +34,7 @@ export default function SidebarRight() {
                 {isMenuOpen && (
                     <div className={styles.userMenu}>
                         <ul>
-                            <li>
+                            <li onClick={() => navigateToProfile("my-profile")}>
                                 <span className={styles.menuIcon}>👤</span>
                                 Trang cá nhân
                             </li>
@@ -59,20 +66,25 @@ export default function SidebarRight() {
             <div className={styles.suggestedFriends}>
                 <div className={styles.friendsHeader}>
                     <h3>Đề xuất bạn bè</h3>
-                    <a href="#" className={styles.viewAll}>
+                    <Link href="/suggested-friends" className={styles.viewAll}>
                         Xem tất cả →
-                    </a>
+                    </Link>
                 </div>
                 <div className={styles.friendList}>
                     {[
-                        { name: "Julia Smith", username: "@juliasmith" },
-                        { name: "Vermillion D. Gray", username: "@vermilliongray" },
-                        { name: "Mai Senpai", username: "@maisenpai" },
-                        { name: "Azunyan U. Wu", username: "@azunyanudesu" },
-                        { name: "Oarack Babama", username: "@obama21" },
+                        {name: "Julia Smith", username: "juliasmith"},
+                        {name: "Vermillion D. Gray", username: "vermilliongray"},
+                        {name: "Mai Senpai", username: "maisenpai"},
+                        {name: "Azunyan U. Wu", username: "azunyanudesu"},
+                        {name: "Oarack Babama", username: "obama21"},
                     ].map((friend, index) => (
-                        <div className={styles.friendItem} key={index}>
-                            <div className={styles.friendInfo}>
+                        <div
+                            className={styles.friendItem}
+                            key={index}
+                        >
+                            <div className={styles.friendInfo}
+                                 onClick={() => navigateToProfile(friend.username)}
+                            >
                                 <Image
                                     src="/user-logo.png"
                                     alt={friend.name}
@@ -85,7 +97,7 @@ export default function SidebarRight() {
                                 <div>
                                     <p className={styles.friendName}>{friend.name}</p>
                                     <p className={styles.friendUsername}>
-                                        {friend.username}
+                                        @{friend.username}
                                     </p>
                                 </div>
                             </div>

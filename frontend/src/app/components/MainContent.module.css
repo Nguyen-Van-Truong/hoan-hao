@@ -3,7 +3,7 @@
 .mainContent {
     overflow-y: auto;
     padding: 20px; /* Khoảng cách nội dung */
-    background-color: #a2d2f2; /* Màu nền */
+    background-color: var(--primary-mid-color); /* Màu nền */
 }
 
 .loadingContainer {

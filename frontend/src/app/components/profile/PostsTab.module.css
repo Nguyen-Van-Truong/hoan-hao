@@ -1,0 +1,17 @@
+.posts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.postItem {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.postItem span {
+    font-size: 14px;
+    color: #888;
+}

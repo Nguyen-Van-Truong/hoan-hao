@@ -1,0 +1,12 @@
+.videos {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.videoItem {
+    width: 100%;
+    max-width: 800px;
+    border-radius: 8px;
+    background-color: #000;
+}

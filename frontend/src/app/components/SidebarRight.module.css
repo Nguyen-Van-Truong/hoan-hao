@@ -3,7 +3,7 @@
 .sidebarRight {
     display: flex;
     flex-direction: column;
-    background-color: #f2a2d2; /* Màu nền hồng */
+    background-color: var(--primary-color); /* Màu nền hồng */
     padding: 20px;
     overflow-y: auto;
 }
@@ -101,6 +101,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    cursor: pointer;
+
 }
 
 .friendAvatar {

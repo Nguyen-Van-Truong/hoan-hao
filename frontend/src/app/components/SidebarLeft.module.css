@@ -1,9 +1,10 @@
+/*frontend/src/app/components/SidebarLeft.module.css*/
 /* Sidebar styles */
 .sidebarLeft {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f2a2d2; /* Màu nền hồng */
+    background-color: var(--primary-color); /* Màu nền hồng */
     padding: 20px;
     overflow-y: auto;
 }

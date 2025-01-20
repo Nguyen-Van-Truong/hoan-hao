@@ -1,5 +1,12 @@
 /*frontend/src/app/globals.css*/
 /* globals.css */
+:root {
+    --primary-color: #f2a2d2; /* Màu chủ đạo */
+    --primary-mid-color: #a2d2f2; /* Màu chủ đạo giao dien o giua */
+    --component-color: #ec86bf; /* Màu component */
+    --component-hover-color: #d075a8; /* Màu component hover*/
+}
+
 body {
     margin: 0;
     font-family: 'Geist Sans', Arial, sans-serif;
@@ -11,11 +18,6 @@ body {
     display: grid;
     grid-template-columns: 1fr 3fr 1fr;
     height: 100vh;
-}
-
-.sidebar-left, .sidebar-right {
-    background-color: #f2a2d2;
-    text-align: center;
 }
 
 /*.main-content {*/

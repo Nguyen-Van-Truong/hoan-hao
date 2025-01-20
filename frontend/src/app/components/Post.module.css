@@ -86,7 +86,7 @@
 }
 
 .action:hover {
-    color: #ec86bf; /* Đổi màu chữ/icon khi hover (tuỳ chọn) */
+    color: var(--component-color); /* Đổi màu chữ/icon khi hover (tuỳ chọn) */
 }
 
 .action img {
