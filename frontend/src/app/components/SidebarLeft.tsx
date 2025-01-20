@@ -46,7 +46,7 @@ export default function SidebarLeft() {
                 </div>
                 <div
                     className={styles.navItem}
-                    onClick={() => navigateTo("/my-friends")}
+                    onClick={() => navigateTo("/friends/list")}
                 >
                     <span className={styles.icon}>👥</span>
                     <span className={styles.label}>Bạn bè</span>

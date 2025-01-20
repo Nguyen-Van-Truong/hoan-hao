@@ -65,7 +65,7 @@ export default function MyFriends() {
 
     return (
         <div className={styles.container} ref={containerRef}>
-            <h1 className={styles.title}>Danh sách bạn bè</h1>
+            <h1 className={styles.title}>Đề xuất bạn bè</h1>
             <div className={styles.friendList}>
                 {friends.map((friend, index) => (
                     <FriendCard

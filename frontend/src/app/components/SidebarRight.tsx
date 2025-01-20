@@ -66,7 +66,7 @@ export default function SidebarRight() {
             <div className={styles.suggestedFriends}>
                 <div className={styles.friendsHeader}>
                     <h3>Đề xuất bạn bè</h3>
-                    <Link href="/suggested-friends" className={styles.viewAll}>
+                    <Link href="/friends/suggestions" className={styles.viewAll}>
                         Xem tất cả →
                     </Link>
                 </div>
