@@ -99,6 +99,13 @@
 .postButton:hover {
     background-color: var(--component-hover-color);
 }
+
+.postButton:disabled {
+    background-color: #ccc; /* Màu nền khi bị vô hiệu hóa */
+    cursor: not-allowed; /* Hiển thị trạng thái không cho phép */
+    color: #888; /* Màu chữ khi bị vô hiệu hóa */
+}
+
 .actionBar {
     display: flex;
     align-items: center;

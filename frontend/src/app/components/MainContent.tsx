@@ -307,9 +307,14 @@ export default function MainContent() {
                         className={styles.hiddenInput}
                     />
 
-                    <button className={styles.postButton} onClick={handleSubmitPost}>
+                    <button
+                        className={styles.postButton}
+                        onClick={handleSubmitPost}
+                        disabled={newPostContent.trim() === "" && newPostImages.length === 0}
+                    >
                         Đăng
                     </button>
+
                 </div>
             </div>
 
