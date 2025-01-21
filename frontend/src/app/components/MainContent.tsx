@@ -196,10 +196,6 @@ export default function MainContent() {
     };
 
     // Handle khi chọn hoặc kéo thả ảnh
-    const onDrop = (acceptedFiles: File[]) => {
-        setNewPostImages((prevImages) => [...prevImages, ...acceptedFiles]);
-    };
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files) {
