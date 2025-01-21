@@ -4,7 +4,6 @@
     max-width: 1000px;
     background-color: var(--primary-mid-color);
     border-radius: 8px;
-    overflow-y: auto; /* Cho phép cuộn */
 }
 
 .friendList {

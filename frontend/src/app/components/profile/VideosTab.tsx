@@ -1,3 +1,4 @@
+// frontend/src/app/components/profile/VideosTab.tsx
 "use client";
 
 import styles from "./VideosTab.module.css";

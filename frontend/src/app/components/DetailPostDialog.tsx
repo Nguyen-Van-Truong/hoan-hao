@@ -15,7 +15,7 @@ interface Comment {
 
 interface CommentDialogProps {
     author: string;
-    role: string;
+    username: string;
     time: string;
     images: string[];
     content: string;
@@ -25,7 +25,7 @@ interface CommentDialogProps {
 
 export default function DetailPostDialog({
                                              author,
-                                             role,
+                                             username,
                                              time,
                                              images,
                                              content,
@@ -146,7 +146,7 @@ export default function DetailPostDialog({
                         />
                         <div className={styles.postHeaderInfo}>
                             <p className={styles.postAuthor}>{author}</p>
-                            <p className={styles.postRole}>{role}</p>
+                            <p className={styles.postUsername}>{username}</p>
                             <p className={styles.postTime}>{time}</p>
                         </div>
                     </div>

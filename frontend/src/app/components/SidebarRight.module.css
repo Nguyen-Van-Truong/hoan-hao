@@ -1,13 +1,5 @@
 /* SidebarRight.module.css */
 
-.sidebarRight {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--primary-color); /* Màu nền hồng */
-    padding: 20px;
-    overflow-y: auto;
-}
-
 @media (max-width: 1025px) {
     .sidebarRight {
         display: none;

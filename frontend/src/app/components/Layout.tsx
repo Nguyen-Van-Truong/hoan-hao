@@ -10,13 +10,18 @@ interface LayoutProps {
     children?: React.ReactNode;
 }
 
-export default function Layout({children }: LayoutProps) {
-
+export default function Layout({ children }: LayoutProps) {
     return (
         <div className="container">
-            <SidebarLeft />
-            {children || <MainContent />}
-            <SidebarRight />
+            <div className="sidebar-left">
+                <SidebarLeft />
+            </div>
+            <div className="main-content">
+                {children || <MainContent />}
+            </div>
+            <div className="sidebar-right">
+                <SidebarRight />
+            </div>
         </div>
     );
 }

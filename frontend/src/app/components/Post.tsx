@@ -1,13 +1,14 @@
 // frontend/src/app/components/Post.tsx
-import { useState } from "react";
+import {useState} from "react";
 import Image from "next/image";
 import styles from "./Post.module.css";
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
+import {useRouter} from "next/navigation";
 
 export default function Post({
                                  author,
-                                 role,
+                                 username,
                                  content,
                                  time,
                                  images = [],
@@ -15,13 +16,14 @@ export default function Post({
 // Optional click handler
                              }: {
     author: string;
-    role: string;
+    username: string;
     content: string;
     time: string;
     images?: string[];
     hashcodeIDPost: string;
     onClick?: () => void;
 }) {
+    const router = useRouter();
     const MAX_LENGTH = 100;
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -96,6 +98,10 @@ export default function Post({
         );
     };
 
+    const navigateToProfile = () => {
+        router.push(`/profile/${username}`);
+    };
+
     return (
         <div className={styles.post}>
             {/* Header */}
@@ -108,11 +114,12 @@ export default function Post({
                     height={50}
                     unoptimized
                     loading="lazy"
+                    onClick={navigateToProfile}
                 />
                 <div className={styles.headerInfo}>
                     <div>
-                        <p className={styles.author}>{author}</p>
-                        <p className={styles.role}>{role}</p>
+                        <p className={styles.author} onClick={navigateToProfile}>{author}</p>
+                        <p className={styles.username} onClick={navigateToProfile}>{username}</p>
                     </div>
                     <p
                         className={styles.time}
@@ -193,7 +200,7 @@ export default function Post({
             {showDialog && (
                 <DetailPostDialog
                     author={author}
-                    role={role}
+                    username={username}
                     time={time}
                     images={images}
                     content={content}

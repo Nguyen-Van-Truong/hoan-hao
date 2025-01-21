@@ -20,25 +20,28 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
+    cursor: pointer;
 }
 
 .headerInfo {
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Căn giữa thông tin theo chiều dọc */
-    flex-grow: 1;
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*justify-content: center; !* Căn giữa thông tin theo chiều dọc *!*/
+    /*flex-grow: 1;*/
 }
 
 .author {
     font-weight: bold;
     font-size: 16px;
     margin: 0;
+    cursor: pointer;
 }
 
-.role {
+.username {
     font-size: 12px;
     color: #777;
     margin: 0;
+    cursor: pointer;
 }
 
 .time {
@@ -165,12 +168,6 @@
     justify-content: center;
     align-items: center;
     border-radius: 10px;
-}
-
-.headerInfo {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
 }
 
 /* Cursor change for all images on hover */

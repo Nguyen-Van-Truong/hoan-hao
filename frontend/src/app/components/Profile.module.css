@@ -1,3 +1,4 @@
+/*frontend/src/app/components/Profile.module.css*/
 .profile {
     display: flex;
     flex-direction: column;
@@ -75,6 +76,11 @@
 
 .contentSection {
     width: 100%;
-    max-width: 800px;
     margin-top: 20px;
+    display: flex;
+    justify-content: center; /* Căn giữa theo chiều ngang */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    min-height: 300px; /* Đảm bảo có đủ chiều cao cho các item khi không có nội dung */
+    padding: 20px; /* Thêm padding nếu cần */
+    box-sizing: border-box;
 }

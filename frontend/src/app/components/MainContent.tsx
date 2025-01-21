@@ -1,5 +1,5 @@
 // frontend/src/app/components/MainContent.tsx
-import { useEffect, useRef, useState, useCallback } from "react";
+import {useEffect, useRef, useState, useCallback} from "react";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -7,7 +7,7 @@ import styles from "./MainContent.module.css";
 // Định nghĩa kiểu dữ liệu cho bài viết
 interface PostType {
     author: string;
-    role: string;
+    username: string;
     content: string;
     time: string;
     images: string[];
@@ -18,7 +18,7 @@ export default function MainContent() {
     const [posts, setPosts] = useState<PostType[]>([
         {
             author: "Truong",
-            role: "User",
+            username: "@truong",
             content: `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed id elit scelerisque, dapibus est ut, facilisis neque. 
             Proin tincidunt, libero a tristique suscipit, neque neque volutpat turpis, a tincidunt sapien velit in nulla. 
             Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.\n
@@ -30,7 +30,7 @@ export default function MainContent() {
         },
         {
             author: "Truong",
-            role: "User",
+            username: "@truong",
             content: `Hôm nay tôi cảm thấy rất vui vì dự án đang tiến triển rất tốt. 
             Đây là một cơ hội tuyệt vời để học hỏi và làm việc cùng nhau.\n
             Cảm ơn các bạn đã luôn hỗ trợ và đồng hành trong suốt hành trình này!`,
@@ -40,7 +40,7 @@ export default function MainContent() {
         },
         {
             author: "Truong",
-            role: "User",
+            username: "@truong",
             content: "Không có gì tuyệt vời hơn việc hoàn thành dự án đúng thời hạn!",
             time: "2 giờ trước",
             images: ["/123.jpg", "/1234.jpg", "/123.jpg"],
@@ -48,7 +48,7 @@ export default function MainContent() {
         },
         {
             author: "Truong",
-            role: "User",
+            username: "@truong",
             content: "Làm việc nhóm giúp tôi học hỏi được rất nhiều điều từ các đồng nghiệp!",
             time: "3 giờ trước",
             images: ["/123.jpg", "/boji2.webp", "/123.jpg", "/1234.jpg"],
@@ -56,15 +56,15 @@ export default function MainContent() {
         },
         {
             author: "Truong",
-            role: "User",
+            username: "@truong",
             content: "Hoàn thành dự án này là một cột mốc lớn trong sự nghiệp của tôi.",
             time: "4 giờ trước",
             images: ["/123.jpg", "/1234.jpg", "/123.jpg", "/1234.jpg", "/1234.jpg"],
             hashcodeIDPost: "post5",
         },
         {
-            author: "Truong",
-            role: "User",
+            author: "Long",
+            username: "@long",
             content:
                 "Dự án này không chỉ giúp tôi nâng cao kỹ năng mà còn mở rộng các cơ hội hợp tác mới.",
             time: "5 giờ trước",
@@ -79,39 +79,48 @@ export default function MainContent() {
     const [loading, setLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<PostType | null>(null); // Cập nhật kiểu dữ liệu
     const mainContentRef = useRef<HTMLDivElement | null>(null);
+    useRef<number>(0);
+    const userCounter = useRef(1); // Giữ giá trị giữa các lần render
 
     const fetchMorePosts = useCallback(async () => {
         if (loading) return;
         setLoading(true);
 
+        // Lưu vị trí hiện tại
+        const scrollTop = document.documentElement.scrollTop;
+        const scrollHeight = document.documentElement.scrollHeight;
+
         await new Promise((res) => setTimeout(res, 1000));
 
         const newPosts: PostType[] = [
             {
-                author: "User 1",
-                role: "User",
+                author: `User ${userCounter.current}`,
+                username: `@user${userCounter.current}`,
                 content: "Bài viết mới với 1 hình ảnh.",
                 time: "1 phút trước",
                 images: ["/123.jpg"],
-                hashcodeIDPost: "post7",
+                hashcodeIDPost: `post${Date.now()}1`,
             },
             {
-                author: "User 2",
-                role: "User",
+                author: `User ${userCounter.current + 1}`,
+                username: `@user${userCounter.current + 1}`,
                 content: "Bài viết mới không có hình ảnh.",
                 time: "2 phút trước",
                 images: [],
-                hashcodeIDPost: "post8",
+                hashcodeIDPost: `post${Date.now()}2`,
             },
             {
-                author: "User 3",
-                role: "User",
+                author: `User ${userCounter.current + 2}`,
+                username: `@user${userCounter.current + 2}`,
                 content: "Bài viết mới với 2 hình ảnh.",
                 time: "3 phút trước",
                 images: ["/123.jpg", "/1234.jpg"],
-                hashcodeIDPost: "post9",
+                hashcodeIDPost: `post${Date.now()}3`,
             },
         ];
+
+        // Tăng giá trị của userCounter sau khi sử dụng
+        userCounter.current += 3;
 
         setPosts((prevPosts) => {
             const uniquePosts = newPosts.filter(
@@ -121,15 +130,44 @@ export default function MainContent() {
             return [...prevPosts, ...uniquePosts];
         });
 
+        // Khôi phục vị trí cuộn cũ
+        setTimeout(() => {
+            const newScrollHeight = document.documentElement.scrollHeight;
+            window.scrollTo({
+                top: scrollTop + (newScrollHeight - scrollHeight),
+                behavior: "auto",
+            });
+        }, 0);
+
         setLoading(false);
     }, [loading]);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+
+            // Kiểm tra khi người dùng cuộn đến dưới cùng
+            if (scrollTop + windowHeight >= documentHeight - 5 && !loading) {
+                fetchMorePosts();
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [fetchMorePosts, loading]);
+
 
     // Tự động mở dialog nếu URL phù hợp
     useEffect(() => {
         const currentPath = window.location.pathname;
         const match = currentPath.match(/\/([^/]+)\/post\/([^/]+)/);
         if (match) {
-            const [, author, hashcodeIDPost] = match;
+            const [, username,author, hashcodeIDPost] = match;
             const foundPost = posts.find((post) => post.hashcodeIDPost === hashcodeIDPost);
 
             if (foundPost) {
@@ -138,7 +176,7 @@ export default function MainContent() {
                 const fetchPostDetail = async () => {
                     const fetchedPost: PostType = {
                         author: author,
-                        role: "User",
+                        username: username,
                         content: `Bài viết từ API: ${hashcodeIDPost}`,
                         time: "1 phút trước",
                         images: [],
@@ -156,28 +194,6 @@ export default function MainContent() {
         window.history.pushState(null, "", "/");
     };
 
-    useEffect(() => {
-        const handleScroll = () => {
-            const container = mainContentRef.current;
-            if (container) {
-                const { scrollTop, scrollHeight, clientHeight } = container;
-                if (scrollTop + clientHeight >= scrollHeight - 5 && !loading) {
-                    fetchMorePosts();
-                }
-            }
-        };
-
-        const container = mainContentRef.current;
-        if (container) {
-            container.addEventListener("scroll", handleScroll);
-        }
-
-        return () => {
-            if (container) {
-                container.removeEventListener("scroll", handleScroll);
-            }
-        };
-    }, [fetchMorePosts, loading]);
 
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
@@ -185,7 +201,7 @@ export default function MainContent() {
                 <Post
                     key={post.hashcodeIDPost}
                     author={post.author}
-                    role={post.role}
+                    username={post.username}
                     content={post.content}
                     time={post.time}
                     images={post.images}
@@ -196,7 +212,7 @@ export default function MainContent() {
 
             {loading && (
                 <div className={styles.loadingContainer}>
-                    <div className={styles.spinner} />
+                    <div className={styles.spinner}/>
                     <p>Đang tải thêm bài viết...</p>
                 </div>
             )}
@@ -204,7 +220,7 @@ export default function MainContent() {
             {selectedPost && (
                 <DetailPostDialog
                     author={selectedPost.author}
-                    role={selectedPost.role}
+                    username={selectedPost.username}
                     time={selectedPost.time}
                     content={selectedPost.content}
                     images={selectedPost.images}

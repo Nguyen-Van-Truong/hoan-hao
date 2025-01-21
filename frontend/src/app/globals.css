@@ -1,10 +1,8 @@
-/*frontend/src/app/globals.css*/
-/* globals.css */
 :root {
     --primary-color: #f2a2d2; /* Màu chủ đạo */
-    --primary-mid-color: #a2d2f2; /* Màu chủ đạo giao dien o giua */
+    --primary-mid-color: #a2d2f2; /* Màu chủ đạo giao diện ở giữa */
     --component-color: #ec86bf; /* Màu component */
-    --component-hover-color: #d075a8; /* Màu component hover*/
+    --component-hover-color: #d075a8; /* Màu component hover */
 }
 
 body {
@@ -15,30 +13,64 @@ body {
 }
 
 .container {
-    display: grid;
-    grid-template-columns: 1fr 3fr 1fr;
-    height: 100vh;
+    display: flex;
+    min-height: 100vh; /* Chiều cao tối thiểu bằng viewport */
+    background-color: var(--primary-mid-color);
+    padding-left: 250px; /* Chừa không gian cho SidebarLeft */
+    padding-right: 250px; /* Chừa không gian cho SidebarRight */
 }
 
-/*.main-content {*/
-/*    background-color: #a2d2f2;*/
-/*    padding: 20px;*/
-/*    !*text-align: center;*!*/
-/*}*/
-
-
-.sidebar-left, .sidebar-right {
-    overflow-y: auto; /* Cho phép cuộn độc lập */
-    /*height: 100vh; !* Đảm bảo mỗi cột chiếm đủ chiều cao *!*/
+/* Sidebar Left */
+.sidebar-left {
+    position: fixed; /* Giữ cố định */
+    top: 0;
+    left: 0;
+    width: 250px; /* Chiều rộng sidebar */
+    height: 100vh; /* Chiều cao toàn màn hình */
+    background-color: var(--primary-color); /* Màu nền */
+    overflow-y: auto; /* Cho phép cuộn nội dung bên trong */
+    z-index: 1000;
+    padding: 20px;
 }
 
+/* Sidebar Right */
+.sidebar-right {
+    position: fixed; /* Giữ cố định */
+    top: 0;
+    right: 0;
+    width: 250px; /* Chiều rộng sidebar */
+    height: 100vh; /* Chiều cao toàn màn hình */
+    background-color: var(--primary-color); /* Màu nền */
+    overflow-y: auto; /* Cho phép cuộn nội dung bên trong */
+    z-index: 1000;
+    padding: 20px;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    margin-left: 30px; /* Tạo khoảng cách với SidebarLeft */
+    margin-right: 30px; /* Tạo khoảng cách với SidebarRight */
+    background-color: var(--primary-mid-color); /* Màu nền của nội dung */
+    padding: 20px;
+    overflow-y: auto; /* Cho phép cuộn nội dung */
+    box-sizing: border-box; /* Đảm bảo padding không làm thay đổi kích thước */
+    border-radius: 10px; /* Tùy chọn: thêm bo góc cho nội dung chính */
+}
+
+/* Đáp ứng màn hình nhỏ */
 @media (max-width: 1025px) {
     .container {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto;
+        padding-left: 0;
+        padding-right: 0;
     }
 
-    .sidebar-left, .sidebar-right {
+    .main-content{
+        padding: 0;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
         display: none;
     }
 }
