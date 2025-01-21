@@ -1,5 +1,6 @@
 // frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
+import {useDropzone} from "react-dropzone";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -81,6 +82,8 @@ export default function MainContent() {
     const mainContentRef = useRef<HTMLDivElement | null>(null);
     useRef<number>(0);
     const userCounter = useRef(1); // Giữ giá trị giữa các lần render
+    const [newPostContent, setNewPostContent] = useState<string>("");
+    const [newPostImages, setNewPostImages] = useState<File[]>([]); // Quản lý ảnh tải lên
 
     const fetchMorePosts = useCallback(async () => {
         if (loading) return;
@@ -160,14 +163,12 @@ export default function MainContent() {
             window.removeEventListener("scroll", handleScroll);
         };
     }, [fetchMorePosts, loading]);
-
-
     // Tự động mở dialog nếu URL phù hợp
     useEffect(() => {
         const currentPath = window.location.pathname;
         const match = currentPath.match(/\/([^/]+)\/post\/([^/]+)/);
         if (match) {
-            const [, username,author, hashcodeIDPost] = match;
+            const [, username, author, hashcodeIDPost] = match;
             const foundPost = posts.find((post) => post.hashcodeIDPost === hashcodeIDPost);
 
             if (foundPost) {
@@ -194,9 +195,106 @@ export default function MainContent() {
         window.history.pushState(null, "", "/");
     };
 
+    // Handle khi chọn hoặc kéo thả ảnh
+    const onDrop = (acceptedFiles: File[]) => {
+        setNewPostImages((prevImages) => [...prevImages, ...acceptedFiles]);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files) {
+            // Sử dụng Array.from() chỉ khi files không phải là null
+            setNewPostImages((prevImages) => [
+                ...prevImages,
+                ...Array.from(files), // Chuyển FileList thành mảng File[]
+            ]);
+        }
+    };
+
+
+    const handlePostContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setNewPostContent(e.target.value);
+    };
+
+    const handleSubmitPost = () => {
+        if (newPostContent.trim() === "") return;
+
+        const newPost: PostType = {
+            author: "Current User", // Lấy tên người dùng hiện tại
+            username: "@currentUser",
+            content: newPostContent,
+            time: "Vừa xong",
+            images: newPostImages.map((file) => URL.createObjectURL(file)),
+            hashcodeIDPost: `post${Date.now()}`,
+        };
+
+        setPosts((prevPosts) => [newPost, ...prevPosts]);
+        setNewPostContent("");
+        setNewPostImages([]);
+    };
+
+    const removeImage = (index: number) => {
+        setNewPostImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    };
+
+    const { getRootProps, getInputProps } = useDropzone({
+        onDrop: (acceptedFiles: File[]) => {
+            setNewPostImages((prevImages) => [
+                ...prevImages,
+                ...acceptedFiles, // acceptedFiles will always be of type File[] here
+            ]);
+        },
+        accept: {
+            "image/jpeg": [".jpeg", ".jpg"], // MIME type as key, array of extensions as value
+            "image/png": [".png"], // MIME type as key, array of extensions as value
+        },
+        multiple: true,
+    });
+
+
+
+
 
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
+            {/* Phần tạo bài viết mới */}
+            <div className={styles.createPost}>
+                <textarea
+                    className={styles.postInput}
+                    placeholder="Bạn đang nghĩ gì?"
+                    value={newPostContent}
+                    onChange={handlePostContentChange}
+                />
+
+                <div {...getRootProps()} className={styles.dropzone}>
+                    <input {...getInputProps()} onChange={handleFileChange}/>
+                    <p>Kéo và thả ảnh vào đây hoặc chọn ảnh từ thiết bị</p>
+                </div>
+
+                <div className={styles.previewImages}>
+                    {newPostImages.map((file, index) => (
+                        <div key={index} className={styles.previewImageWrapper}>
+                            <img
+                                src={URL.createObjectURL(file)}
+                                alt={`preview-${index}`}
+                                className={styles.previewImage}
+                            />
+                            <button
+                                className={styles.removeImage}
+                                onClick={() => removeImage(index)}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <button className={styles.postButton} onClick={handleSubmitPost}>
+                    Đăng
+                </button>
+            </div>
+
+            {/* Hiển thị bài viết */}
             {posts.map((post) => (
                 <Post
                     key={post.hashcodeIDPost}

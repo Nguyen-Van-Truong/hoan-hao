@@ -29,7 +29,7 @@ export default function SidebarLeft() {
             <div className={styles.searchBar}>
                 <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Tìm kiếm..."
                     className={styles.searchInput}
                 />
             </div>
