@@ -1,7 +1,8 @@
 /*frontend/src/app/components/MainContent.module.css*/
 .mainContent {
     overflow-y: auto;
-    padding: 5vh; /* Khoảng cách nội dung */
+    padding-left: 5vh; /* Khoảng cách nội dung */
+    padding-right: 5vh; /* Khoảng cách nội dung */
     background-color: var(--primary-mid-color); /* Màu nền */
 }
 
@@ -41,7 +42,14 @@
 
 .previewImages {
     display: flex;
+    flex-wrap: wrap; /* Cho phép xuống dòng khi không đủ chỗ */
+    gap: 10px; /* Khoảng cách giữa các ảnh */
     margin-top: 10px;
+    justify-content: flex-start; /* Căn các ảnh từ bên trái */
+}
+
+.previewImageWrapper {
+    position: relative; /* Để nút xóa ảnh có thể đặt ở góc */
 }
 
 .previewImage {
@@ -49,11 +57,34 @@
     height: 60px;
     object-fit: cover;
     border-radius: 8px;
-    margin-right: 10px;
+    border: 1px solid #ddd; /* Đường viền để ảnh nổi bật hơn */
+}
+
+.removeImage {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4d4f;
+    border: none;
+    color: white;
+    font-size: 14px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s;
+}
+
+.removeImage:hover {
+    background: #e04142; /* Đổi màu nút khi hover */
 }
 
 .postButton {
-    background-color: #1877f2;
+    background-color: var(--component-color);
     color: #fff;
     padding: 10px 16px;
     border: none;
@@ -66,8 +97,32 @@
 }
 
 .postButton:hover {
-    background-color: #165eab;
+    background-color: var(--component-hover-color);
 }
+.actionBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.imageIcon {
+    cursor: pointer;
+    display: inline-block;
+    width: 45px;
+    height: 45px;
+}
+
+.imageIcon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Đảm bảo ảnh không bị cắt méo */
+}
+
+.hiddenInput {
+    display: none;
+}
+
 
 .loadingContainer {
     display: flex;

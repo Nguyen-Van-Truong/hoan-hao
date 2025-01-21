@@ -1,5 +1,6 @@
 // frontend/src/app/components/profile/PostsTab.tsx
 import { useState, useEffect, useCallback, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 import Post from "../Post"; // Đảm bảo bạn sử dụng lại Post component
 import styles from "./PostsTab.module.css";
 
@@ -56,7 +57,7 @@ export default function PostsTab() {
                 content: "Bài viết mới với 1 hình ảnh.",
                 time: "1 phút trước",
                 images: ["/123.jpg"],
-                hashcodeIDPost: `post${Date.now()}1`,
+                hashcodeIDPost: uuidv4(),
             },
             {
                 author: `User ${userCounter.current + 1}`,
@@ -64,7 +65,7 @@ export default function PostsTab() {
                 content: "Bài viết mới không có hình ảnh.",
                 time: "2 phút trước",
                 images: [],
-                hashcodeIDPost: `post${Date.now()}2`,
+                hashcodeIDPost: uuidv4(),
             },
             {
                 author: `User ${userCounter.current + 2}`,
@@ -72,7 +73,7 @@ export default function PostsTab() {
                 content: "Bài viết mới với 2 hình ảnh.",
                 time: "3 phút trước",
                 images: ["/123.jpg", "/1234.jpg"],
-                hashcodeIDPost: `post${Date.now()}3`,
+                hashcodeIDPost: uuidv4(),
             },
         ];
 

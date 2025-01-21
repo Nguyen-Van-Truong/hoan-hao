@@ -1,6 +1,7 @@
 // frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
-import {useDropzone} from "react-dropzone";
+import { v4 as uuidv4 } from "uuid";
+import { toast } from "react-toastify";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -84,6 +85,7 @@ export default function MainContent() {
     const userCounter = useRef(1); // Giữ giá trị giữa các lần render
     const [newPostContent, setNewPostContent] = useState<string>("");
     const [newPostImages, setNewPostImages] = useState<File[]>([]); // Quản lý ảnh tải lên
+    const MAX_IMAGES = 6;
 
     const fetchMorePosts = useCallback(async () => {
         if (loading) return;
@@ -102,7 +104,7 @@ export default function MainContent() {
                 content: "Bài viết mới với 1 hình ảnh.",
                 time: "1 phút trước",
                 images: ["/123.jpg"],
-                hashcodeIDPost: `post${Date.now()}1`,
+                hashcodeIDPost: uuidv4(),
             },
             {
                 author: `User ${userCounter.current + 1}`,
@@ -110,7 +112,7 @@ export default function MainContent() {
                 content: "Bài viết mới không có hình ảnh.",
                 time: "2 phút trước",
                 images: [],
-                hashcodeIDPost: `post${Date.now()}2`,
+                hashcodeIDPost: uuidv4(),
             },
             {
                 author: `User ${userCounter.current + 2}`,
@@ -118,7 +120,7 @@ export default function MainContent() {
                 content: "Bài viết mới với 2 hình ảnh.",
                 time: "3 phút trước",
                 images: ["/123.jpg", "/1234.jpg"],
-                hashcodeIDPost: `post${Date.now()}3`,
+                hashcodeIDPost: uuidv4(),
             },
         ];
 
@@ -197,31 +199,58 @@ export default function MainContent() {
 
     // Handle khi chọn hoặc kéo thả ảnh
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files) {
-            // Sử dụng Array.from() chỉ khi files không phải là null
-            setNewPostImages((prevImages) => [
-                ...prevImages,
-                ...Array.from(files), // Chuyển FileList thành mảng File[]
-            ]);
+        const files = Array.from(e.target.files || []);
+        if (newPostImages.length + files.length > MAX_IMAGES) {
+            toast.error(`Bạn chỉ được tải lên tối đa ${MAX_IMAGES} ảnh.`);
+            return;
         }
+        const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+        setNewPostImages((prevImages) => [...prevImages, ...imageFiles]);
     };
-
 
     const handlePostContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setNewPostContent(e.target.value);
     };
 
+    const handleDragOver = (e: React.DragEvent<HTMLTextAreaElement>) => {
+        e.preventDefault(); // Ngăn trình duyệt mặc định mở tệp
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLTextAreaElement>) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files);
+        if (newPostImages.length + files.length > MAX_IMAGES) {
+            toast.error(`Bạn chỉ được tải lên tối đa ${MAX_IMAGES} ảnh.`);
+            return;
+        }
+
+        const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+        setNewPostImages((prevImages) => [...prevImages, ...imageFiles]);
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const items = Array.from(e.clipboardData.items);
+        const imageItems = items.filter((item) => item.type.startsWith("image/"));
+        const imageFiles = imageItems.map((item) => item.getAsFile()!);
+
+        if (newPostImages.length + imageFiles.length > MAX_IMAGES) {
+            toast.error(`Bạn chỉ được tải lên tối đa ${MAX_IMAGES} ảnh.`);
+            return;
+        }
+
+        setNewPostImages((prevImages) => [...prevImages, ...imageFiles]);
+    };
+
     const handleSubmitPost = () => {
-        if (newPostContent.trim() === "") return;
+        if (newPostContent.trim() === "" && newPostImages.length === 0) return;
 
         const newPost: PostType = {
-            author: "Current User", // Lấy tên người dùng hiện tại
+            author: "Current User",
             username: "@currentUser",
             content: newPostContent,
             time: "Vừa xong",
             images: newPostImages.map((file) => URL.createObjectURL(file)),
-            hashcodeIDPost: `post${Date.now()}`,
+            hashcodeIDPost: uuidv4(),
         };
 
         setPosts((prevPosts) => [newPost, ...prevPosts]);
@@ -232,25 +261,6 @@ export default function MainContent() {
     const removeImage = (index: number) => {
         setNewPostImages((prevImages) => prevImages.filter((_, i) => i !== index));
     };
-
-    const { getRootProps, getInputProps } = useDropzone({
-        onDrop: (acceptedFiles: File[]) => {
-            setNewPostImages((prevImages) => [
-                ...prevImages,
-                ...acceptedFiles, // acceptedFiles will always be of type File[] here
-            ]);
-        },
-        accept: {
-            "image/jpeg": [".jpeg", ".jpg"], // MIME type as key, array of extensions as value
-            "image/png": [".png"], // MIME type as key, array of extensions as value
-        },
-        multiple: true,
-    });
-
-
-
-
-
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
             {/* Phần tạo bài viết mới */}
@@ -260,12 +270,10 @@ export default function MainContent() {
                     placeholder="Bạn đang nghĩ gì?"
                     value={newPostContent}
                     onChange={handlePostContentChange}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onPaste={handlePaste}
                 />
-
-                <div {...getRootProps()} className={styles.dropzone}>
-                    <input {...getInputProps()} onChange={handleFileChange}/>
-                    <p>Kéo và thả ảnh vào đây hoặc chọn ảnh từ thiết bị</p>
-                </div>
 
                 <div className={styles.previewImages}>
                     {newPostImages.map((file, index) => (
@@ -285,9 +293,24 @@ export default function MainContent() {
                     ))}
                 </div>
 
-                <button className={styles.postButton} onClick={handleSubmitPost}>
-                    Đăng
-                </button>
+                <div className={styles.actionBar}>
+                    {/* Biểu tượng hình ảnh */}
+                    <label htmlFor="fileInput" className={styles.imageIcon}>
+                        <img src="/icon/icon_choose_image.svg" alt="Chọn ảnh"/>
+                    </label>
+                    <input
+                        id="fileInput"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileChange}
+                        className={styles.hiddenInput}
+                    />
+
+                    <button className={styles.postButton} onClick={handleSubmitPost}>
+                        Đăng
+                    </button>
+                </div>
             </div>
 
             {/* Hiển thị bài viết */}
