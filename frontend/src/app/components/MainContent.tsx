@@ -304,7 +304,6 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                 <div className={styles.actionBar}>
                     {/* Biểu tượng hình ảnh */}
                     <label htmlFor="fileInput" className={styles.imageIcon}>
-                        <img src="/icon/icon_choose_image.svg" alt="Chọn ảnh"/>
                         <Image
                             src={"/icon/icon_choose_image.svg"}
                             alt={"Chọn ảnh"}
