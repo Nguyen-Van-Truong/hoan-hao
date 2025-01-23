@@ -45,18 +45,26 @@ export default function DetailPostDialog({
 
     // Cập nhật URL và tiêu đề khi mở dialog
     useEffect(() => {
-        const truncatedContent =
-            content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
-        const newUrl = `/${author}/post/${hashcodeIDPost}`;
-        window.history.pushState(null, "", newUrl);
-        document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
+        if (author && hashcodeIDPost) {
+            const truncatedContent =
+                content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
 
-        return () => {
-            const defaultUrl = window.location.origin;
-            window.history.pushState(null, "", defaultUrl);
-            document.title = "Hoàn Hảo";
-        };
+            // Cập nhật URL đầy đủ với `author` và `hashcodeIDPost`
+            const newUrl = `/${author}/post/${hashcodeIDPost}`;
+            window.history.pushState(null, "", newUrl);
+
+            // Cập nhật tiêu đề trang
+            document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
+
+            return () => {
+                // Khôi phục URL và tiêu đề gốc khi dialog bị đóng
+                const defaultUrl = window.location.origin;
+                window.history.pushState(null, "", defaultUrl);
+                document.title = "Hoàn Hảo";
+            };
+        }
     }, [author, content, hashcodeIDPost]);
+
 
     // Giả lập tải thêm bình luận
     const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
