@@ -1,5 +1,5 @@
 // frontend/src/app/components/DetailPostDialog.tsx
-import { useState, useEffect } from "react";
+import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
 import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
@@ -40,6 +40,7 @@ export default function DetailPostDialog({
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [liked, setLiked] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false); // Trạng thái xem thêm nội dung bài viết
+    const dialogRef = useRef<HTMLDivElement | null>(null); // Tham chiếu đến dialog
 
     const MAX_LENGTH = 100;
 
@@ -130,11 +131,25 @@ export default function DetailPostDialog({
         setIsLoadingMore(false);
     };
 
+    // Đóng form khi nhấp bên ngoài
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
+                onClose(); // Đóng form nếu click bên ngoài
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [onClose]);
+
     return (
         <div className={styles.dialog}>
-            <div className={styles.dialogContent}>
+            <div className={styles.dialogContent} ref={dialogRef}>
                 <div className={styles.header}>
-                    <span>Bài viết của {author}</span>
+                <span>Bài viết của {author}</span>
                     <button className={styles.closeButton} onClick={onClose}>
                         ✖
                     </button>

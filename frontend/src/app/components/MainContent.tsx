@@ -16,7 +16,12 @@ interface PostType {
     hashcodeIDPost: string;
 }
 
-export default function MainContent() {
+interface MainContentProps {
+    username?: string; // Tùy chọn nhận username từ route
+    hashcodeIDPost?: string; // Tùy chọn nhận hashcodeIDPost từ route
+}
+
+export default function MainContent({ username, hashcodeIDPost }: MainContentProps) {
     const [posts, setPosts] = useState<PostType[]>([
         {
             author: "Truong",
@@ -165,21 +170,20 @@ export default function MainContent() {
             window.removeEventListener("scroll", handleScroll);
         };
     }, [fetchMorePosts, loading]);
-    // Tự động mở dialog nếu URL phù hợp
+
+    // Tự động mở dialog nếu có username và hashcodeIDPost
     useEffect(() => {
-        const currentPath = window.location.pathname;
-        const match = currentPath.match(/\/([^/]+)\/post\/([^/]+)/);
-        if (match) {
-            const [, username, author, hashcodeIDPost] = match;
+        if (hashcodeIDPost) {
             const foundPost = posts.find((post) => post.hashcodeIDPost === hashcodeIDPost);
 
             if (foundPost) {
-                setSelectedPost(foundPost);
+                setSelectedPost(foundPost); // Bài viết đã tồn tại trong danh sách
             } else {
+                // Gọi API để lấy bài viết nếu không tìm thấy
                 const fetchPostDetail = async () => {
                     const fetchedPost: PostType = {
-                        author: author,
-                        username: username,
+                        author: username || "Unknown",
+                        username: `@${username || "Unknown"}`,
                         content: `Bài viết từ API: ${hashcodeIDPost}`,
                         time: "1 phút trước",
                         images: [],
@@ -190,7 +194,7 @@ export default function MainContent() {
                 fetchPostDetail();
             }
         }
-    }, [posts]);
+    }, [hashcodeIDPost, posts, username]);
 
     const closeDialog = () => {
         setSelectedPost(null);
