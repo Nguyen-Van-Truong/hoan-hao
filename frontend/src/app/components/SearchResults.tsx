@@ -1,23 +1,25 @@
+// frontend/src/app/components/SearchResults.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import styles from "./SearchResults.module.css";
 
 interface SearchResult {
     id: number;
-    type: string; // "user" hoặc "post"
-    name: string; // Tên bài viết hoặc người dùng
-    description?: string; // Mô tả bài viết
-    avatar?: string; // Avatar nếu là người dùng
-    author?: string; // Tên tác giả nếu là bài viết
-    hashcodeIDPost?: string; // Mã bài viết nếu là bài viết
+    type: "user" | "post"; // Giới hạn kiểu
+    name: string;
+    description?: string;
+    avatar?: string;
+    author?: string;
+    hashcodeIDPost?: string;
 }
 
 const mockSearchResults = (keyword: string): Promise<SearchResult[]> => {
     return new Promise((resolve) =>
         setTimeout(() => {
-            const results = [
+            const results: SearchResult[] = [
                 { id: 1, type: "user", name: "Nguyễn Văn A", avatar: "/user-logo.png" },
                 { id: 2, type: "user", name: "Trần Thị B", avatar: "/user-logo.png" },
                 {
@@ -64,10 +66,8 @@ export default function SearchResults({ keyword }: { keyword: string }) {
 
     const handleResultClick = (result: SearchResult) => {
         if (result.type === "user") {
-            // Điều hướng đến trang hồ sơ của người dùng
             router.push(`/profile/${result.name}`);
         } else if (result.type === "post" && result.author && result.hashcodeIDPost) {
-            // Điều hướng đến trang bài viết
             router.push(`/${result.author}/post/${result.hashcodeIDPost}`);
         }
     };
@@ -79,7 +79,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
     if (results.length === 0) {
         return (
             <div className={styles.noResults}>
-                Không tìm thấy kết quả nào cho "{keyword}"
+                Không tìm thấy kết quả nào cho &quot;{keyword}&quot;
             </div>
         );
     }
@@ -98,9 +98,11 @@ export default function SearchResults({ keyword }: { keyword: string }) {
                     >
                         {result.type === "user" ? (
                             <>
-                                <img
+                                <Image
                                     src={result.avatar || "/default-avatar.png"}
                                     alt={result.name}
+                                    width={40}
+                                    height={40}
                                     className={styles.avatar}
                                 />
                                 <div>
