@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
+import Image from "next/image";
 
 // Định nghĩa kiểu dữ liệu cho bài viết
 interface PostType {
@@ -282,10 +283,13 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                 <div className={styles.previewImages}>
                     {newPostImages.map((file, index) => (
                         <div key={index} className={styles.previewImageWrapper}>
-                            <img
+                            <Image
                                 src={URL.createObjectURL(file)}
                                 alt={`preview-${index}`}
+                                width={40}
+                                height={40}
                                 className={styles.previewImage}
+                                loading={"lazy"}
                             />
                             <button
                                 className={styles.removeImage}
@@ -301,6 +305,14 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                     {/* Biểu tượng hình ảnh */}
                     <label htmlFor="fileInput" className={styles.imageIcon}>
                         <img src="/icon/icon_choose_image.svg" alt="Chọn ảnh"/>
+                        <Image
+                            src={"/icon/icon_choose_image.svg"}
+                            alt={"Chọn ảnh"}
+                            width={40}
+                            height={40}
+                            className={styles.previewImage}
+                            loading={"lazy"}
+                        />
                     </label>
                     <input
                         id="fileInput"

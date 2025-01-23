@@ -1,13 +1,23 @@
+// frontend/src/app/components/SearchBar.tsx
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./SearchBar.module.css";
 import Image from "next/image";
 
-const fetchSuggestions = async (query: string) => {
+// Định nghĩa kiểu dữ liệu cho gợi ý
+interface Suggestion {
+    id: number;
+    type: "user" | "keyword"; // Gợi ý có thể là người dùng hoặc từ khóa
+    name: string; // Tên của người dùng hoặc từ khóa
+    avatar?: string; // Hình đại diện (nếu là người dùng)
+}
+
+// Hàm giả lập fetch gợi ý
+const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
     if (!query) return [];
-    return new Promise<{ id: number; type: string; name: string; avatar?: string }[]>((resolve) =>
+    return new Promise((resolve) =>
         setTimeout(() => {
-            const mockSearchSuggestions = [
+            const mockSearchSuggestions: Suggestion[] = [
                 { id: 1, type: "user", name: "Nguyễn Văn A", avatar: "/user-logo.png" },
                 { id: 2, type: "user", name: "Trần Thị B", avatar: "/user-logo.png" },
                 { id: 3, type: "keyword", name: "ReactJS" },
@@ -31,12 +41,13 @@ const fetchSuggestions = async (query: string) => {
 };
 
 export default function SearchBar() {
-    const [searchValue, setSearchValue] = useState("");
-    const [suggestions, setSuggestions] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false); // Trạng thái đang tải
-    const [dropdownVisible, setDropdownVisible] = useState(false);
-    const router = useRouter(); // Sử dụng router để điều hướng
+    const [searchValue, setSearchValue] = useState<string>(""); // Giá trị ô tìm kiếm
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]); // Danh sách gợi ý
+    const [loading, setLoading] = useState<boolean>(false); // Trạng thái đang tải
+    const [dropdownVisible, setDropdownVisible] = useState<boolean>(false); // Hiển thị dropdown
+    const router = useRouter(); // Điều hướng Next.js
 
+    // Xử lý thay đổi nội dung tìm kiếm
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchValue(value);
@@ -49,7 +60,7 @@ export default function SearchBar() {
         }
 
         setLoading(true); // Hiển thị trạng thái đang tải
-        setDropdownVisible(true); // Luôn hiển thị dropdown khi đang gõ
+        setDropdownVisible(true); // Hiển thị dropdown
 
         const data = await fetchSuggestions(value);
         setLoading(false); // Kết thúc trạng thái đang tải
@@ -57,23 +68,25 @@ export default function SearchBar() {
         setSuggestions(data); // Cập nhật danh sách gợi ý
     };
 
+    // Xử lý nhấn phím Enter
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && searchValue.trim() !== "") {
             router.push(`/search?keyword=${searchValue.trim()}`); // Điều hướng đến trang tìm kiếm
         }
     };
 
-    const handleSelectSuggestion = (suggestion: any) => {
+    // Xử lý chọn gợi ý
+    const handleSelectSuggestion = (suggestion: Suggestion) => {
         if (suggestion.type === "user") {
-            router.push(`/profile/${suggestion.id}`); // Điều hướng đến trang profile
+            router.push(`/profile/${suggestion.id}`); // Điều hướng đến trang hồ sơ
         } else {
             router.push(`/search?keyword=${suggestion.name}`); // Điều hướng đến trang tìm kiếm
         }
     };
 
+    // Ẩn dropdown khi mất focus
     const handleBlur = () => {
-        // Ẩn dropdown khi input mất focus
-        setTimeout(() => setDropdownVisible(false), 200);
+        setTimeout(() => setDropdownVisible(false), 200); // Trễ để không ảnh hưởng đến onClick
     };
 
     return (
@@ -84,14 +97,14 @@ export default function SearchBar() {
                 className={styles.searchInput}
                 value={searchValue}
                 onChange={handleSearchChange}
-                onKeyDown={handleKeyDown} // Lắng nghe phím Enter
+                onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
             />
             {/* Dropdown gợi ý */}
             {dropdownVisible && (
                 <div className={styles.suggestionsDropdown}>
                     {loading && (
-                        // Spinner hiển thị khi đang tải
+                        // Hiển thị spinner khi đang tải
                         <div className={styles.spinnerContainer}>
                             <div className={styles.spinner}></div>
                         </div>
@@ -112,10 +125,14 @@ export default function SearchBar() {
                                             height={30}
                                             className={styles.avatar}
                                         />
-                                        <span className={styles.suggestionText}>{suggestion.name}</span>
+                                        <span className={styles.suggestionText}>
+                                            {suggestion.name}
+                                        </span>
                                     </>
                                 ) : (
-                                    <span className={styles.suggestionText}>🔍 {suggestion.name}</span>
+                                    <span className={styles.suggestionText}>
+                                        🔍 {suggestion.name}
+                                    </span>
                                 )}
                             </div>
                         ))}

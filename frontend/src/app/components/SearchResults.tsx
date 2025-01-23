@@ -104,6 +104,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
                                     width={40}
                                     height={40}
                                     className={styles.avatar}
+                                    loading={"lazy"}
                                 />
                                 <div>
                                     <p className={styles.resultName}>{result.name}</p>
