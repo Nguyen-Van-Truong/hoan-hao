@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: userservice
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+
+  web:
+    resources:
+      add-mappings: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration: 3600000 # 1 giờ
+    refresh-token-expiration: 86400000 # 1 ngày
