@@ -1,6 +1,6 @@
 spring:
   application:
-    name: userservice
+    name: authservice
 
   datasource:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true

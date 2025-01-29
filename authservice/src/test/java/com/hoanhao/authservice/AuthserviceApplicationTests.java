@@ -1,10 +1,10 @@
-package com.hoanhao.userservice;
+package com.hoanhao.authservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class UserserviceApplicationTests {
+class AuthserviceApplicationTests {
 
 	@Test
 	void contextLoads() {

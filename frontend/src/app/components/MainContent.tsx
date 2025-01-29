@@ -1,7 +1,7 @@
 // frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
-import { v4 as uuidv4 } from "uuid";
-import { toast } from "react-toastify";
+import {v4 as uuidv4} from "uuid";
+import {toast} from "react-toastify";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -22,7 +22,7 @@ interface MainContentProps {
     hashcodeIDPost?: string; // Tùy chọn nhận hashcodeIDPost từ route
 }
 
-export default function MainContent({ username, hashcodeIDPost }: MainContentProps) {
+export default function MainContent({username, hashcodeIDPost}: MainContentProps) {
     const [posts, setPosts] = useState<PostType[]>([
         {
             author: "Truong",

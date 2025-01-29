@@ -1,6 +1,6 @@
 "use client";
 
-import Layout from "@/app/components/Layout";
+import Layout from "@/app/layout/Layout";
 import SearchResults from "@/app/components/SearchResults";
 import { use } from "react";
 

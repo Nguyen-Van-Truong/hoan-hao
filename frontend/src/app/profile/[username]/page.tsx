@@ -1,7 +1,7 @@
     // frontend/src/app/profile/[username]/page.tsx
     "use client";
 
-    import Layout from "@/app/components/Layout";
+    import Layout from "@/app/layout/Layout";
     import Profile from "@/app/components/Profile";
     import { use } from "react";
 

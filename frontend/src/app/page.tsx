@@ -1,7 +1,7 @@
 // frontend/src/app/page.tsx
 "use client";
 
-import Layout from "./components/Layout";
+import Layout from "./layout/Layout";
 
 export default function Home() {
     return <Layout/>;

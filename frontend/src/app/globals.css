@@ -3,6 +3,9 @@
     --primary-mid-color: #a2d2f2; /* Màu chủ đạo giao diện ở giữa */
     --component-color: #ec86bf; /* Màu component */
     --component-hover-color: #d075a8; /* Màu component hover */
+    --white: #ffffff;
+    --gray-text: #555;
+    --gray-bg: #f9f9f9;
 }
 
 body {
