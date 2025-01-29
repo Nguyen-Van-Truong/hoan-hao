@@ -1,43 +1,49 @@
 // frontend/src/app/register/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import {useState} from "react";
+import {SubmitHandler, useForm} from "react-hook-form";
+import {useRouter} from "next/navigation";
+import {toast} from "react-toastify";
 import Link from "next/link";
-import { mockRegister } from "../api/mockAuth";
+import {mockRegister} from "../api/mockAuth";
 import styles from "./Register.module.css";
-import { motion } from "framer-motion";
+import {motion} from "framer-motion";
+
+interface RegisterFormData {
+    email: string;
+    password: string;
+    confirmPassword: string;
+}
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { register, handleSubmit, formState: { errors }, watch } = useForm();
+    const {register, handleSubmit, formState: {errors}, watch} = useForm<RegisterFormData>();
     const [loading, setLoading] = useState(false);
 
-    const onSubmit = async (data: any) => {
+    const onSubmit: SubmitHandler<RegisterFormData> = async (data) => {
         setLoading(true);
         try {
             const response = await mockRegister(data.email, data.password);
             toast.success(response.message);
             router.push("/login");
-        } catch (error: any) {
-            toast.error(error.message);
+        } catch (error) {
+            toast.error((error as Error).message);
         }
         setLoading(false);
     };
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            initial={{opacity: 0, scale: 0.95}}
+            animate={{opacity: 1, scale: 1}}
+            transition={{duration: 0.5}}
             className={styles.registerContainer}
         >
             <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6 }}
+                initial={{y: -20, opacity: 0}}
+                animate={{y: 0, opacity: 1}}
+                transition={{duration: 0.6}}
                 className={styles.registerBox}
             >
                 <h2 className={styles.title}>Đăng Ký</h2>
@@ -47,7 +53,7 @@ export default function RegisterPage() {
                         <label className={styles.inputLabel}>Email</label>
                         <input
                             type="email"
-                            {...register("email", { required: "Vui lòng nhập email" })}
+                            {...register("email", {required: "Vui lòng nhập email"})}
                             className={styles.inputField}
                         />
                         {errors.email?.message && (
@@ -59,7 +65,10 @@ export default function RegisterPage() {
                         <label className={styles.inputLabel}>Mật khẩu</label>
                         <input
                             type="password"
-                            {...register("password", { required: "Vui lòng nhập mật khẩu", minLength: { value: 6, message: "Mật khẩu ít nhất 6 ký tự" } })}
+                            {...register("password", {
+                                required: "Vui lòng nhập mật khẩu",
+                                minLength: {value: 6, message: "Mật khẩu ít nhất 6 ký tự"}
+                            })}
                             className={styles.inputField}
                         />
                         {errors.password?.message && (
@@ -83,8 +92,8 @@ export default function RegisterPage() {
                     </div>
 
                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
+                        whileHover={{scale: 1.05}}
+                        whileTap={{scale: 0.97}}
                         type="submit"
                         disabled={loading}
                         className={styles.registerButton}
@@ -95,7 +104,7 @@ export default function RegisterPage() {
 
                 <p className={styles.loginText}>
                     Đã có tài khoản?{" "}
-                    <Link href="/login" className={styles.loginLink}>Đăng nhập ngay</Link>
+                    <Link href="../login" className={styles.loginLink}>Đăng nhập ngay</Link>
                 </p>
             </motion.div>
         </motion.div>
