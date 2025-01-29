@@ -37,3 +37,19 @@ export async function mockForgotPassword(email: string) {
         }, 1000);
     });
 }
+
+export async function mockResetPassword(token: string, newPassword: string) {
+    return new Promise<{ message: string }>((resolve, reject) => {
+        setTimeout(() => {
+            if (token === "valid-token") {
+                if (newPassword.length >= 6) {
+                    resolve({ message: "Mật khẩu đã được đặt lại thành công!" });
+                } else {
+                    reject(new Error("Mật khẩu phải có ít nhất 6 ký tự!"));
+                }
+            } else {
+                reject(new Error("Token không hợp lệ hoặc đã hết hạn!"));
+            }
+        }, 1000);
+    });
+}

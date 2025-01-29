@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
         try {
             const response = await mockForgotPassword(data.email);
             toast.success(response.message);
-            router.push("/login");
+            router.push("/reset-password");
         } catch (error) {
             toast.error((error as Error).message);
         }

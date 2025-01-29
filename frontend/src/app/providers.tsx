@@ -15,7 +15,7 @@ export default function Providers({ children }: { children: ReactNode }) {
         const token = localStorage.getItem("token");
 
         // Các trang không yêu cầu đăng nhập
-        const publicRoutes = ["/login", "/register", "/forgot-password"];
+        const publicRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
 
         if (!token && !publicRoutes.includes(pathname)) {
             toast.warn("Vui lòng đăng nhập để tiếp tục.");
