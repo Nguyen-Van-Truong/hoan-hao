@@ -167,3 +167,12 @@
     color: #555;
 }
 
+.selectBoxInMenu {
+    padding: 5px 10px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+    margin-left: 10px; /* Space between the icon and the dropdown */
+}
