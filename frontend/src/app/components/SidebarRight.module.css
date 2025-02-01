@@ -154,6 +154,7 @@
     cursor: pointer;
     width: 100%; /* Đảm bảo mục menu chiếm hết chiều ngang */
     transition: background-color 0.2s;
+    box-sizing: border-box;
 }
 
 .userMenu li:hover {
