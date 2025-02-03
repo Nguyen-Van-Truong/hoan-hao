@@ -1,4 +1,4 @@
-// frontend/src/app/components/Layout.tsx
+// frontend/src/app/layout/Layout.tsx
 "use client";
 
 import React from "react";

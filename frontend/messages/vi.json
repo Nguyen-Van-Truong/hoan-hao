@@ -1,0 +1,76 @@
+{
+  "HomePage": {
+    "title": "Chào mừng đến với trang web của chúng tôi",
+    "description": "Đây là nơi tốt nhất để học hỏi và phát triển."
+  },
+  "SidebarRight": {
+    "profile": "Trang cá nhân",
+    "logout": "Đăng xuất",
+    "logout_success": "Đăng xuất thành công!",
+    "switch_language": "Chuyển sang tiếng Anh",
+    "ads": "Quảng cáo",
+    "ads_content": "Nội dung quảng cáo",
+    "suggested_friends": "Đề xuất bạn bè",
+    "view_all": "Xem tất cả →",
+    "add_friend": "Thêm"
+  },
+  "SidebarLeft": {
+    "home": "Trang chủ",
+    "friends": "Bạn bè",
+    "notifications": "Thông báo",
+    "messages": "Tin nhắn",
+    "settings": "Cài đặt",
+    "search_placeholder": "Tìm kiếm...",
+    "new_notifications": "Thông báo mới",
+    "new_messages": "Tin nhắn mới"
+  },
+  "SearchBar": {
+    "search_placeholder": "Tìm kiếm..."
+  },
+  "SearchResults": {
+    "loading": "Đang tải kết quả...",
+    "no_results": "Không tìm thấy kết quả nào cho \"{keyword}\"",
+    "search_results_for": "Kết quả tìm kiếm cho:",
+    "profile": "Trang cá nhân",
+    "post": "Bài viết"
+  },
+  "MainContent": {
+    "create_post_placeholder": "Bạn đang nghĩ gì?",
+    "image_select_icon_alt": "Chọn ảnh",
+    "post_button": "Đăng",
+    "loading_more_posts": "Đang tải thêm bài viết...",
+    "remove_image": "Xóa ảnh",
+    "max_image_limit": "Bạn chỉ được tải lên tối đa 6 ảnh.",
+    "no_content_to_post": "Vui lòng nhập nội dung hoặc chọn ảnh để đăng bài."
+  },
+  "Post": {
+    "like": "Thích",
+    "liked": "Đã thích",
+    "comment": "Bình luận",
+    "share": "Chia sẻ",
+    "view_more": "Xem thêm",
+    "view_less": "Ẩn bớt",
+    "more_options": "Tùy chọn khác",
+    "image_preview_more": "+{{count}} ảnh",
+    "loading": "Đang tải"
+  },
+  "DetailPostDialog": {
+    "post_of": "Bài viết của",
+    "view_more_comments": "Xem thêm bình luận",
+    "loading": "Đang tải",
+    "write_comment": "Viết bình luận...",
+    "image_preview": "Ảnh xem trước",
+    "close": "Đóng"
+  },
+  "NotFound": {
+    "message": "Rất tiếc! Trang bạn đang tìm không tồn tại.",
+    "go_home": "Quay lại trang chủ"
+  },
+  "Metadata": {
+    "title": "Trang chủ | Hoàn Hảo",
+    "description": "Chào mừng bạn đến với trang web hoàn hảo!"
+  },
+  "Test": {
+    "title": "hello vn"
+  }
+}

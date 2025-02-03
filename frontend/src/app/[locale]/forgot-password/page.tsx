@@ -6,7 +6,7 @@ import {useForm, SubmitHandler} from "react-hook-form";
 import {useRouter} from "next/navigation";
 import {toast} from "react-toastify";
 import Link from "next/link";
-import {mockForgotPassword} from "../api/mockAuth";
+import {mockForgotPassword} from "../../api/mockAuth";
 import styles from "./ForgotPassword.module.css";
 import {motion} from "framer-motion";
 

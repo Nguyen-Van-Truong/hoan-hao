@@ -1,15 +1,21 @@
 // frontend/src/app/components/SidebarRight.tsx
-import { useState } from "react";
+import {useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import {useRouter} from "next/navigation";
+import {toast} from "react-toastify";
+import {useLocale, useTranslations} from "next-intl"; // ✅ Thêm i18n
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [language, setLanguage] = useState("vi"); // Default language is Vietnamese
     const router = useRouter();
+    const locale = useLocale(); // ✅ Kiểm tra lại locale
+    const t = useTranslations("SidebarRight"); // ✅ Lấy dữ liệu dịch
+
+    console.log("🟢 Debug SidebarRight.tsx");
+    console.log("🟢 Current locale:", locale);
+    console.log("🟢 Translation for 'profile':", t("profile"));
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -22,13 +28,8 @@ export default function SidebarRight() {
     // Hàm đăng xuất
     const handleLogout = () => {
         localStorage.removeItem("token");
-        toast.success(language === "vi" ? "Đăng xuất thành công!" : "Logout successful!");
+        toast.success(t("logout_success")); // ✅ Dùng i18n thay vì kiểm tra `language`
         router.push("/login");
-    };
-
-    const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setLanguage(e.target.value);
-        toast.info(language === "vi" ? "Chuyển sang tiếng Anh" : "Switched to Vietnamese");
     };
 
     return (
@@ -50,22 +51,11 @@ export default function SidebarRight() {
                         <ul>
                             <li onClick={() => navigateToProfile("my-profile")}>
                                 <span className={styles.menuIcon}>👤</span>
-                                {language === "vi" ? "Trang cá nhân" : "Profile"}
-                            </li>
-                            <li>
-                                <span className={styles.menuIcon}>🌐</span>
-                                <select
-                                    value={language}
-                                    onChange={handleLanguageChange}
-                                    className={styles.selectBoxInMenu}
-                                >
-                                    <option value="vi">Tiếng Việt</option>
-                                    <option value="en">English</option>
-                                </select>
+                                {t("profile")}
                             </li>
                             <li onClick={handleLogout}>
                                 <span className={styles.menuIcon}>🚪</span>
-                                {language === "vi" ? "Đăng xuất" : "Logout"}
+                                {t("logout")}
                             </li>
                         </ul>
                     </div>
@@ -74,15 +64,15 @@ export default function SidebarRight() {
 
             {/* Quảng cáo */}
             <div className={styles.ads}>
-                <h3 className={styles.adsTitle}>Quảng cáo</h3>
+                <h3 className={styles.adsTitle}>{t("ads")}</h3>
                 <div className={styles.adBox}>
                     <div className={styles.adContent}>
-                        <p>Nội dung quảng cáo</p>
+                        <p>{t("ads_content")}</p>
                     </div>
                 </div>
                 <div className={styles.adBox}>
                     <div className={styles.adContent}>
-                        <p>Nội dung quảng cáo</p>
+                        <p>{t("ads_content")}</p>
                     </div>
                 </div>
             </div>
@@ -90,13 +80,19 @@ export default function SidebarRight() {
             {/* Đề xuất bạn bè */}
             <div className={styles.suggestedFriends}>
                 <div className={styles.friendsHeader}>
-                    <h3>Đề xuất bạn bè</h3>
+                    <h3>{t("suggested_friends")}</h3>
                     <Link href="../friends/suggestions" className={styles.viewAll}>
-                        Xem tất cả →
+                        {t("view_all")}
                     </Link>
                 </div>
                 <div className={styles.friendList}>
-                    {[{ name: "Julia Smith", username: "juliasmith" }, { name: "Vermillion D. Gray", username: "vermilliongray" }, { name: "Mai Senpai", username: "maisenpai" }, { name: "Azunyan U. Wu", username: "azunyanudesu" }, { name: "Oarack Babama", username: "obama21" }]
+                    {[{name: "Julia Smith", username: "juliasmith"}, {
+                        name: "Vermillion D. Gray",
+                        username: "vermilliongray"
+                    }, {name: "Mai Senpai", username: "maisenpai"}, {
+                        name: "Azunyan U. Wu",
+                        username: "azunyanudesu"
+                    }, {name: "Oarack Babama", username: "obama21"}]
                         .map((friend, index) => (
                             <div className={styles.friendItem} key={index}>
                                 <div className={styles.friendInfo} onClick={() => navigateToProfile(friend.username)}>

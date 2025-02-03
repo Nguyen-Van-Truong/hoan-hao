@@ -1,0 +1,76 @@
+{
+  "HomePage": {
+    "title": "Welcome to Our Website",
+    "description": "This is the best place to learn and grow."
+  },
+  "SidebarRight": {
+    "profile": "Profile",
+    "logout": "Logout",
+    "logout_success": "Logout successful!",
+    "switch_language": "Switched to Vietnamese",
+    "ads": "Advertisement",
+    "ads_content": "Advertisement content",
+    "suggested_friends": "Suggested Friends",
+    "view_all": "View all →",
+    "add_friend": "Add"
+  },
+  "SidebarLeft": {
+    "home": "Home",
+    "friends": "Friends",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "settings": "Settings",
+    "search_placeholder": "Search...",
+    "new_notifications": "New notifications",
+    "new_messages": "New messages"
+  },
+  "SearchBar": {
+    "search_placeholder": "Search..."
+  },
+  "SearchResults": {
+    "loading": "Loading results...",
+    "no_results": "No results found for \"{keyword}\"",
+    "search_results_for": "Search results for:",
+    "profile": "Profile",
+    "post": "Post"
+  },
+  "MainContent": {
+    "create_post_placeholder": "What's on your mind?",
+    "image_select_icon_alt": "Choose image",
+    "post_button": "Post",
+    "loading_more_posts": "Loading more posts...",
+    "remove_image": "Remove image",
+    "max_image_limit": "You can upload a maximum of 6 images.",
+    "no_content_to_post": "Please enter content or select images to post."
+  },
+  "Post": {
+    "like": "Like",
+    "liked": "Liked",
+    "comment": "Comment",
+    "share": "Share",
+    "view_more": "View more",
+    "view_less": "View less",
+    "more_options": "More options",
+    "image_preview_more": "+{{count}} more images",
+    "loading": "Loading"
+  },
+  "DetailPostDialog": {
+    "post_of": "Bài viết của",
+    "view_more_comments": "Xem thêm bình luận",
+    "loading": "Đang tải",
+    "write_comment": "Viết bình luận...",
+    "image_preview": "Ảnh xem trước",
+    "close": "Đóng"
+  },
+  "NotFound": {
+    "message": "Oops! The page you are looking for doesn't exist.",
+    "go_home": "Go back home"
+  },
+  "Metadata": {
+    "title": "Home | Perfect Site",
+    "description": "Welcome to the perfect website!"
+  },
+  "Test": {
+    "title": "hello en"
+  }
+}

@@ -1,13 +1,24 @@
 // frontend/src/components/SidebarLeft.tsx
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl"; // ✅ Hỗ trợ đa ngôn ngữ
 import SearchBar from "./SearchBar";
 import styles from "./SidebarLeft.module.css";
 import Image from "next/image";
 
 export default function SidebarLeft() {
+    const router = useRouter();
+    const locale = useLocale(); // ✅ Lấy locale hiện tại
+    const t = useTranslations("SidebarLeft"); // ✅ Lấy nội dung dịch từ JSON
+
+    // ✅ Hàm chuyển hướng theo `locale`
+    const navigate = (path: string) => {
+        router.push(`/${locale}${path}`);
+    };
+
     return (
         <div className={styles.sidebarLeft}>
             {/* Phần logo */}
-            <div className={styles.logo} onClick={() => window.location.href = "/"}>
+            <div className={styles.logo} onClick={() => navigate("/")}>
                 <Image
                     src="/logo.png"
                     alt="Logo"
@@ -24,18 +35,27 @@ export default function SidebarLeft() {
 
             {/* Điều hướng */}
             <div className={styles.navigation}>
-                <div className={styles.navItem} onClick={() => window.location.href = "/"}>
+                <div className={styles.navItem} onClick={() => navigate("/")}>
                     <span className={styles.icon}>🏠</span>
-                    <span className={styles.label}>Trang chủ</span>
-                    <span className={styles.badge}>10</span>
+                    <span className={styles.label}>{t("home")}</span>
                 </div>
-                <div
-                    className={styles.navItem}
-                    onClick={() => window.location.href = "/friends/list"}
-                >
+                <div className={styles.navItem} onClick={() => navigate("/friends/list")}>
                     <span className={styles.icon}>👥</span>
-                    <span className={styles.label}>Bạn bè</span>
+                    <span className={styles.label}>{t("friends")}</span>
+                </div>
+                <div className={styles.navItem} onClick={() => navigate("/notifications")}>
+                    <span className={styles.icon}>🔔</span>
+                    <span className={styles.label}>{t("notifications")}</span>
+                    <span className={styles.badge}>5</span>
+                </div>
+                <div className={styles.navItem} onClick={() => navigate("/messages")}>
+                    <span className={styles.icon}>💬</span>
+                    <span className={styles.label}>{t("messages")}</span>
                     <span className={styles.badge}>2</span>
+                </div>
+                <div className={styles.navItem} onClick={() => navigate("/settings")}>
+                    <span className={styles.icon}>⚙️</span>
+                    <span className={styles.label}>{t("settings")}</span>
                 </div>
             </div>
         </div>

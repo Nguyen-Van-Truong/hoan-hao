@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { useTranslations } from "next-intl"; // ✅ Thêm i18n
 import styles from "./SearchResults.module.css";
+import Image from "next/image";
 
 interface SearchResult {
     id: number;
-    type: "user" | "post"; // Giới hạn kiểu
+    type: "user" | "post";
     name: string;
     description?: string;
     avatar?: string;
@@ -52,6 +53,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const t = useTranslations("SearchResults"); // ✅ Dùng next-intl để lấy nội dung dịch
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -73,13 +75,13 @@ export default function SearchResults({ keyword }: { keyword: string }) {
     };
 
     if (loading) {
-        return <div className={styles.loading}>Đang tải kết quả...</div>;
+        return <div className={styles.loading}>{t("loading")}</div>;
     }
 
     if (results.length === 0) {
         return (
             <div className={styles.noResults}>
-                Không tìm thấy kết quả nào cho &quot;{keyword}&quot;
+                {t("no_results", { keyword })}
             </div>
         );
     }
@@ -87,7 +89,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
     return (
         <div className={styles.resultsContainer}>
             <h2 className={styles.resultsHeader}>
-                Kết quả tìm kiếm cho: <span className={styles.keyword}>{keyword}</span>
+                {t("search_results_for")} <span className={styles.keyword}>{keyword}</span>
             </h2>
             <ul className={styles.resultsList}>
                 {results.map((result) => (
@@ -108,6 +110,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
                                 />
                                 <div>
                                     <p className={styles.resultName}>{result.name}</p>
+                                    <p className={styles.resultDescription}>{t("profile")}</p>
                                 </div>
                             </>
                         ) : (
@@ -117,6 +120,7 @@ export default function SearchResults({ keyword }: { keyword: string }) {
                                     <p className={styles.resultDescription}>
                                         {result.description}
                                     </p>
+                                    <p className={styles.resultDescription}>{t("post")}</p>
                                 </div>
                             </>
                         )}

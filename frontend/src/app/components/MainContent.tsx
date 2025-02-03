@@ -6,6 +6,7 @@ import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
 import Image from "next/image";
+import {useTranslations} from "next-intl";
 
 // Định nghĩa kiểu dữ liệu cho bài viết
 interface PostType {
@@ -92,6 +93,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
     const [newPostContent, setNewPostContent] = useState<string>("");
     const [newPostImages, setNewPostImages] = useState<File[]>([]); // Quản lý ảnh tải lên
     const MAX_IMAGES = 6;
+    const t = useTranslations("MainContent"); // ✅ Thêm i18n cho các thông báo
 
     const fetchMorePosts = useCallback(async () => {
         if (loading) return;
@@ -272,7 +274,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
             <div className={styles.createPost}>
                 <textarea
                     className={styles.postInput}
-                    placeholder="Bạn đang nghĩ gì?"
+                    placeholder={t("create_post_placeholder")} // ✅ Dùng i18n cho placeholder
                     value={newPostContent}
                     onChange={handlePostContentChange}
                     onDragOver={handleDragOver}
@@ -306,7 +308,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
                     <label htmlFor="fileInput" className={styles.imageIcon}>
                         <Image
                             src={"/icon/icon_choose_image.svg"}
-                            alt={"Chọn ảnh"}
+                            alt={t("image_select_icon_alt")} // ✅ Thêm i18n cho alt text
                             width={40}
                             height={40}
                             className={styles.previewImage}
@@ -327,7 +329,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
                         onClick={handleSubmitPost}
                         disabled={newPostContent.trim() === "" && newPostImages.length === 0}
                     >
-                        Đăng
+                        {t("post_button")}
                     </button>
 
                 </div>
@@ -350,7 +352,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
             {loading && (
                 <div className={styles.loadingContainer}>
                     <div className={styles.spinner}/>
-                    <p>Đang tải thêm bài viết...</p>
+                    <p>{t("loading_more_posts")}</p>
                 </div>
             )}
 

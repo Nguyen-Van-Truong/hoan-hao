@@ -1,6 +1,7 @@
 // frontend/src/app/components/SearchBar.tsx
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl"; // ✅ Thêm hỗ trợ i18n
 import styles from "./SearchBar.module.css";
 import Image from "next/image";
 
@@ -30,7 +31,6 @@ const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
                 item.name.toLowerCase().includes(query.toLowerCase())
             );
 
-            // Nếu không có kết quả, trả về chính từ khóa như gợi ý
             if (filtered.length === 0) {
                 resolve([{ id: 0, type: "keyword", name: query }]);
             } else {
@@ -46,6 +46,13 @@ export default function SearchBar() {
     const [loading, setLoading] = useState<boolean>(false); // Trạng thái đang tải
     const [dropdownVisible, setDropdownVisible] = useState<boolean>(false); // Hiển thị dropdown
     const router = useRouter(); // Điều hướng Next.js
+    const locale = useLocale(); // ✅ Lấy locale hiện tại
+    const t = useTranslations("SearchBar"); // ✅ Lấy nội dung dịch từ JSON
+
+    // ✅ Hàm điều hướng với locale
+    const navigate = (path: string) => {
+        router.push(`/${locale}${path}`);
+    };
 
     // Xử lý thay đổi nội dung tìm kiếm
     const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,52 +66,50 @@ export default function SearchBar() {
             return;
         }
 
-        setLoading(true); // Hiển thị trạng thái đang tải
-        setDropdownVisible(true); // Hiển thị dropdown
+        setLoading(true);
+        setDropdownVisible(true);
 
         const data = await fetchSuggestions(value);
-        setLoading(false); // Kết thúc trạng thái đang tải
+        setLoading(false);
 
-        setSuggestions(data); // Cập nhật danh sách gợi ý
+        setSuggestions(data);
     };
 
     // Xử lý nhấn phím Enter
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && searchValue.trim() !== "") {
-            router.push(`/search?keyword=${searchValue.trim()}`); // Điều hướng đến trang tìm kiếm
+            navigate(`/search?keyword=${searchValue.trim()}`);
         }
     };
 
     // Xử lý chọn gợi ý
     const handleSelectSuggestion = (suggestion: Suggestion) => {
         if (suggestion.type === "user") {
-            router.push(`/profile/${suggestion.id}`); // Điều hướng đến trang hồ sơ
+            navigate(`/profile/${suggestion.id}`);
         } else {
-            router.push(`/search?keyword=${suggestion.name}`); // Điều hướng đến trang tìm kiếm
+            navigate(`/search?keyword=${suggestion.name}`);
         }
     };
 
     // Ẩn dropdown khi mất focus
     const handleBlur = () => {
-        setTimeout(() => setDropdownVisible(false), 200); // Trễ để không ảnh hưởng đến onClick
+        setTimeout(() => setDropdownVisible(false), 200);
     };
 
     return (
         <div className={styles.searchBar} style={{ position: "relative" }}>
             <input
                 type="text"
-                placeholder="Tìm kiếm..."
+                placeholder={t("search_placeholder")} // ✅ Placeholder theo locale
                 className={styles.searchInput}
                 value={searchValue}
                 onChange={handleSearchChange}
                 onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
             />
-            {/* Dropdown gợi ý */}
             {dropdownVisible && (
                 <div className={styles.suggestionsDropdown}>
                     {loading && (
-                        // Hiển thị spinner khi đang tải
                         <div className={styles.spinnerContainer}>
                             <div className={styles.spinner}></div>
                         </div>

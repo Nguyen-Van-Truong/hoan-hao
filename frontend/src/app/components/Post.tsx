@@ -1,10 +1,10 @@
-// frontend/src/app/components/Post.tsx
-import {useState} from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import styles from "./Post.module.css";
+import { useTranslations } from "next-intl"; // ✅ Thêm i18n
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
-import {useRouter} from "next/navigation";
 
 export default function Post({
                                  author,
@@ -13,7 +13,6 @@ export default function Post({
                                  time,
                                  images = [],
                                  hashcodeIDPost,
-// Optional click handler
                              }: {
     author: string;
     username: string;
@@ -24,6 +23,7 @@ export default function Post({
     onClick?: () => void;
 }) {
     const router = useRouter();
+    const t = useTranslations("Post"); // ✅ Thêm i18n cho Post
     const MAX_LENGTH = 100;
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -128,7 +128,7 @@ export default function Post({
                         {time}
                     </p>
                 </div>
-                <div className={styles.moreOptions}>⋮</div>
+                <div className={styles.moreOptions}>{t("more_options")}</div>
             </div>
 
             {/* Content */}
@@ -142,7 +142,7 @@ export default function Post({
                 </p>
                 {content.length > MAX_LENGTH && (
                     <button onClick={toggleContent} className={styles.toggleButton}>
-                        {isExpanded ? "Ẩn bớt" : "Xem thêm"}
+                        {isExpanded ? t("view_less") : t("view_more")}
                     </button>
                 )}
             </div>
@@ -159,40 +159,40 @@ export default function Post({
                                 ? "/icon/heart-like-solid.svg"
                                 : "/icon/heart-like-no-solid.svg"
                         }
-                        alt="Like"
+                        alt={t("like")}
                         className={styles.icon}
                         width={28}
                         height={28}
                         unoptimized
                         loading="lazy"
                     />
-                    {liked ? "13 Thích" : "12 Thích"}
+                    {liked ? "13 "+ t("liked") : "12 "+t("like")}
                 </div>
 
                 <div className={styles.action} onClick={() => setShowDialog(true)}>
                     <Image
                         src="/icon/comment.svg"
-                        alt="Comment"
+                        alt={t("comment")}
                         className={styles.icon}
                         width={28}
                         height={28}
                         unoptimized
                         loading="lazy"
                     />
-                    25 Bình luận
+                    25 {t("comment")}
                 </div>
 
                 <div className={styles.action} onClick={toggleShare}>
                     <Image
                         src="/icon/share.svg"
-                        alt="Share"
+                        alt={t("share")}
                         className={styles.icon}
                         width={28}
                         height={28}
                         unoptimized
                         loading="lazy"
                     />
-                    187 Chia sẻ
+                    187 {t("share")}
                 </div>
             </div>
 
