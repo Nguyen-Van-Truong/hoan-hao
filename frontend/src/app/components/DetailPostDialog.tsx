@@ -251,7 +251,7 @@ export default function DetailPostDialog({
                                 loading="lazy"
                                 unoptimized
                             />
-                            {liked ? t("liked") : t("like")}
+                            {liked ? `13 ${t("liked")}` : `12 ${t("like")}`}
                         </div>
                         <div className={styles.action} onClick={handleShare}>
                             <Image
