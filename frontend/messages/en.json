@@ -53,12 +53,18 @@
     "loading": "Loading"
   },
   "DetailPostDialog": {
-    "post_of": "Bài viết của",
-    "view_more_comments": "Xem thêm bình luận",
-    "loading": "Đang tải",
-    "write_comment": "Viết bình luận...",
-    "image_preview": "Ảnh xem trước",
-    "close": "Đóng"
+    "post_of": "Post of",
+    "avatar_alt": "Avatar",
+    "view_more": "View more",
+    "view_less": "View less",
+    "liked": "Liked",
+    "like": "Like",
+    "share": "Share",
+    "image_preview": "Image preview",
+    "loading": "Loading",
+    "write_comment": "Write a comment...",
+    "view_more_comments": "View more comments",
+    "close": "Close"
   },
   "MyFriends": {
     "title": "Friends List",

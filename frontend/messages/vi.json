@@ -54,10 +54,16 @@
   },
   "DetailPostDialog": {
     "post_of": "Bài viết của",
-    "view_more_comments": "Xem thêm bình luận",
+    "avatar_alt": "Ảnh đại diện",
+    "view_more": "Xem thêm",
+    "view_less": "Ẩn bớt",
+    "liked": "Đã thích",
+    "like": "Thích",
+    "share": "Chia sẻ",
+    "image_preview": "Ảnh xem trước",
     "loading": "Đang tải",
     "write_comment": "Viết bình luận...",
-    "image_preview": "Ảnh xem trước",
+    "view_more_comments": "Xem thêm bình luận",
     "close": "Đóng"
   },
   "MyFriends": {

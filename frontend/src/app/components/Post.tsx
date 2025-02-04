@@ -1,8 +1,9 @@
-import { useState } from "react";
+import {useState} from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import {useRouter} from "next/navigation";
+import {useLocale} from "next-intl"; // Thêm useLocale để lấy locale hiện tại
 import styles from "./Post.module.css";
-import { useTranslations } from "next-intl"; // ✅ Thêm i18n
+import {useTranslations} from "next-intl"; // ✅ Thêm i18n
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
 
@@ -23,6 +24,7 @@ export default function Post({
     onClick?: () => void;
 }) {
     const router = useRouter();
+    const locale = useLocale(); // Lấy locale hiện tại
     const t = useTranslations("Post"); // ✅ Thêm i18n cho Post
     const MAX_LENGTH = 100;
     const [isExpanded, setIsExpanded] = useState(false);
@@ -98,8 +100,9 @@ export default function Post({
         );
     };
 
+    // Cập nhật hàm navigateToProfile để thêm locale vào URL
     const navigateToProfile = () => {
-        router.push(`/profile/${username}`);
+        router.push(`/${locale}/profile/${username}`);
     };
 
     return (
@@ -154,11 +157,7 @@ export default function Post({
             <div className={styles.actions}>
                 <div className={styles.action} onClick={toggleLike}>
                     <Image
-                        src={
-                            liked
-                                ? "/icon/heart-like-solid.svg"
-                                : "/icon/heart-like-no-solid.svg"
-                        }
+                        src={liked ? "/icon/heart-like-solid.svg" : "/icon/heart-like-no-solid.svg"}
                         alt={t("like")}
                         className={styles.icon}
                         width={28}
@@ -166,7 +165,7 @@ export default function Post({
                         unoptimized
                         loading="lazy"
                     />
-                    {liked ? "13 "+ t("liked") : "12 "+t("like")}
+                    {liked ? `13 ${t("liked")}` : `12 ${t("like")}`}
                 </div>
 
                 <div className={styles.action} onClick={() => setShowDialog(true)}>

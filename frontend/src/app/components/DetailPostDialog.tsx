@@ -1,6 +1,7 @@
 // frontend/src/app/components/DetailPostDialog.tsx
 import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
+import {useLocale, useTranslations} from "next-intl"; // Use the i18n hooks
 import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
@@ -41,6 +42,8 @@ export default function DetailPostDialog({
     const [liked, setLiked] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false); // Trạng thái xem thêm nội dung bài viết
     const dialogRef = useRef<HTMLDivElement | null>(null); // Tham chiếu đến dialog
+    const locale = useLocale(); // Lấy locale hiện tại
+    const t = useTranslations("DetailPostDialog"); // Thêm i18n cho DetailPostDialog
 
     const MAX_LENGTH = 100;
 
@@ -50,8 +53,8 @@ export default function DetailPostDialog({
             const truncatedContent =
                 content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
 
-            // Cập nhật URL đầy đủ với `author` và `hashcodeIDPost`
-            const newUrl = `/${author}/post/${hashcodeIDPost}`;
+            // Cập nhật URL đầy đủ với `locale`, `author` và `hashcodeIDPost`
+            const newUrl = `/${locale}/${author}/post/${hashcodeIDPost}`;
             window.history.pushState(null, "", newUrl);
 
             // Cập nhật tiêu đề trang
@@ -64,8 +67,7 @@ export default function DetailPostDialog({
                 document.title = "Hoàn Hảo";
             };
         }
-    }, [author, content, hashcodeIDPost]);
-
+    }, [author, content, hashcodeIDPost, locale]); // Thêm `locale` vào dependency array
 
     // Giả lập tải thêm bình luận
     const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
@@ -149,7 +151,7 @@ export default function DetailPostDialog({
         <div className={styles.dialog}>
             <div className={styles.dialogContent} ref={dialogRef}>
                 <div className={styles.header}>
-                <span>Bài viết của {author}</span>
+                    <span>{t("post_of")} {author}</span> {/* Use translation */}
                     <button className={styles.closeButton} onClick={onClose}>
                         ✖
                     </button>
@@ -159,11 +161,11 @@ export default function DetailPostDialog({
                     <div className={styles.postInfo}>
                         <Image
                             src="/user-logo.png"
-                            alt="Author Avatar"
+                            alt={t("avatar_alt")}
                             width={50}
                             height={50}
                             className={styles.postAvatar}
-                            style={{ borderRadius: "50%" }}
+                            style={{borderRadius: "50%"}}
                             loading="lazy"
                             unoptimized
                         />
@@ -185,17 +187,13 @@ export default function DetailPostDialog({
                         </p>
                         {content.length > MAX_LENGTH && (
                             <button onClick={toggleContent} className={styles.toggleButton}>
-                                {isExpanded ? "Ẩn bớt" : "Xem thêm"}
+                                {isExpanded ? t("view_less") : t("view_more")} {/* Use translation */}
                             </button>
                         )}
                     </div>
 
                     {/* Post images */}
-                    <div
-                        className={
-                            images.length === 1 ? styles.singleImageWrapper : styles.imageGrid
-                        }
-                    >
+                    <div className={images.length === 1 ? styles.singleImageWrapper : styles.imageGrid}>
                         {images.map((img, index) => (
                             <div key={index} className={styles.imageWrapper}>
                                 <Image
@@ -205,7 +203,7 @@ export default function DetailPostDialog({
                                     height={200}
                                     className={styles.dialogImage}
                                     onClick={() => setPreviewIndex(index)}
-                                    style={{ objectFit: "cover" }}
+                                    style={{objectFit: "cover"}}
                                     loading="lazy"
                                     unoptimized
                                 />
@@ -221,26 +219,26 @@ export default function DetailPostDialog({
                                         ? "/icon/heart-like-solid.svg"
                                         : "/icon/heart-like-no-solid.svg"
                                 }
-                                alt="Like"
+                                alt={t("like")}
                                 width={28}
                                 height={28}
                                 className={styles.icon}
                                 loading="lazy"
                                 unoptimized
                             />
-                            {liked ? "13 Thích" : "12 Thích"}
+                            {liked ? t("liked") : t("like")}
                         </div>
                         <div className={styles.action}>
                             <Image
                                 src="/icon/share.svg"
-                                alt="Share"
+                                alt={t("share")}
                                 width={28}
                                 height={28}
                                 className={styles.icon}
                                 loading="lazy"
                                 unoptimized
                             />
-                            {"187 Chia sẻ"}
+                            {"187 " + t("share")}
                         </div>
                     </div>
 
@@ -250,11 +248,11 @@ export default function DetailPostDialog({
                             <div key={index} className={styles.commentWrapper}>
                                 <Image
                                     src={comment.avatar}
-                                    alt="Avatar"
+                                    alt={t("avatar_alt")}
                                     width={40}
                                     height={40}
                                     className={styles.commentAvatar}
-                                    style={{ borderRadius: "50%" }}
+                                    style={{borderRadius: "50%"}}
                                     loading="lazy"
                                     unoptimized
                                 />
@@ -266,12 +264,12 @@ export default function DetailPostDialog({
                                     {comment.image && (
                                         <Image
                                             src={comment.image}
-                                            alt="Comment Image"
+                                            alt={t("image_preview")}
                                             width={100}
                                             height={100}
                                             className={styles.commentImage}
                                             onClick={() => setPreviewCommentImage(comment.image || null)}
-                                            style={{ objectFit: "cover" }}
+                                            style={{objectFit: "cover"}}
                                             loading="lazy"
                                             unoptimized
                                         />
@@ -286,7 +284,7 @@ export default function DetailPostDialog({
                                 onClick={loadMoreComments}
                                 disabled={isLoadingMore}
                             >
-                                {isLoadingMore ? "Đang tải..." : "Xem thêm bình luận"}
+                                {isLoadingMore ? t("loading") : t("view_more_comments")} {/* Use translation */}
                             </button>
                         </div>
                     </div>
@@ -295,7 +293,7 @@ export default function DetailPostDialog({
                 {/* Footer */}
                 <div className={styles.footer}>
                     <textarea
-                        placeholder="Viết bình luận..."
+                        placeholder={t("write_comment")}
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         onKeyDown={(e) => {
@@ -348,14 +346,14 @@ export default function DetailPostDialog({
                 {/* Image previews */}
                 {newCommentImage && (
                     <div className={styles.previewImageWrapper}>
-                        <div style={{ position: "relative", display: "inline-block" }}>
+                        <div style={{position: "relative", display: "inline-block"}}>
                             <Image
                                 src={newCommentImage}
-                                alt="Preview Comment Image"
+                                alt={t("image_preview")}
                                 width={100}
                                 height={100}
                                 className={styles.commentPreviewImage}
-                                style={{ objectFit: "cover", borderRadius: "8px" }}
+                                style={{objectFit: "cover", borderRadius: "8px"}}
                                 unoptimized
                             />
                             <button
@@ -367,8 +365,6 @@ export default function DetailPostDialog({
                         </div>
                     </div>
                 )}
-
-
             </div>
 
             {/* Image carousel */}
@@ -382,7 +378,7 @@ export default function DetailPostDialog({
                 />
             )}
             {previewCommentImage && (
-                <ImagePreviewSingle imageSrc={previewCommentImage} onClose={() => setPreviewCommentImage(null)} />
+                <ImagePreviewSingle imageSrc={previewCommentImage} onClose={() => setPreviewCommentImage(null)}/>
             )}
         </div>
     );
