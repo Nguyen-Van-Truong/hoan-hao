@@ -79,6 +79,9 @@
     "photos": "Photo",
     "videos": "Video"
   },
+  "PostsTab": {
+    "loading": "Loading more posts..."
+  },
   "NotFound": {
     "message": "Oops! The page you are looking for doesn't exist.",
     "go_home": "Go back home"

@@ -79,6 +79,9 @@
     "photos": "Ảnh",
     "videos": "Video"
   },
+  "PostsTab": {
+    "loading": "Đang tải thêm bài viết..."
+  },
   "NotFound": {
     "message": "Rất tiếc! Trang bạn đang tìm không tồn tại.",
     "go_home": "Quay lại trang chủ"

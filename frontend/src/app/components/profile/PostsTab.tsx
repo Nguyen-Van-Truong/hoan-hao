@@ -1,7 +1,8 @@
 // frontend/src/app/components/profile/PostsTab.tsx
 import { useState, useEffect, useCallback, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
-import Post from "../Post"; // Đảm bảo bạn sử dụng lại Post component
+import { useTranslations } from "next-intl"; // ✅ Hỗ trợ i18n
+import Post from "../Post"; // ✅ Tái sử dụng Post component
 import styles from "./PostsTab.module.css";
 
 interface PostType {
@@ -14,6 +15,7 @@ interface PostType {
 }
 
 export default function PostsTab() {
+    const t = useTranslations("PostsTab"); // ✅ Lấy dữ liệu dịch từ JSON
     const [posts, setPosts] = useState<PostType[]>([
         {
             author: "User 1",
@@ -40,6 +42,7 @@ export default function PostsTab() {
             hashcodeIDPost: `post3`,
         },
     ]);
+
     const [loading, setLoading] = useState(false);
     const userCounter = useRef(4); // Để tiếp tục tăng số user trong bài viết mới
 
@@ -126,7 +129,7 @@ export default function PostsTab() {
             {loading && (
                 <div className={styles.loadingContainer}>
                     <div className={styles.spinner}></div>
-                    <p>Đang tải thêm bài viết...</p>
+                    <p>{t("loading")}</p>
                 </div>
             )}
         </div>
