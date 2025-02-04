@@ -19,9 +19,10 @@ const geistMono = Geist_Mono({
 });
 
 // Kiểm tra locale hợp lệ
-function isValidLocale(locale: string): locale is "vi" | "en" {
-    return routing.locales.includes(locale as any);
+function isValidLocale(locale: string): locale is 'vi' | 'en' {
+    return routing.locales.includes(locale as 'vi' | 'en');
 }
+
 
 export default async function RootLayout({
                                              children,

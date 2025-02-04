@@ -53,7 +53,7 @@ export default function Providers({children}: { children: React.ReactNode }) {
             setLocale('vi');
             router.push(`/vi${pathname}`); // Điều hướng tới URL với locale mặc định
         }
-    }, [pathname, router]);
+    }, [pathname, router, locales]);
 
     if (isLoading) return null; // Tránh hiển thị nội dung khi đang kiểm tra
 

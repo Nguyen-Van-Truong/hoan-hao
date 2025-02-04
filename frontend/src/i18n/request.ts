@@ -1,13 +1,13 @@
 // frontend/src/i18n/request.ts
-import {getRequestConfig} from 'next-intl/server';
-import {routing} from './routing';
+import { getRequestConfig } from 'next-intl/server';
+import { routing } from './routing';
 
-export default getRequestConfig(async ({requestLocale}) => {
+export default getRequestConfig(async ({ requestLocale }) => {
     // This typically corresponds to the `[locale]` segment
     let locale = await requestLocale;
 
-    // Ensure that a valid locale is used
-    if (!locale || !routing.locales.includes(locale as any)) {
+    // Đảm bảo locale là một giá trị hợp lệ
+    if (!locale || !routing.locales.includes(locale as 'vi' | 'en')) {
         locale = routing.defaultLocale;
     }
 
