@@ -358,7 +358,6 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
 
             {selectedPost && (
                 <DetailPostDialog
-                    author={selectedPost.author}
                     username={selectedPost.username}
                     time={selectedPost.time}
                     content={selectedPost.content}

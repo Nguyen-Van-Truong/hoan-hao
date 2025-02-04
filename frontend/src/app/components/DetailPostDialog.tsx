@@ -15,7 +15,6 @@ interface Comment {
 }
 
 interface CommentDialogProps {
-    author: string;
     username: string;
     time: string;
     images: string[];
@@ -25,7 +24,6 @@ interface CommentDialogProps {
 }
 
 export default function DetailPostDialog({
-                                             author,
                                              username,
                                              time,
                                              images,
@@ -49,16 +47,16 @@ export default function DetailPostDialog({
 
     // Cập nhật URL và tiêu đề khi mở dialog
     useEffect(() => {
-        if (author && hashcodeIDPost) {
+        if (username && hashcodeIDPost) {
             const truncatedContent =
                 content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
 
-            // Cập nhật URL đầy đủ với `locale`, `author` và `hashcodeIDPost`
-            const newUrl = `/${locale}/${author}/post/${hashcodeIDPost}`;
+            // Cập nhật URL đầy đủ với `locale`, `username` và `hashcodeIDPost`
+            const newUrl = `/${locale}/${username}/post/${hashcodeIDPost}`;
             window.history.pushState(null, "", newUrl);
 
             // Cập nhật tiêu đề trang
-            document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
+            document.title = `${username} - ${truncatedContent} - Hoàn Hảo`;
 
             return () => {
                 // Khôi phục URL và tiêu đề gốc khi dialog bị đóng
@@ -67,7 +65,7 @@ export default function DetailPostDialog({
                 document.title = "Hoàn Hảo";
             };
         }
-    }, [author, content, hashcodeIDPost, locale]); // Thêm `locale` vào dependency array
+    }, [username, content, hashcodeIDPost, locale]); // Thêm `locale` vào dependency array
 
     // Giả lập tải thêm bình luận
     const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
@@ -151,7 +149,7 @@ export default function DetailPostDialog({
         <div className={styles.dialog}>
             <div className={styles.dialogContent} ref={dialogRef}>
                 <div className={styles.header}>
-                    <span>{t("post_of")} {author}</span> {/* Use translation */}
+                    <span>{t("post_of")} {username}</span>
                     <button className={styles.closeButton} onClick={onClose}>
                         ✖
                     </button>
@@ -170,7 +168,7 @@ export default function DetailPostDialog({
                             unoptimized
                         />
                         <div className={styles.postHeaderInfo}>
-                            <p className={styles.postAuthor}>{author}</p>
+                            <p className={styles.postAuthor}>{username}</p>
                             <p className={styles.postUsername}>{username}</p>
                             <p className={styles.postTime}>{time}</p>
                         </div>
@@ -187,7 +185,7 @@ export default function DetailPostDialog({
                         </p>
                         {content.length > MAX_LENGTH && (
                             <button onClick={toggleContent} className={styles.toggleButton}>
-                                {isExpanded ? t("view_less") : t("view_more")} {/* Use translation */}
+                                {isExpanded ? t("view_less") : t("view_more")}
                             </button>
                         )}
                     </div>
@@ -214,11 +212,7 @@ export default function DetailPostDialog({
                     <div className={styles.actions}>
                         <div className={styles.action} onClick={() => setLiked(!liked)}>
                             <Image
-                                src={
-                                    liked
-                                        ? "/icon/heart-like-solid.svg"
-                                        : "/icon/heart-like-no-solid.svg"
-                                }
+                                src={liked ? "/icon/heart-like-solid.svg" : "/icon/heart-like-no-solid.svg"}
                                 alt={t("like")}
                                 width={28}
                                 height={28}
@@ -238,7 +232,7 @@ export default function DetailPostDialog({
                                 loading="lazy"
                                 unoptimized
                             />
-                            {"187 " + t("share")}
+                            187 {t("share")}
                         </div>
                     </div>
 
@@ -284,7 +278,7 @@ export default function DetailPostDialog({
                                 onClick={loadMoreComments}
                                 disabled={isLoadingMore}
                             >
-                                {isLoadingMore ? t("loading") : t("view_more_comments")} {/* Use translation */}
+                                {isLoadingMore ? t("loading") : t("view_more_comments")}
                             </button>
                         </div>
                     </div>

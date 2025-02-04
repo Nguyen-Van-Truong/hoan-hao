@@ -43,20 +43,6 @@ export default function SidebarLeft() {
                     <span className={styles.icon}>👥</span>
                     <span className={styles.label}>{t("friends")}</span>
                 </div>
-                <div className={styles.navItem} onClick={() => navigate("/notifications")}>
-                    <span className={styles.icon}>🔔</span>
-                    <span className={styles.label}>{t("notifications")}</span>
-                    <span className={styles.badge}>5</span>
-                </div>
-                <div className={styles.navItem} onClick={() => navigate("/messages")}>
-                    <span className={styles.icon}>💬</span>
-                    <span className={styles.label}>{t("messages")}</span>
-                    <span className={styles.badge}>2</span>
-                </div>
-                <div className={styles.navItem} onClick={() => navigate("/settings")}>
-                    <span className={styles.icon}>⚙️</span>
-                    <span className={styles.label}>{t("settings")}</span>
-                </div>
             </div>
         </div>
     );

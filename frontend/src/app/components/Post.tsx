@@ -1,9 +1,10 @@
 import {useState} from "react";
 import Image from "next/image";
 import {useRouter} from "next/navigation";
-import {useLocale} from "next-intl"; // Thêm useLocale để lấy locale hiện tại
-import styles from "./Post.module.css";
+import {useLocale} from "next-intl"; // Lấy locale hiện tại
+import {toast} from "react-toastify"; // Đảm bảo toast được import
 import {useTranslations} from "next-intl"; // ✅ Thêm i18n
+import styles from "./Post.module.css";
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
 
@@ -29,12 +30,10 @@ export default function Post({
     const MAX_LENGTH = 100;
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(false);
-    const [filledShare, setFilledShare] = useState(false);
     const [showDialog, setShowDialog] = useState(false);
     const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
     const toggleLike = () => setLiked(!liked);
-    const toggleShare = () => setFilledShare(!filledShare);
     const toggleContent = () => setIsExpanded(!isExpanded);
 
     const closePreview = () => setPreviewIndex(null);
@@ -104,6 +103,39 @@ export default function Post({
     const navigateToProfile = () => {
         router.push(`/${locale}/profile/${username}`);
     };
+
+    // Hàm sao chép đường dẫn và hiển thị thông báo
+    const handleShare = () => {
+        const currentUrl = `${window.location.origin}/${locale}/${username}/post/${hashcodeIDPost}`;
+
+        // Kiểm tra xem navigator.clipboard có hỗ trợ hay không
+        if (navigator.clipboard) {
+            // Dùng Clipboard API khi có hỗ trợ
+            navigator.clipboard.writeText(currentUrl)
+                .then(() => {
+                    toast.success(t("share_copy_success"));
+                })
+                .catch((err) => {
+                    toast.error(t("share_copy_error"));
+                    console.error('Error copying to clipboard', err); // Xem chi tiết lỗi
+                });
+        } else {
+            // Sử dụng phương pháp thủ công cho các trình duyệt không hỗ trợ clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = currentUrl;
+            document.body.appendChild(textArea);
+            textArea.select();  // Chọn toàn bộ văn bản trong textarea
+            try {
+                // Sử dụng phương pháp cũ document.execCommand('copy')
+                document.execCommand('copy');
+                toast.success(t("share_copy_success"));
+            } catch (err) {
+                toast.error(t("share_copy_error:" + err));
+            }
+            document.body.removeChild(textArea);  // Xóa textarea sau khi sao chép
+        }
+    };
+
 
     return (
         <div className={styles.post}>
@@ -181,7 +213,7 @@ export default function Post({
                     25 {t("comment")}
                 </div>
 
-                <div className={styles.action} onClick={toggleShare}>
+                <div className={styles.action} onClick={handleShare}>
                     <Image
                         src="/icon/share.svg"
                         alt={t("share")}
@@ -198,7 +230,6 @@ export default function Post({
             {/* Detail Post Dialog */}
             {showDialog && (
                 <DetailPostDialog
-                    author={author}
                     username={username}
                     time={time}
                     images={images}

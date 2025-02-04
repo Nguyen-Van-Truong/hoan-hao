@@ -50,7 +50,9 @@
     "share": "Share",
     "view_more": "View more",
     "view_less": "View less",
-    "loading": "Loading"
+    "loading": "Loading",
+    "share_copy_success": "Link copied successfully!",
+    "share_copy_error": "Failed to copy link."
   },
   "DetailPostDialog": {
     "post_of": "Post of",

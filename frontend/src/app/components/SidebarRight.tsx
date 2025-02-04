@@ -1,11 +1,12 @@
 // frontend/src/app/components/SidebarRight.tsx
-import {useState} from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
-import {toast} from "react-toastify";
-import {useTranslations, useLocale} from "next-intl"; // ✅ Hỗ trợ i18n
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { useTranslations, useLocale } from "next-intl"; // ✅ Hỗ trợ i18n
 import styles from "./SidebarRight.module.css";
+import LanguageSwitcher from "./LanguageSwitcher"; // Import LanguageSwitcher component
 
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -54,6 +55,10 @@ export default function SidebarRight() {
                             <li onClick={() => navigateToProfile("my-profile")}>
                                 <span className={styles.menuIcon}>👤</span>
                                 {t("profile")}
+                            </li>
+                            <li>
+                                <span className={styles.menuIcon}>🌐</span>
+                                <LanguageSwitcher className={styles.languageSwitcher} /> {/* Add LanguageSwitcher */}
                             </li>
                             <li onClick={handleLogout}>
                                 <span className={styles.menuIcon}>🚪</span>
