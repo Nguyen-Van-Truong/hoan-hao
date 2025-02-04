@@ -230,6 +230,7 @@ export default function Post({
             {/* Detail Post Dialog */}
             {showDialog && (
                 <DetailPostDialog
+                    author={author}
                     username={username}
                     time={time}
                     images={images}

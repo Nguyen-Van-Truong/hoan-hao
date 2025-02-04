@@ -1,10 +1,10 @@
-// frontend/src/app/components/DetailPostDialog.tsx
 import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
-import {useLocale, useTranslations} from "next-intl"; // Use the i18n hooks
+import {useLocale, useTranslations} from "next-intl";
 import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
+import {toast} from "react-toastify";
 
 interface Comment {
     avatar: string;
@@ -15,6 +15,7 @@ interface Comment {
 }
 
 interface CommentDialogProps {
+    author: string;
     username: string;
     time: string;
     images: string[];
@@ -24,6 +25,7 @@ interface CommentDialogProps {
 }
 
 export default function DetailPostDialog({
+                                             author,
                                              username,
                                              time,
                                              images,
@@ -38,10 +40,10 @@ export default function DetailPostDialog({
     const [previewCommentImage, setPreviewCommentImage] = useState<string | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [liked, setLiked] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false); // Trạng thái xem thêm nội dung bài viết
-    const dialogRef = useRef<HTMLDivElement | null>(null); // Tham chiếu đến dialog
-    const locale = useLocale(); // Lấy locale hiện tại
-    const t = useTranslations("DetailPostDialog"); // Thêm i18n cho DetailPostDialog
+    const [isExpanded, setIsExpanded] = useState(false);
+    const dialogRef = useRef<HTMLDivElement | null>(null);
+    const locale = useLocale();
+    const t = useTranslations("DetailPostDialog");
 
     const MAX_LENGTH = 100;
 
@@ -56,7 +58,7 @@ export default function DetailPostDialog({
             window.history.pushState(null, "", newUrl);
 
             // Cập nhật tiêu đề trang
-            document.title = `${username} - ${truncatedContent} - Hoàn Hảo`;
+            document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
 
             return () => {
                 // Khôi phục URL và tiêu đề gốc khi dialog bị đóng
@@ -65,7 +67,7 @@ export default function DetailPostDialog({
                 document.title = "Hoàn Hảo";
             };
         }
-    }, [username, content, hashcodeIDPost, locale]); // Thêm `locale` vào dependency array
+    }, [author, username, content, hashcodeIDPost, locale]);
 
     // Giả lập tải thêm bình luận
     const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
@@ -135,7 +137,7 @@ export default function DetailPostDialog({
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
-                onClose(); // Đóng form nếu click bên ngoài
+                onClose();
             }
         };
 
@@ -145,11 +147,40 @@ export default function DetailPostDialog({
         };
     }, [onClose]);
 
+    // Hàm sao chép đường dẫn và hiển thị thông báo
+    const handleShare = () => {
+        const currentUrl = `${window.location.origin}/${locale}/${username}/post/${hashcodeIDPost}`;
+
+        // Kiểm tra xem navigator.clipboard có hỗ trợ hay không
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(currentUrl)
+                .then(() => {
+                    toast.success(t("share_copy_success"));
+                })
+                .catch((err) => {
+                    toast.error(t("share_copy_error"));
+                    console.error('Error copying to clipboard', err);
+                });
+        } else {
+            const textArea = document.createElement('textarea');
+            textArea.value = currentUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                toast.success(t("share_copy_success"));
+            } catch (err) {
+                toast.error(t("share_copy_error:" + err));
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
     return (
         <div className={styles.dialog}>
             <div className={styles.dialogContent} ref={dialogRef}>
                 <div className={styles.header}>
-                    <span>{t("post_of")} {username}</span>
+                    <span>{t("post_of")} {author}</span>
                     <button className={styles.closeButton} onClick={onClose}>
                         ✖
                     </button>
@@ -168,7 +199,7 @@ export default function DetailPostDialog({
                             unoptimized
                         />
                         <div className={styles.postHeaderInfo}>
-                            <p className={styles.postAuthor}>{username}</p>
+                            <p className={styles.postAuthor}>{author}</p>
                             <p className={styles.postUsername}>{username}</p>
                             <p className={styles.postTime}>{time}</p>
                         </div>
@@ -222,7 +253,7 @@ export default function DetailPostDialog({
                             />
                             {liked ? t("liked") : t("like")}
                         </div>
-                        <div className={styles.action}>
+                        <div className={styles.action} onClick={handleShare}>
                             <Image
                                 src="/icon/share.svg"
                                 alt={t("share")}
