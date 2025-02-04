@@ -29,9 +29,9 @@ export default async function RootLayout({
                                              params,
                                          }: {
     children: React.ReactNode;
-    params: { locale: string };
+    params: { locale: string } & { then?: never };
 }) {
-    const {locale} = params; // ✅ Lấy giá trị `locale` ra ngoài để đảm bảo TypeScript hiểu
+    const {locale} = params;
 
     // Kiểm tra locale hợp lệ
     if (!isValidLocale(locale)) {
