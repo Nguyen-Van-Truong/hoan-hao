@@ -2,34 +2,36 @@
 import {useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {useRouter} from "next/navigation";
-import {toast} from "react-toastify";
-import {useLocale, useTranslations} from "next-intl"; // ✅ Thêm i18n
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
+import { useTranslations, useLocale } from "next-intl"; // ✅ Hỗ trợ i18n
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const router = useRouter();
-    const locale = useLocale(); // ✅ Kiểm tra lại locale
-    const t = useTranslations("SidebarRight"); // ✅ Lấy dữ liệu dịch
-
-    console.log("🟢 Debug SidebarRight.tsx");
-    console.log("🟢 Current locale:", locale);
-    console.log("🟢 Translation for 'profile':", t("profile"));
+    const locale = useLocale(); // ✅ Lấy locale hiện tại
+    const t = useTranslations("SidebarRight"); // ✅ Lấy dữ liệu dịch từ JSON
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
-    const navigateToProfile = (username: string) => {
-        router.push(`/profile/${username}`);
+    // ✅ Hàm chuyển hướng theo `locale`
+    const navigate = (path: string) => {
+        router.push(`/${locale}${path}`);
     };
 
-    // Hàm đăng xuất
+    // ✅ Cập nhật hàm chuyển hướng profile có locale
+    const navigateToProfile = (username: string) => {
+        navigate(`/profile/${username}`);
+    };
+
+    // ✅ Cập nhật hàm logout để có locale
     const handleLogout = () => {
         localStorage.removeItem("token");
-        toast.success(t("logout_success")); // ✅ Dùng i18n thay vì kiểm tra `language`
-        router.push("/login");
+        toast.success(t("logout_success"));
+        navigate("/login");
     };
 
     return (
@@ -81,18 +83,16 @@ export default function SidebarRight() {
             <div className={styles.suggestedFriends}>
                 <div className={styles.friendsHeader}>
                     <h3>{t("suggested_friends")}</h3>
-                    <Link href="../friends/suggestions" className={styles.viewAll}>
+                    <Link href={`/${locale}/friends/suggestions`} className={styles.viewAll}>
                         {t("view_all")}
                     </Link>
                 </div>
                 <div className={styles.friendList}>
-                    {[{name: "Julia Smith", username: "juliasmith"}, {
-                        name: "Vermillion D. Gray",
-                        username: "vermilliongray"
-                    }, {name: "Mai Senpai", username: "maisenpai"}, {
-                        name: "Azunyan U. Wu",
-                        username: "azunyanudesu"
-                    }, {name: "Oarack Babama", username: "obama21"}]
+                    {[{ name: "Julia Smith", username: "juliasmith" },
+                        { name: "Vermillion D. Gray", username: "vermilliongray" },
+                        { name: "Mai Senpai", username: "maisenpai" },
+                        { name: "Azunyan U. Wu", username: "azunyanudesu" },
+                        { name: "Oarack Babama", username: "obama21" }]
                         .map((friend, index) => (
                             <div className={styles.friendItem} key={index}>
                                 <div className={styles.friendInfo} onClick={() => navigateToProfile(friend.username)}>
