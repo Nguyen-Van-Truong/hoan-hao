@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl"; // ✅ Hỗ trợ i18n
 import styles from "./SuggestedFriends.module.css";
 import FriendCard from "./FriendCard";
 
@@ -21,6 +22,7 @@ const initialFriends: Friend[] = Array.from({ length: 12 }, (_, i) => ({
 export default function SuggestedFriends() {
     const [friends, setFriends] = useState<Friend[]>(initialFriends);
     const [loading, setLoading] = useState(false);
+    const t = useTranslations("SuggestedFriends"); // ✅ Lấy dữ liệu dịch từ JSON
 
     const fetchMoreFriends = useCallback(async () => {
         if (loading) return;
@@ -59,7 +61,7 @@ export default function SuggestedFriends() {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Đề xuất bạn bè</h1>
+            <h1 className={styles.title}>{t("title")}</h1> {/* ✅ Sử dụng i18n */}
             <div className={styles.friendList}>
                 {friends.map((friend, index) => (
                     <FriendCard
@@ -73,7 +75,7 @@ export default function SuggestedFriends() {
             {loading && (
                 <div className={styles.loading}>
                     <div className={styles.spinner}></div>
-                    <p>Đang tải thêm bạn bè...</p>
+                    <p>{t("loading")}</p> {/* ✅ Sử dụng i18n */}
                 </div>
             )}
         </div>

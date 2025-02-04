@@ -2,9 +2,9 @@
 import {useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { useTranslations, useLocale } from "next-intl"; // ✅ Hỗ trợ i18n
+import {useRouter} from "next/navigation";
+import {toast} from "react-toastify";
+import {useTranslations, useLocale} from "next-intl"; // ✅ Hỗ trợ i18n
 import styles from "./SidebarRight.module.css";
 
 export default function SidebarRight() {
@@ -88,11 +88,11 @@ export default function SidebarRight() {
                     </Link>
                 </div>
                 <div className={styles.friendList}>
-                    {[{ name: "Julia Smith", username: "juliasmith" },
-                        { name: "Vermillion D. Gray", username: "vermilliongray" },
-                        { name: "Mai Senpai", username: "maisenpai" },
-                        { name: "Azunyan U. Wu", username: "azunyanudesu" },
-                        { name: "Oarack Babama", username: "obama21" }]
+                    {[{name: "Julia Smith", username: "juliasmith"},
+                        {name: "Vermillion D. Gray", username: "vermilliongray"},
+                        {name: "Mai Senpai", username: "maisenpai"},
+                        {name: "Azunyan U. Wu", username: "azunyanudesu"},
+                        {name: "Oarack Babama", username: "obama21"}]
                         .map((friend, index) => (
                             <div className={styles.friendItem} key={index}>
                                 <div className={styles.friendInfo} onClick={() => navigateToProfile(friend.username)}>

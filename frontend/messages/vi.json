@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "Chào mừng đến với trang web của chúng tôi",
+    "title": "Chào mừng đến với Hoàn Hảo",
     "description": "Đây là nơi tốt nhất để học hỏi và phát triển."
   },
   "SidebarRight": {
@@ -59,6 +59,25 @@
     "write_comment": "Viết bình luận...",
     "image_preview": "Ảnh xem trước",
     "close": "Đóng"
+  },
+  "MyFriends": {
+    "title": "Danh sách bạn bè",
+    "loading": "Đang tải thêm bạn bè..."
+  },
+  "FriendCard": {
+    "add_friend": "Kết bạn"
+  },
+  "SuggestedFriends": {
+    "title": "Đề xuất bạn bè",
+    "loading": "Đang tải thêm bạn bè..."
+  },
+  "Profile": {
+    "avatar_alt": "Ảnh đại diện",
+    "friends_count": "Bạn bè: {count}",
+    "edit_profile": "Chỉnh sửa hồ sơ",
+    "posts": "Bài viết",
+    "photos": "Ảnh",
+    "videos": "Video"
   },
   "NotFound": {
     "message": "Rất tiếc! Trang bạn đang tìm không tồn tại.",

@@ -1,6 +1,6 @@
 {
   "HomePage": {
-    "title": "Welcome to Our Website",
+    "title": "Welcome to Hoàn Hảo",
     "description": "This is the best place to learn and grow."
   },
   "SidebarRight": {
@@ -60,13 +60,32 @@
     "image_preview": "Ảnh xem trước",
     "close": "Đóng"
   },
+  "MyFriends": {
+    "title": "Friends List",
+    "loading": "Loading more friends..."
+  },
+  "SuggestedFriends": {
+    "title": "Suggested Friends",
+    "loading": "Loading more friends..."
+  },
+  "FriendCard": {
+    "add_friend": "Add friend"
+  },
+  "Profile": {
+    "avatar_alt": "Avatar",
+    "friends_count": "Friend: {count}",
+    "edit_profile": "Edit profile",
+    "posts": "Post",
+    "photos": "Photo",
+    "videos": "Video"
+  },
   "NotFound": {
     "message": "Oops! The page you are looking for doesn't exist.",
     "go_home": "Go back home"
   },
   "Metadata": {
-    "title": "Home | Perfect Site",
-    "description": "Welcome to the perfect website!"
+    "title": "Home | Hoàn Hảo",
+    "description": "Welcome to the Hoàn Hảo!"
   },
   "Test": {
     "title": "hello en"

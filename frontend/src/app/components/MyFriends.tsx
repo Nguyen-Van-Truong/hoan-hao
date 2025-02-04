@@ -1,7 +1,8 @@
 // frontend/src/app/components/MyFriends.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {useState, useEffect, useCallback} from "react";
+import {useTranslations, useLocale} from "next-intl";
 import styles from "./MyFriends.module.css";
 import FriendCard from "./FriendCard";
 
@@ -12,13 +13,16 @@ interface Friend {
 }
 
 // Danh sách bạn bè ban đầu
-const initialFriends: Friend[] = Array.from({ length: 12 }, (_, i) => ({
+const initialFriends: Friend[] = Array.from({length: 12}, (_, i) => ({
     name: `Friend ${i + 1}`,
     username: `@friend${i + 1}`,
     avatar: "/user-logo.png",
 }));
 
 export default function MyFriends() {
+    const t = useTranslations("MyFriends"); // ✅ Hỗ trợ i18n
+    useLocale();
+// ✅ Lấy locale hiện tại
     const [friends, setFriends] = useState<Friend[]>(initialFriends);
     const [loading, setLoading] = useState(false);
 
@@ -29,7 +33,7 @@ export default function MyFriends() {
         // Mô phỏng gọi API thêm bạn bè
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        const newFriends: Friend[] = Array.from({ length: 8 }, (_, i) => ({
+        const newFriends: Friend[] = Array.from({length: 8}, (_, i) => ({
             name: `New Friend ${friends.length + i + 1}`,
             username: `@newfriend${friends.length + i + 1}`,
             avatar: "/user-logo.png",
@@ -41,7 +45,7 @@ export default function MyFriends() {
 
     useEffect(() => {
         const handleScroll = () => {
-            const { scrollTop, clientHeight, scrollHeight } = document.documentElement;
+            const {scrollTop, clientHeight, scrollHeight} = document.documentElement;
 
             // Kiểm tra nếu cuộn đến gần cuối trang
             if (scrollTop + clientHeight >= scrollHeight - 5 && !loading) {
@@ -59,7 +63,7 @@ export default function MyFriends() {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Danh sách bạn bè</h1>
+            <h1 className={styles.title}>{t("title")}</h1>
             <div className={styles.friendList}>
                 {friends.map((friend, index) => (
                     <FriendCard
@@ -72,8 +76,8 @@ export default function MyFriends() {
             </div>
             {loading && (
                 <div className={styles.loadingContainer}>
-                    <div className={styles.spinner} />
-                    <p>Đang tải thêm bạn bè...</p>
+                    <div className={styles.spinner}/>
+                    <p>{t("loading")}</p>
                 </div>
             )}
         </div>
