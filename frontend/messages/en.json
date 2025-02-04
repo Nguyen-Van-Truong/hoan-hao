@@ -50,8 +50,6 @@
     "share": "Share",
     "view_more": "View more",
     "view_less": "View less",
-    "more_options": "More options",
-    "image_preview_more": "+{{count}} more images",
     "loading": "Loading"
   },
   "DetailPostDialog": {

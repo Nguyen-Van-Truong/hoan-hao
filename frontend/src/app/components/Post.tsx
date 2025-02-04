@@ -128,7 +128,7 @@ export default function Post({
                         {time}
                     </p>
                 </div>
-                <div className={styles.moreOptions}>{t("more_options")}</div>
+                <div className={styles.moreOptions}>⋮</div>
             </div>
 
             {/* Content */}

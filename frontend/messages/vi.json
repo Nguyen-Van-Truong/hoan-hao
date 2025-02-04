@@ -50,8 +50,6 @@
     "share": "Chia sẻ",
     "view_more": "Xem thêm",
     "view_less": "Ẩn bớt",
-    "more_options": "Tùy chọn khác",
-    "image_preview_more": "+{{count}} ảnh",
     "loading": "Đang tải"
   },
   "DetailPostDialog": {
