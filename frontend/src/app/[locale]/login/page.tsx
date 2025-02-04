@@ -1,4 +1,4 @@
-// frontend/src/app/login/page.tsx
+// frontend/src/app/[locale]/login/page.tsx
 "use client";
 
 import {useState, useEffect} from "react";
@@ -9,8 +9,9 @@ import Link from "next/link";
 import {mockLogin} from "../../api/mockAuth";
 import styles from "./Login.module.css";
 import {motion} from "framer-motion";
+import {useLocale} from "next-intl"; // ✅ Use useLocale to get current locale
 
-// Định nghĩa kiểu dữ liệu của form
+// Define form data types
 interface LoginFormData {
     email: string;
     password: string;
@@ -18,15 +19,16 @@ interface LoginFormData {
 
 export default function LoginPage() {
     const router = useRouter();
+    const locale = useLocale(); // Get the current locale
     const {register, handleSubmit, formState: {errors}} = useForm<LoginFormData>();
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
-            router.push("/");
+            router.push(`/${locale}`); // Include locale when redirecting
         }
-    }, [router]);
+    }, [router, locale]);
 
     const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
         setLoading(true);
@@ -35,7 +37,7 @@ export default function LoginPage() {
             localStorage.setItem("token", response.token);
             localStorage.setItem("user", JSON.stringify(response.user));
             toast.success("Đăng nhập thành công!");
-            router.push("/");
+            router.push(`/${locale}`); // Include locale when redirecting
         } catch (error) {
             toast.error((error as Error).message);
         }
@@ -84,7 +86,8 @@ export default function LoginPage() {
 
                     {/* Liên kết Quên mật khẩu */}
                     <p className={styles.forgotPasswordText}>
-                        <Link href="../forgot-password" className={styles.forgotPasswordLink}>Quên mật khẩu?</Link>
+                        <Link href={`/${locale}/forgot-password`} className={styles.forgotPasswordLink}>Quên mật
+                            khẩu?</Link>
                     </p>
 
                     <motion.button
@@ -100,7 +103,7 @@ export default function LoginPage() {
 
                 <p className={styles.registerText}>
                     Chưa có tài khoản?{" "}
-                    <Link href="../register" className={styles.registerLink}>Đăng ký ngay</Link>
+                    <Link href={`/${locale}/register`} className={styles.registerLink}>Đăng ký ngay</Link>
                 </p>
             </motion.div>
         </motion.div>

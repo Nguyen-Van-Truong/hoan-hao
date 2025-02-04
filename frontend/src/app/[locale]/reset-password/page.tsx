@@ -1,4 +1,4 @@
-// frontend/src/app/reset-password/page.tsx
+// frontend/src/app/[locale]/reset-password/page.tsx
 "use client";
 
 import {useState} from "react";
@@ -8,6 +8,7 @@ import {toast} from "react-toastify";
 import styles from "./ResetPassword.module.css";
 import {motion} from "framer-motion";
 import {mockResetPassword} from "@/app/api/mockAuth";
+import {useLocale} from "next-intl"; // ✅ Use useLocale to get current locale
 
 interface ResetPasswordFormData {
     newPassword: string;
@@ -17,16 +18,17 @@ interface ResetPasswordFormData {
 export default function ResetPasswordPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const token = searchParams.get("token") || "invalid-token"; // Mặc định token là không hợp lệ nếu không có trong URL
+    const token = searchParams.get("token") || "invalid-token"; // Default token as invalid if not provided
     const {register, handleSubmit, formState: {errors}, watch} = useForm<ResetPasswordFormData>();
     const [loading, setLoading] = useState(false);
+    const locale = useLocale(); // Get the current locale
 
     const onSubmit: SubmitHandler<ResetPasswordFormData> = async (data) => {
         setLoading(true);
         try {
             const response = await mockResetPassword(token, data.newPassword);
             toast.success(response.message);
-            router.push("/login");
+            router.push(`/${locale}/login`); // Redirect with locale
         } catch (error) {
             toast.error((error as Error).message);
         }

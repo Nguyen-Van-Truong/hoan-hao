@@ -1,4 +1,4 @@
-// frontend/src/app/register/page.tsx
+// frontend/src/app/[locale]/register/page.tsx
 "use client";
 
 import {useState} from "react";
@@ -9,6 +9,7 @@ import Link from "next/link";
 import {mockRegister} from "../../api/mockAuth";
 import styles from "./Register.module.css";
 import {motion} from "framer-motion";
+import {useLocale} from "next-intl"; // ✅ Use useLocale to get current locale
 
 interface RegisterFormData {
     email: string;
@@ -20,13 +21,14 @@ export default function RegisterPage() {
     const router = useRouter();
     const {register, handleSubmit, formState: {errors}, watch} = useForm<RegisterFormData>();
     const [loading, setLoading] = useState(false);
+    const locale = useLocale(); // Get the current locale
 
     const onSubmit: SubmitHandler<RegisterFormData> = async (data) => {
         setLoading(true);
         try {
             const response = await mockRegister(data.email, data.password);
             toast.success(response.message);
-            router.push("/login");
+            router.push(`/${locale}/login`); // Redirect with locale
         } catch (error) {
             toast.error((error as Error).message);
         }
@@ -104,7 +106,7 @@ export default function RegisterPage() {
 
                 <p className={styles.loginText}>
                     Đã có tài khoản?{" "}
-                    <Link href="../login" className={styles.loginLink}>Đăng nhập ngay</Link>
+                    <Link href={`/${locale}/login`} className={styles.loginLink}>Đăng nhập ngay</Link>
                 </p>
             </motion.div>
         </motion.div>

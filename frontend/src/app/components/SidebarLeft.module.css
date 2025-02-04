@@ -21,6 +21,7 @@
     display: flex;
     justify-content: center; /* Đặt logo ở giữa theo chiều ngang */
     align-items: center;
+    cursor: pointer;
 }
 
 .logoImage {

@@ -1,4 +1,4 @@
-// frontend/src/app/forgot-password/page.tsx
+// frontend/src/app/[locale]/forgot-password/page.tsx
 "use client";
 
 import {useState} from "react";
@@ -9,24 +9,26 @@ import Link from "next/link";
 import {mockForgotPassword} from "../../api/mockAuth";
 import styles from "./ForgotPassword.module.css";
 import {motion} from "framer-motion";
+import {useLocale} from "next-intl"; // ✅ Import useLocale to get current locale
 
-// Định nghĩa kiểu dữ liệu cho form
+// Define form data types
 interface ForgotPasswordFormData {
     email: string;
 }
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
+    const locale = useLocale(); // Get the current locale
     const {register, handleSubmit, formState: {errors}} = useForm<ForgotPasswordFormData>();
     const [loading, setLoading] = useState(false);
 
-    // Sử dụng SubmitHandler<ForgotPasswordFormData> để đảm bảo TypeScript an toàn
+    // Submit handler for the form
     const onSubmit: SubmitHandler<ForgotPasswordFormData> = async (data) => {
         setLoading(true);
         try {
             const response = await mockForgotPassword(data.email);
             toast.success(response.message);
-            router.push("/reset-password");
+            router.push(`/${locale}/reset-password`); // Navigate with locale
         } catch (error) {
             toast.error((error as Error).message);
         }
@@ -77,7 +79,8 @@ export default function ForgotPasswordPage() {
 
                 <p className={styles.loginText}>
                     Quay lại{" "}
-                    <Link href="../login" className={styles.loginLink}>Đăng nhập</Link>
+                    <Link href={`/${locale}/login`} className={styles.loginLink}>Đăng
+                        nhập</Link> {/* Include locale in the link */}
                 </p>
             </motion.div>
         </motion.div>
