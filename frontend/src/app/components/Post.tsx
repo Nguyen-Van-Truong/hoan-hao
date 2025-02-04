@@ -223,7 +223,7 @@ export default function Post({
                         unoptimized
                         loading="lazy"
                     />
-                    187 {t("share")}
+                    {t("share")}
                 </div>
             </div>
 
