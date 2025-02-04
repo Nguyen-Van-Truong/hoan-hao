@@ -7,6 +7,7 @@ import {getMessages, getTranslations} from "next-intl/server";
 import {notFound} from "next/navigation";
 import {routing} from "@/i18n/routing";
 import {setRequestLocale} from "next-intl/server";
+import {JSX} from "react";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -29,9 +30,9 @@ export default async function RootLayout({
                                              params,
                                          }: {
     children: React.ReactNode;
-    params: { locale: string } & { then?: never };
-}) {
-    const {locale} = params;
+    params: { locale: string }; // Định nghĩa rõ ràng kiểu params
+}): Promise<JSX.Element> {
+    const { locale } = params;
 
     // Kiểm tra locale hợp lệ
     if (!isValidLocale(locale)) {
@@ -42,10 +43,10 @@ export default async function RootLayout({
     setRequestLocale(locale);
 
     // ✅ Lấy messages theo locale
-    const messages = await getMessages({locale});
+    const messages = await getMessages({ locale });
 
     // ✅ Lấy metadata từ JSON dịch
-    const t = await getTranslations({locale, namespace: "Metadata"});
+    const t = await getTranslations({ locale, namespace: "Metadata" });
     const title = t("title");
     const description = t("description");
 
@@ -53,8 +54,8 @@ export default async function RootLayout({
         <html lang={locale} suppressHydrationWarning>
         <head>
             <title>{title}</title>
-            <meta name="description" content={description}/>
-            <link rel="icon" href="/h.png" type="image/png"/>
+            <meta name="description" content={description} />
+            <link rel="icon" href="/h.png" type="image/png" />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
