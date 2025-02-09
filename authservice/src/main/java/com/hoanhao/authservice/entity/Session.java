@@ -2,36 +2,38 @@ package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
-@Entity
 @Data
-@Table(name = "session")
+@Entity
+@Table(name = "session", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "refresh_token")
+})
 public class Session {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "refresh_token", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String refreshToken;
 
-    @Column(name = "ip_address", length = 45)
+    @Column(length = 45)
     private String ipAddress;
 
-    @Column(name = "user_agent", length = 255)
+    @Column(length = 255)
     private String userAgent;
 
-    @Column(name = "expires_at", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "revoked_at")
+    @Column
     private LocalDateTime revokedAt;
 }

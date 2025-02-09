@@ -2,27 +2,29 @@ package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
-@Entity
 @Data
-@Table(name = "oauth_provider")
+@Entity
+@Table(name = "oauth_provider", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"provider_name", "provider_id"})
+})
 public class OauthProvider {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "provider_name", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     private String providerName;
 
-    @Column(name = "provider_id", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String providerId;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 }

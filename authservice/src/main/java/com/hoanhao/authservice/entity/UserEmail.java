@@ -2,12 +2,13 @@ package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "user_role")
-public class UserRole {
+@Table(name = "user_emails", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "email"})
+})
+public class UserEmail {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,10 +18,9 @@ public class UserRole {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @Column(nullable = false, length = 255)
+    private String email;
 
-    @Column(nullable = false)
-    private LocalDateTime assignedAt;
+    @Column(nullable = false, length = 20)
+    private String visibility;
 }

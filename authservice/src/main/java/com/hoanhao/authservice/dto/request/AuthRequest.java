@@ -1,13 +1,9 @@
 package com.hoanhao.authservice.dto.request;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Setter
-@Getter
+@Data
 public class AuthRequest {
-    // Getters and Setters
-    private String identifier; // Tên người dùng hoặc email
+    private String usernameOrEmailOrPhone;
     private String password;
-
 }

@@ -2,40 +2,58 @@ package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-@Entity
 @Data
-@Table(name = "user")
+@Entity
+@Table(name = "user", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "username")
+})
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = true, length = 255)
     private String username;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
-
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "is_active")
-    private boolean isActive = true;
+    @Column(nullable = true)
+    private Boolean isActive;
 
-    @Column(name = "is_verified")
-    private boolean isVerified = false;
+    @Column(nullable = true)
+    private Boolean isVerified;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = true)
+    private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(nullable = true)
+    private LocalDateTime updatedAt;
 
-    @Column(name = "last_login_at")
+    @Column(nullable = true)
     private LocalDateTime lastLoginAt;
 
+    // Relationships
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserEmail> emails = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserPhoneNumber> phoneNumbers = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> roles = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Session> sessions = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<LoginAttempt> loginAttempts = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<OauthProvider> oauthProviders = new HashSet<>();
 }
