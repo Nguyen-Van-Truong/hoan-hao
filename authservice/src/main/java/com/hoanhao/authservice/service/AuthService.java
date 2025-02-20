@@ -94,11 +94,11 @@ public class AuthService implements IAuthService {
         userRoleRepository.save(userRoleEntity);
 
         // Gửi thông tin người dùng đến UserService để tạo hồ sơ người dùng
-        String userServiceUrl = "http://user-service.local/api/user/createProfile";  // URL của UserService
+        String userServiceUrl = "http://localhost:8081/api/user/createProfile";  // URL của UserService
 
         // DTO chứa thông tin cần thiết cho UserService
-        UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(userDto.getUsername(), userDto.getEmail());
-
+        UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(userDto.getUsername(), userDto.getEmail(), userDto.getFullName());
+        System.out.println("userDto.getFullName:" + userDto.getFullName());
         try {
             // Gọi UserService để tạo thông tin người dùng
             restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);  // Gửi yêu cầu tới UserService
