@@ -3,6 +3,7 @@ package com.hoanhao.authservice.service;
 import com.hoanhao.authservice.dto.reponse.AuthResponse;
 import com.hoanhao.authservice.dto.reponse.UserResponseDto;
 import com.hoanhao.authservice.dto.request.AuthRequest;
+import com.hoanhao.authservice.dto.request.UserProfileRequestDto;
 import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
 import com.hoanhao.authservice.entity.Role;
 import com.hoanhao.authservice.entity.User;
@@ -13,15 +14,17 @@ import com.hoanhao.authservice.repository.UserEmailRepository;
 import com.hoanhao.authservice.repository.UserRepository;
 import com.hoanhao.authservice.repository.UserRoleRepository;
 import com.hoanhao.authservice.util.JwtUtil;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
-public class UserService implements IUserService {
+public class AuthService implements IAuthService {
 
     @Autowired
     private UserRepository userRepository;
@@ -32,6 +35,8 @@ public class UserService implements IUserService {
     private RoleRepository roleRepository;
     @Autowired
     private UserRoleRepository userRoleRepository;
+    @Autowired
+    private RestTemplate restTemplate;
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -56,6 +61,7 @@ public class UserService implements IUserService {
         return new AuthResponse(accessToken, refreshToken);
     }
 
+    @Transactional
     public void registerUser(UserRegistrationRequestDto userDto) {
         if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -86,6 +92,20 @@ public class UserService implements IUserService {
         userRoleEntity.setUser(user);
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
+
+        // Gửi thông tin người dùng đến UserService để tạo hồ sơ người dùng
+        String userServiceUrl = "http://user-service.local/api/user/createProfile";  // URL của UserService
+
+        // DTO chứa thông tin cần thiết cho UserService
+        UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(userDto.getUsername(), userDto.getEmail());
+
+        try {
+            // Gọi UserService để tạo thông tin người dùng
+            restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);  // Gửi yêu cầu tới UserService
+        } catch (Exception e) {
+            // Nếu UserService không thành công, rollback lại các thay đổi đã thực hiện
+            throw new RuntimeException("Failed to create user profile in UserService, rolling back registration.", e);
+        }
     }
 
 

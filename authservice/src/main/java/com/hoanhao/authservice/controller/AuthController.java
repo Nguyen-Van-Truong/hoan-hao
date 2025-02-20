@@ -4,7 +4,7 @@ import com.hoanhao.authservice.dto.reponse.AuthResponse;
 import com.hoanhao.authservice.dto.reponse.UserResponseDto;
 import com.hoanhao.authservice.dto.request.AuthRequest;
 import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
-import com.hoanhao.authservice.service.UserService;
+import com.hoanhao.authservice.service.AuthService;
 import com.hoanhao.authservice.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ import java.util.Map;
 public class AuthController {
 
     @Autowired
-    private UserService userService;
+    private AuthService authService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -29,7 +29,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
         try {
-            AuthResponse response = userService.login(authRequest);
+            AuthResponse response = authService.login(authRequest);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
@@ -66,7 +66,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@Validated @RequestBody UserRegistrationRequestDto userDto) {
         try {
-            userService.registerUser(userDto);
+            authService.registerUser(userDto);
             return ResponseEntity.ok(Map.of("message", "User registered successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
@@ -79,7 +79,7 @@ public class AuthController {
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         try {
-            UserResponseDto userDto = userService.getUserById(id);
+            UserResponseDto userDto = authService.getUserById(id);
             return ResponseEntity.ok(userDto);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
