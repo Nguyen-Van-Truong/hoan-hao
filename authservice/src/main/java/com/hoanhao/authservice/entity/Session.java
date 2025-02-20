@@ -1,39 +1,55 @@
 package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
 
-@Data
-@Entity
-@Table(name = "session", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "refresh_token")
-})
-public class Session {
 
+@Getter
+@Setter
+@Entity
+@Table(name = "session", schema = "hoanhao_auth")
+public class Session {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 255)
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
-    @Column(length = 45)
+    @Size(max = 45)
+    @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(length = 255)
+    @Size(max = 255)
+    @Column(name = "user_agent")
     private String userAgent;
 
-    @Column(nullable = false)
+    @NotNull
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
+    private LocalDateTime  createdAt;
 
-    @Column
-    private LocalDateTime revokedAt;
+    @Column(name = "revoked_at")
+    private LocalDateTime  revokedAt;
+
 }

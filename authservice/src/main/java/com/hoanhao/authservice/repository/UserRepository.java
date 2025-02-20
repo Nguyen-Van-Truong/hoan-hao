@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u " +
-            "LEFT JOIN u.emails e " +
+            "LEFT JOIN u.userEmails e " +  // Thay đổi tên entity userEmails
             "WHERE u.username = :usernameOrEmailOrPhone " +
             "OR e.email = :usernameOrEmailOrPhone " +
             "OR EXISTS (SELECT 1 FROM UserPhoneNumber p WHERE p.user = u AND (p.phoneNumber = :usernameOrEmailOrPhone))")

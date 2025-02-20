@@ -1,26 +1,40 @@
 package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
 
-@Data
-@Entity
-@Table(name = "user_role")
-public class UserRole {
 
+@Getter
+@Setter
+@Entity
+@Table(name = "user_role", schema = "hoanhao_auth")
+public class UserRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
-    @Column(nullable = false)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
+
 }

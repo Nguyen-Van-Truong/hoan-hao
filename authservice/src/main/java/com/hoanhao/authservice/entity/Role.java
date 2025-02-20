@@ -1,32 +1,35 @@
 package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Entity
-@Table(name = "role", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "name")
-})
+@Table(name = "role", schema = "hoanhao_auth")
 public class Role {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(nullable = false, length = 50)
+    @Size(max = 50)
+    @NotNull
+    @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @Column(length = 255)
+    @Size(max = 255)
+    @Column(name = "description")
     private String description;
 
-    @Column(nullable = false)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Relationships
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserRole> userRoles = new HashSet<>();
 }

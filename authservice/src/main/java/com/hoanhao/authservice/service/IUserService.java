@@ -1,5 +1,6 @@
 package com.hoanhao.authservice.service;
 
+import com.hoanhao.authservice.dto.reponse.AuthResponse;
 import com.hoanhao.authservice.dto.reponse.UserResponseDto;
 import com.hoanhao.authservice.dto.request.AuthRequest;
 import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
@@ -9,5 +10,5 @@ public interface IUserService {
 
     UserResponseDto getUserById(Long id); // Thêm phương thức này
 
-    String login(AuthRequest authRequest);
+    AuthResponse login(AuthRequest authRequest);
 }

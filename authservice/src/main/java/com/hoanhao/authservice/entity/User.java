@@ -1,59 +1,54 @@
 package com.hoanhao.authservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
-@Table(name = "user", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "username")
-})
+@Table(name = "user", schema = "hoanhao_auth")
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(nullable = true, length = 255)
+    @Size(max = 255)
+    @Column(name = "username")
     private String username;
 
-    @Column(nullable = false, length = 255)
+    @Size(max = 255)
+    @NotNull
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(nullable = true)
+    @ColumnDefault("1")
+    @Column(name = "is_active")
     private Boolean isActive;
 
-    @Column(nullable = true)
+    @ColumnDefault("0")
+    @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Column(nullable = true)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(nullable = true)
+    @ColumnDefault("CURRENT_TIMESTAMP")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(nullable = true)
+    @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    // Relationships
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserEmail> emails = new HashSet<>();
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<UserEmail> userEmails;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserPhoneNumber> phoneNumbers = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<UserRole> roles = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Session> sessions = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LoginAttempt> loginAttempts = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<OauthProvider> oauthProviders = new HashSet<>();
 }
