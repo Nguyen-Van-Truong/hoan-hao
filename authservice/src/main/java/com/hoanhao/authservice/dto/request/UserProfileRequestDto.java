@@ -3,21 +3,24 @@ package com.hoanhao.authservice.dto.request;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Setter
 @Getter
 public class UserProfileRequestDto {
     private String username;
     private String email;
     private String fullName;
-    private String dateOfBirth; // Sử dụng String
+    private String dateOfBirth;
+    private String countryCode;  // Thêm countryCode
+    private String phoneNumber;  // Thêm phoneNumber
 
-    public UserProfileRequestDto(String username, String email, String fullName, String dateOfBirth) {
+    public UserProfileRequestDto(String username, String email, String fullName, String dateOfBirth,
+                                 String countryCode, String phoneNumber) {
         this.username = username;
         this.email = email;
         this.fullName = fullName;
         this.dateOfBirth = dateOfBirth;
+        this.countryCode = countryCode;
+        this.phoneNumber = phoneNumber;
     }
 
 }

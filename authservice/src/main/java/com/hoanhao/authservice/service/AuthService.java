@@ -106,7 +106,9 @@ public class AuthService implements IAuthService {
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getFullName(),
-                userDto.getDateOfBirth()
+                userDto.getDateOfBirth(),
+                userDto.getCountryCode(),  // Truyền countryCode
+                userDto.getPhoneNumber()   // Truyền phoneNumber
         );
         try {
             restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);

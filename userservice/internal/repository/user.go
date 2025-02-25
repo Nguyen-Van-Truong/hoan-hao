@@ -1,24 +1,21 @@
 package repository
 
 import (
-	"userservice/internal/model"
-
 	"github.com/jinzhu/gorm"
+	"userservice/internal/model"
 )
 
-// UserRepository định nghĩa interface cho tầng repository
 type UserRepository interface {
 	FindByUsername(username string) (*model.UserProfile, error)
 	SaveProfile(profile *model.UserProfile) error
 	SaveEmail(email *model.UserEmail) error
+	SavePhoneNumber(phone *model.UserPhoneNumber) error // Thêm phương thức mới
 }
 
-// userRepository là struct triển khai interface
 type userRepository struct {
 	db *gorm.DB
 }
 
-// NewUserRepository tạo instance mới của repository
 func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
@@ -37,4 +34,8 @@ func (r *userRepository) SaveProfile(profile *model.UserProfile) error {
 
 func (r *userRepository) SaveEmail(email *model.UserEmail) error {
 	return r.db.Create(email).Error
+}
+
+func (r *userRepository) SavePhoneNumber(phone *model.UserPhoneNumber) error {
+	return r.db.Create(phone).Error
 }

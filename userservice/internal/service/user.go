@@ -7,17 +7,14 @@ import (
 	"userservice/internal/repository"
 )
 
-// UserService định nghĩa interface cho tầng service
 type UserService interface {
 	CreateProfile(req model.UserProfileRequestDto) error
 }
 
-// userService là struct triển khai interface
 type userService struct {
 	repo repository.UserRepository
 }
 
-// NewUserService tạo instance mới của service
 func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{repo: repo}
 }
@@ -54,8 +51,26 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 
 	// Lưu email
 	email := &model.UserEmail{
-		UserID: profile.ID,
-		Email:  req.Email,
+		UserID:     profile.ID,
+		Email:      req.Email,
+		Visibility: "private",
 	}
-	return s.repo.SaveEmail(email)
+	if err := s.repo.SaveEmail(email); err != nil {
+		return err
+	}
+
+	// Lưu số điện thoại nếu có
+	if req.CountryCode != "" && req.PhoneNumber != "" {
+		phone := &model.UserPhoneNumber{
+			UserID:      profile.ID,
+			CountryCode: req.CountryCode,
+			PhoneNumber: req.PhoneNumber,
+			Visibility:  "private",
+		}
+		if err := s.repo.SavePhoneNumber(phone); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
