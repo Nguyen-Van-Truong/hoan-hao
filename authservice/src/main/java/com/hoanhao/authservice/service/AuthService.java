@@ -5,14 +5,8 @@ import com.hoanhao.authservice.dto.reponse.UserResponseDto;
 import com.hoanhao.authservice.dto.request.AuthRequest;
 import com.hoanhao.authservice.dto.request.UserProfileRequestDto;
 import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
-import com.hoanhao.authservice.entity.Role;
-import com.hoanhao.authservice.entity.User;
-import com.hoanhao.authservice.entity.UserEmail;
-import com.hoanhao.authservice.entity.UserRole;
-import com.hoanhao.authservice.repository.RoleRepository;
-import com.hoanhao.authservice.repository.UserEmailRepository;
-import com.hoanhao.authservice.repository.UserRepository;
-import com.hoanhao.authservice.repository.UserRoleRepository;
+import com.hoanhao.authservice.entity.*;
+import com.hoanhao.authservice.repository.*;
 import com.hoanhao.authservice.util.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +29,8 @@ public class AuthService implements IAuthService {
     private RoleRepository roleRepository;
     @Autowired
     private UserRoleRepository userRoleRepository;
+    @Autowired
+    private UserPhoneNumberRepository userPhoneNumberRepository;
     @Autowired
     private RestTemplate restTemplate;
     @Autowired
@@ -76,34 +72,45 @@ public class AuthService implements IAuthService {
         user.setIsActive(true);
         user.setIsVerified(false);
 
-        // Lưu User vào cơ sở dữ liệu
+        // Lưu User
         userRepository.save(user);
 
-        // Tạo đối tượng UserEmail và lưu vào bảng user_emails
+        // Lưu email
         UserEmail userEmail = new UserEmail();
         userEmail.setUser(user);
         userEmail.setEmail(userDto.getEmail());
         userEmail.setVisibility("private");
         userEmailRepository.save(userEmail);
 
-        // Gán role 'USER' cho người dùng mới
-        Role userRole = roleRepository.findByName("USER").orElseThrow(() -> new RuntimeException("Role USER not found"));
+        // Lưu số điện thoại nếu có
+        if (userDto.getCountryCode() != null && userDto.getPhoneNumber() != null) {
+            UserPhoneNumber userPhone = new UserPhoneNumber();
+            userPhone.setUser(user);
+            userPhone.setCountryCode(userDto.getCountryCode());
+            userPhone.setPhoneNumber(userDto.getPhoneNumber());
+            userPhone.setVisibility("private");
+            userPhoneNumberRepository.save(userPhone);
+        }
+
+        // Gán role 'USER'
+        Role userRole = roleRepository.findByName("USER")
+                .orElseThrow(() -> new RuntimeException("Role USER not found"));
         UserRole userRoleEntity = new UserRole();
         userRoleEntity.setUser(user);
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
 
-        // Gửi thông tin người dùng đến UserService để tạo hồ sơ người dùng
-        String userServiceUrl = "http://localhost:8081/api/user/createProfile";  // URL của UserService
-
-        // DTO chứa thông tin cần thiết cho UserService
-        UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(userDto.getUsername(), userDto.getEmail(), userDto.getFullName());
-        System.out.println("userDto.getFullName:" + userDto.getFullName());
+        // Gửi thông tin đến UserService
+        String userServiceUrl = "http://localhost:8081/api/user/createProfile";
+        UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
+                userDto.getUsername(),
+                userDto.getEmail(),
+                userDto.getFullName(),
+                userDto.getDateOfBirth()
+        );
         try {
-            // Gọi UserService để tạo thông tin người dùng
-            restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);  // Gửi yêu cầu tới UserService
+            restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);
         } catch (Exception e) {
-            // Nếu UserService không thành công, rollback lại các thay đổi đã thực hiện
             throw new RuntimeException("Failed to create user profile in UserService, rolling back registration.", e);
         }
     }
