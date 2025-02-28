@@ -59,8 +59,16 @@ public class AuthService implements IAuthService {
 
     @Transactional
     public void registerUser(UserRegistrationRequestDto userDto) {
+        // Kiểm tra trùng username
         if (userRepository.existsByUsername(userDto.getUsername())) {
             throw new RuntimeException("Username already exists");
+        }
+
+        // Kiểm tra trùng số điện thoại nếu có
+        if (userDto.getCountryCode() != null && userDto.getPhoneNumber() != null) {
+            if (userPhoneNumberRepository.existsByCountryCodeAndPhoneNumber(userDto.getCountryCode(), userDto.getPhoneNumber())) {
+                throw new RuntimeException("Phone number already exists");
+            }
         }
 
         // Tạo đối tượng User
@@ -72,12 +80,12 @@ public class AuthService implements IAuthService {
         user.setIsActive(true);
         user.setIsVerified(false);
 
-        // Lưu User
-        userRepository.save(user);
+        // Lưu User và lấy ID
+        User savedUser = userRepository.save(user);
 
         // Lưu email
         UserEmail userEmail = new UserEmail();
-        userEmail.setUser(user);
+        userEmail.setUser(savedUser);
         userEmail.setEmail(userDto.getEmail());
         userEmail.setVisibility("private");
         userEmailRepository.save(userEmail);
@@ -85,7 +93,7 @@ public class AuthService implements IAuthService {
         // Lưu số điện thoại nếu có
         if (userDto.getCountryCode() != null && userDto.getPhoneNumber() != null) {
             UserPhoneNumber userPhone = new UserPhoneNumber();
-            userPhone.setUser(user);
+            userPhone.setUser(savedUser);
             userPhone.setCountryCode(userDto.getCountryCode());
             userPhone.setPhoneNumber(userDto.getPhoneNumber());
             userPhone.setVisibility("private");
@@ -96,19 +104,20 @@ public class AuthService implements IAuthService {
         Role userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RuntimeException("Role USER not found"));
         UserRole userRoleEntity = new UserRole();
-        userRoleEntity.setUser(user);
+        userRoleEntity.setUser(savedUser);
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
 
-        // Gửi thông tin đến UserService
+        // Gửi thông tin đến UserService, bao gồm userId
         String userServiceUrl = "http://localhost:8081/api/user/createProfile";
         UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getFullName(),
                 userDto.getDateOfBirth(),
-                userDto.getCountryCode(),  // Truyền countryCode
-                userDto.getPhoneNumber()   // Truyền phoneNumber
+                userDto.getCountryCode(),
+                userDto.getPhoneNumber(),
+                savedUser.getId()
         );
         try {
             restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);
@@ -116,7 +125,6 @@ public class AuthService implements IAuthService {
             throw new RuntimeException("Failed to create user profile in UserService, rolling back registration.", e);
         }
     }
-
 
     public UserResponseDto getUserById(Long id) {
         Optional<User> userOpt = userRepository.findById(id);
