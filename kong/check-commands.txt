@@ -1,0 +1,17 @@
+REM Kiểm tra trạng thái Kong Admin API
+curl -I http://localhost:8001
+
+REM Liệt kê tất cả Services
+curl -X GET http://localhost:8001/services
+
+REM Liệt kê tất cả Routes
+curl -X GET http://localhost:8001/routes
+
+REM Liệt kê tất cả Plugins
+curl -X GET http://localhost:8001/plugins
+
+REM Liệt kê tất cả Consumers
+curl -X GET http://localhost:8001/consumers
+
+REM Liệt kê JWT Credentials của Consumer (thay test-user bằng tên consumer)
+curl -X GET http://localhost:8001/consumers/test-user/jwt

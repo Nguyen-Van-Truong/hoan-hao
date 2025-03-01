@@ -1,0 +1,11 @@
+REM Đăng ký Service cho AuthService (port 8080)
+curl -i -X POST http://localhost:8001/services -d "name=auth-service" -d "url=http://host.docker.internal:8080"
+
+REM Đăng ký Service cho UserService (port 8081)
+curl -i -X POST http://localhost:8001/services -d "name=user-service" -d "url=http://host.docker.internal:8081"
+
+REM Thêm Route cho AuthService (/auth)
+curl -i -X POST http://localhost:8001/services/auth-service/routes -d "paths[]=/auth" -d "name=auth-route"
+
+REM Thêm Route cho UserService (/user)
+curl -i -X POST http://localhost:8001/services/user-service/routes -d "paths[]=/user" -d "name=user-route"

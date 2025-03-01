@@ -1,0 +1,17 @@
+REM Khởi động Kong
+docker-compose up -d
+
+REM Dừng và xóa container
+docker-compose down
+
+REM Xem trạng thái container
+docker ps -a
+
+REM Xem log của Kong Gateway
+docker logs kong-kong-1
+
+REM Xem log của migrations
+docker logs kong-kong-migrations-1
+
+REM Xem log của PostgreSQL
+docker logs kong-kong-database-1

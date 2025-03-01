@@ -18,7 +18,7 @@ spring:
 
 security:
   jwt:
-    secret: 'WHg3JDkyJjZrVwEBhWd0YhI4J3gtLUxHehNzTmNvcFJTdFV2V3hZWg=='  # Giá trị mặc định
+    secret: 'mysecretkeyforhs256whichislongenough'  # Giá trị mặc định
     access-token-expiration: 3600000 # 1 giờ
     refresh-token-expiration: 86400000 # 1 ngày
 #    access-token-expiration: 10000 # 10 giây

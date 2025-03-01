@@ -1,0 +1,2 @@
+chạy tất cả lệnh thiết lập kong với script Powershell
+.\setup-kong.ps1

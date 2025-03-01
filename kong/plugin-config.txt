@@ -1,0 +1,2 @@
+REM Kích hoạt JWT Plugin cho UserService
+curl -i -X POST http://localhost:8001/services/user-service/plugins -d "name=jwt"

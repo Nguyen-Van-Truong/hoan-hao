@@ -1,3 +1,4 @@
+// userservice/internal/service/user.go
 package service
 
 import (
@@ -124,11 +125,11 @@ func (s *userService) SendFriendRequest(userID, friendID uint) error {
 		}
 	}
 
-	profile, err := s.repo.FindProfileByID(userID)
+	profile, err := s.repo.FindProfileByUserID(userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
-	friendProfile, err := s.repo.FindProfileByID(friendID)
+	friendProfile, err := s.repo.FindProfileByUserID(friendID)
 	if err != nil {
 		return fmt.Errorf("friend not found: %v", err)
 	}
@@ -156,7 +157,7 @@ func (s *userService) GetPublicProfile(userID uint) (*model.UserProfile, error) 
 }
 
 func (s *userService) GetMyProfile(userID uint) (*model.UserProfile, error) {
-	return s.repo.FindProfileByID(userID)
+	return s.repo.FindProfileByUserID(userID)
 }
 
 func (s *userService) GetFriends(userID uint) ([]model.Friend, error) {

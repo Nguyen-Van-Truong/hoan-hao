@@ -1,0 +1,34 @@
+REM === XÓA TỪNG THÀNH PHẦN RIÊNG LẺ ===
+
+REM Xóa Service auth-service
+curl -i -X DELETE http://localhost:8001/services/auth-service
+
+REM Xóa Service user-service
+curl -i -X DELETE http://localhost:8001/services/user-service
+
+REM Xóa Route auth-route (nếu cần xóa riêng)
+curl -i -X DELETE http://localhost:8001/routes/auth-route
+
+REM Xóa Route user-route (nếu cần xóa riêng)
+curl -i -X DELETE http://localhost:8001/routes/user-route
+
+REM Lấy ID Plugin JWT của user-service
+curl -X GET http://localhost:8001/services/user-service/plugins
+
+REM Xóa Plugin JWT (thay <plugin-id> bằng ID thực tế)
+curl -i -X DELETE http://localhost:8001/plugins/<plugin-id>
+
+REM Xóa Consumer test-user
+curl -i -X DELETE http://localhost:8001/consumers/test-user
+
+REM === RESET TOÀN BỘ CƠ SỞ DỮ LIỆU ===
+
+REM Dừng và xóa tất cả container
+docker-compose down
+
+REM Xóa volume của PostgreSQL (nếu cần reset hoàn toàn)
+docker volume ls
+docker volume rm $(docker volume ls -q)
+
+REM Khởi động lại để tạo cơ sở dữ liệu mới
+docker-compose up -d

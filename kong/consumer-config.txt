@@ -1,0 +1,5 @@
+REM Tạo Consumer
+curl -i -X POST http://localhost:8001/consumers -d "username=test-user"
+
+REM Tạo JWT Credential cho Consumer
+curl -i -X POST http://localhost:8001/consumers/test-user/jwt -H "Content-Type: application/x-www-form-urlencoded" -d "key=test-key" -d "secret=test-secret"

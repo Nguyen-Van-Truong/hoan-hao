@@ -1,7 +1,10 @@
 package com.hoanhao.authservice.util;
 
+import com.hoanhao.authservice.entity.User;
+import com.hoanhao.authservice.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,39 +13,47 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${security.jwt.secret}")
-    private String secretKey;
+    // Secret key cố định, plain text, đủ dài cho HS256
+    private String secretKey = "mysecretkeyforhs256whichislongenough";
 
     @Value("${security.jwt.access-token-expiration}")
-    private long accessTokenExpiration; // Thời gian hết hạn của access token
+    private long accessTokenExpiration;
 
     @Value("${security.jwt.refresh-token-expiration}")
-    private long refreshTokenExpiration; // Thời gian hết hạn của refresh token
+    private long refreshTokenExpiration;
 
-    // Tạo access token
+    @Autowired
+    private UserRepository userRepository;
+
+    // Tạo access token với HS256
     public String generateAccessToken(String username) {
+        User user = userRepository.findByUsernameOrEmailOrPhone(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+
         return Jwts.builder()
                 .setSubject(username)
+                .claim("userId", user.getId())
+                .setIssuer("hoanhao-auth-service")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration)) // Sử dụng cấu hình
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(SignatureAlgorithm.HS256, secretKey.getBytes()) // Sử dụng HS256
                 .compact();
     }
 
-    // Tạo refresh token
+    // Tạo refresh token với HS256
     public String generateRefreshToken(String username) {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration)) // Sử dụng cấu hình
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(SignatureAlgorithm.HS256, secretKey.getBytes()) // Sử dụng HS256
                 .compact();
     }
 
     // Trích xuất username từ token
     public String extractUsername(String token) {
         return Jwts.parser()
-                .setSigningKey(secretKey)
+                .setSigningKey(secretKey.getBytes())
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -51,7 +62,7 @@ public class JwtUtil {
     // Kiểm tra tính hợp lệ của token
     public Boolean isTokenValid(String token) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parser().setSigningKey(secretKey.getBytes()).parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;

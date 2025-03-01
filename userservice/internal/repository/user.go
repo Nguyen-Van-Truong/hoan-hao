@@ -1,3 +1,4 @@
+// userservice/internal/repository/user.go
 package repository
 
 import (
@@ -16,6 +17,8 @@ type UserRepository interface {
 	UpdateFriendStatus(friendID uint, status string) error
 	GetFriends(userID uint) ([]model.Friend, error)
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
+	FindProfileByUserID(userID uint) (*model.UserProfile, error) // Thêm phương thức mới
+
 }
 
 type userRepository struct {
@@ -29,6 +32,14 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 func (r *userRepository) FindProfileByID(id uint) (*model.UserProfile, error) {
 	var profile model.UserProfile
 	if err := r.db.First(&profile, id).Error; err != nil {
+		return nil, err
+	}
+	return &profile, nil
+}
+
+func (r *userRepository) FindProfileByUserID(userID uint) (*model.UserProfile, error) {
+	var profile model.UserProfile
+	if err := r.db.Where("user_id = ?", userID).First(&profile).Error; err != nil {
 		return nil, err
 	}
 	return &profile, nil

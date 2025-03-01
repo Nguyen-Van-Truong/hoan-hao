@@ -1,0 +1,58 @@
+REM === KIỂM TRA CÁC API ĐÃ ĐĂNG KÝ QUA KONG ===
+
+REM Kiểm tra trạng thái Kong Admin API (để chắc chắn Kong đang chạy)
+curl -I http://localhost:8001
+
+REM --- Test AuthService qua Kong ---
+
+REM Đăng nhập qua AuthService (lấy access_token)
+curl -X POST "http://localhost:8000/auth/api/auth/login" `
+  -H "Content-Type: application/json" `
+  -d "{\"usernameOrEmailOrPhone\": \"testuser\", \"password\": \"password\"}"
+
+REM Đăng ký qua AuthService
+curl --location 'http://localhost:8000/auth/register' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "username": "t23",
+    "email": "t23@gmail.com",
+    "password": "1",
+    "fullName": "Nguyen Van T23",
+    "dateOfBirth": "2002-10-11",
+    "countryCode": "+84",
+    "phoneNumber": "0787662342"
+}'
+
+REM --- Test UserService qua Kong ---
+
+REM Gửi yêu cầu kết bạn (thay <access_token> bằng token từ lệnh đăng nhập)
+curl -X POST "http://localhost:8000/user/friend/request" `
+  -H "Authorization: Bearer <access_token>" `
+  -d "friendId=2"
+
+REM Thay đổi trạng thái lời mời kết bạn
+curl --location 'http://localhost:8000/user/friend/update' \
+--header 'Authorization: Bearer <access_token>' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'friendId=2'
+
+REM Xem profile công khai của một user (ví dụ userId=2)
+curl -X GET "http://localhost:8000/user/profile/public/2" `
+  -H "Authorization: Bearer <access_token>"
+
+REM Xem profile cá nhân của user hiện tại
+curl -X GET "http://localhost:8000/user/profile/me" `
+  -H "Authorization: Bearer <access_token>"
+
+REM Lấy danh sách bạn bè của user hiện tại
+curl -X GET "http://localhost:8000/user/friends" `
+  -H "Authorization: Bearer <access_token>"
+
+REM Lấy danh sách gợi ý bạn bè (giới hạn 5)
+curl -X GET "http://localhost:8000/user/friends/suggestions?limit=5" `
+  -H "Authorization: Bearer <access_token>"
+
+REM --- Lưu ý ---
+REM 1. Thay <access_token> bằng token thực tế từ lệnh đăng nhập.
+REM 2. Đảm bảo AuthService và UserService đang chạy trên port 8080 và 8081.
+REM 3. Nếu lỗi 401 Unauthorized, kiểm tra JWT secret khớp giữa AuthService và Kong.

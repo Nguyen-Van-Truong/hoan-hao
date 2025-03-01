@@ -1,0 +1,5 @@
+REM Đăng nhập qua AuthService
+curl -X POST "http://localhost:8000/auth/api/auth/login" -H "Content-Type: application/json" -d "{\"usernameOrEmailOrPhone\": \"testuser\", \"password\": \"password\"}"
+
+REM Gửi yêu cầu kết bạn qua UserService (thay <access_token> bằng token thực tế)
+curl -X POST "http://localhost:8000/user/friend/request" -H "Authorization: Bearer <access_token>" -d "friendId=2"
