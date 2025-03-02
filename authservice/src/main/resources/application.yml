@@ -15,10 +15,27 @@ spring:
   task:
     scheduling:
       enabled: true
+    execution: # Cấu hình thread pool cho @Async
+      pool:
+        core-size: 5
+        max-size: 10
+        queue-capacity: 100
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   web:
     resources:
       add-mappings: false
+
 
 security:
   jwt:

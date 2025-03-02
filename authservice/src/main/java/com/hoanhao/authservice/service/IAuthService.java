@@ -2,13 +2,13 @@ package com.hoanhao.authservice.service;
 
 import com.hoanhao.authservice.dto.reponse.AuthResponse;
 import com.hoanhao.authservice.dto.reponse.UserResponseDto;
-import com.hoanhao.authservice.dto.request.AuthRequest;
-import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
+import com.hoanhao.authservice.dto.request.*;
 
 public interface IAuthService {
-    void registerUser(UserRegistrationRequestDto userDto);
-
-    UserResponseDto getUserById(Long id); // Thêm phương thức này
-
     AuthResponse login(AuthRequest authRequest);
+    AuthResponse refreshToken(String refreshToken);
+    void registerUser(UserRegistrationRequestDto userDto);
+    void changePassword(String authorizationHeader, ChangePasswordRequest changePasswordRequest);
+    void forgotPassword(ForgotPasswordRequest forgotPasswordRequest);
+    void resetPassword(ResetPasswordRequest resetPasswordRequest);
 }

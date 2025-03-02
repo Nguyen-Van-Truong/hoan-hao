@@ -16,4 +16,9 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     @Modifying
     @Query("DELETE FROM Session s WHERE s.revokedAt < :threshold OR s.expiresAt < :threshold")
     int deleteByRevokedAtBeforeOrExpiresAtBefore(LocalDateTime threshold, LocalDateTime expiresThreshold);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Session s SET s.revokedAt = :revokedAt WHERE s.user.id = :userId AND s.revokedAt IS NULL")
+    void revokeAllSessionsByUserId(Long userId, LocalDateTime revokedAt);
 }

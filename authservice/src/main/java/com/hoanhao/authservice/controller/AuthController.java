@@ -1,9 +1,7 @@
 package com.hoanhao.authservice.controller;
 
 import com.hoanhao.authservice.dto.reponse.AuthResponse;
-import com.hoanhao.authservice.dto.reponse.UserResponseDto;
-import com.hoanhao.authservice.dto.request.AuthRequest;
-import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
+import com.hoanhao.authservice.dto.request.*;
 import com.hoanhao.authservice.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -59,15 +57,36 @@ public class AuthController {
     }
 
     /**
-     * Lấy thông tin người dùng theo ID
+     * Đổi mật khẩu người dùng
      */
-//    @GetMapping("/users/{id}")
-//    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-//        try {
-//            UserResponseDto userDto = authService.getUserById(id);
-//            return ResponseEntity.ok(userDto);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
-//        }
-//    }
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestHeader("Authorization") String authorizationHeader,
+                                            @Validated @RequestBody ChangePasswordRequest changePasswordRequest) {
+        try {
+            authService.changePassword(authorizationHeader, changePasswordRequest);
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Validated @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        try {
+            authService.forgotPassword(forgotPasswordRequest);
+            return ResponseEntity.ok(Map.of("message", "Reset password token sent successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Validated @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        try {
+            authService.resetPassword(resetPasswordRequest);
+            return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(Map.of("error", e.getMessage()));
+        }
+    }
 }
