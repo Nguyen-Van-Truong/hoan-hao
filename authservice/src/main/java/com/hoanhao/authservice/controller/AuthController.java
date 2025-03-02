@@ -61,13 +61,13 @@ public class AuthController {
     /**
      * Lấy thông tin người dùng theo ID
      */
-    @GetMapping("/users/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
-        try {
-            UserResponseDto userDto = authService.getUserById(id);
-            return ResponseEntity.ok(userDto);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
-        }
-    }
+//    @GetMapping("/users/{id}")
+//    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+//        try {
+//            UserResponseDto userDto = authService.getUserById(id);
+//            return ResponseEntity.ok(userDto);
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+//        }
+//    }
 }
