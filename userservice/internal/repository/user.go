@@ -17,6 +17,7 @@ type UserRepository interface {
 	UpdateFriendStatus(friendID uint, status string) error
 	GetFriends(userID uint) ([]model.Friend, error)
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
+	DB() *gorm.DB // Thêm phương thức để truy cập db
 }
 
 type userRepository struct {
@@ -25,6 +26,10 @@ type userRepository struct {
 
 func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
+}
+
+func (r *userRepository) DB() *gorm.DB {
+	return r.db
 }
 
 func (r *userRepository) FindProfileByID(id uint) (*model.UserProfile, error) {

@@ -5,7 +5,6 @@ import com.hoanhao.authservice.dto.reponse.UserResponseDto;
 import com.hoanhao.authservice.dto.request.AuthRequest;
 import com.hoanhao.authservice.dto.request.UserRegistrationRequestDto;
 import com.hoanhao.authservice.service.AuthService;
-import com.hoanhao.authservice.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -19,9 +18,6 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
     /**
      * Đăng nhập người dùng
@@ -42,19 +38,8 @@ public class AuthController {
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestParam String refreshToken) {
         try {
-            // Kiểm tra tính hợp lệ của refresh token
-            if (!jwtUtil.isTokenValid(refreshToken)) {
-                throw new RuntimeException("Invalid refresh token");
-            }
-
-            // Trích xuất username từ refresh token
-            String username = jwtUtil.extractUsername(refreshToken);
-
-            // Tạo access token mới
-            String newAccessToken = jwtUtil.generateAccessToken(username);
-
-            // Trả về response
-            return ResponseEntity.ok(new AuthResponse(newAccessToken, refreshToken));
+            AuthResponse response = authService.refreshToken(refreshToken);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         }

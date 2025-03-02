@@ -11,6 +11,10 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
+  # Bật scheduled tasks
+  task:
+    scheduling:
+      enabled: true
 
   web:
     resources:
@@ -19,7 +23,7 @@ spring:
 security:
   jwt:
     secret: 'mysecretkeyforhs256whichislongenough'  # Giá trị mặc định
-    access-token-expiration: 3600000 # 1 giờ
-    refresh-token-expiration: 86400000 # 1 ngày
+    access-token-expiration: 86400000 # 1 ngày
+    refresh-token-expiration: 604800000 # 1 tuần
 #    access-token-expiration: 10000 # 10 giây
 #    refresh-token-expiration: 30000 # 30 giay

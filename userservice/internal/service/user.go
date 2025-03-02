@@ -1,8 +1,8 @@
-// userservice/internal/service/user.go
 package service
 
 import (
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"time"
 	"userservice/internal/model"
 	"userservice/internal/repository"
@@ -11,11 +11,13 @@ import (
 type UserService interface {
 	CreateProfile(req model.UserProfileRequestDto) error
 	SendFriendRequest(userID, friendID uint) error
-	UpdateFriendRequest(friendID uint, status string) error
+	UpdateFriendRequest(userID, friendID uint, status string) error
 	GetPublicProfile(userID uint) (*model.UserProfile, error)
 	GetMyProfile(userID uint) (*model.UserProfile, error)
 	GetFriends(userID uint) ([]model.Friend, error)
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
+	GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) // Thêm API mới
+	GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) // Thêm API mới
 }
 
 type userService struct {
@@ -45,7 +47,7 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 
 	// Tạo UserProfile với ID từ AuthService
 	profile := &model.UserProfile{
-		ID:             req.UserID, // Gán từ AuthService
+		ID:             req.UserID,
 		Username:       req.Username,
 		FullName:       req.FullName,
 		IsActive:       true,
@@ -145,11 +147,26 @@ func (s *userService) SendFriendRequest(userID, friendID uint) error {
 	return s.repo.SaveFriend(friend)
 }
 
-func (s *userService) UpdateFriendRequest(friendID uint, status string) error {
+func (s *userService) UpdateFriendRequest(userID, friendID uint, status string) error {
 	if status != "ACCEPTED" && status != "BLOCKED" {
 		return fmt.Errorf("invalid status, must be ACCEPTED or BLOCKED")
 	}
-	return s.repo.UpdateFriendStatus(friendID, status)
+
+	// Tìm bản ghi friend request theo id
+	var friend model.Friend
+	if err := s.repo.DB().Where("id = ?", friendID).First(&friend).Error; err != nil {
+		return fmt.Errorf("friend request not found: %v", err)
+	}
+
+	// Kiểm tra quyền: chỉ friend_id (người nhận) mới được phép ACCEPT
+	if status == "ACCEPTED" && friend.FriendID != userID {
+		return fmt.Errorf("only the recipient (friend_id) can accept the friend request")
+	}
+
+	// Cập nhật trạng thái và action_by
+	friend.Status = status
+	friend.ActionBy = &userID
+	return s.repo.DB().Save(&friend).Error
 }
 
 func (s *userService) GetPublicProfile(userID uint) (*model.UserProfile, error) {
@@ -166,4 +183,57 @@ func (s *userService) GetFriends(userID uint) ([]model.Friend, error) {
 
 func (s *userService) GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error) {
 	return s.repo.GetFriendSuggestions(userID, limit)
+}
+
+// GetIncomingFriendRequests lấy danh sách lời mời kết bạn gửi tới người dùng
+func (s *userService) GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) {
+	var requests []model.Friend
+	var total int64
+
+	// Đếm tổng số lời mời
+	if err := s.repo.DB().Model(&model.Friend{}).
+		Where("friend_id = ? AND status = ?", userID, "PENDING").
+		Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count incoming requests: %v", err)
+	}
+
+	// Lấy danh sách với phân trang
+	if err := s.repo.DB().Where("friend_id = ? AND status = ?", userID, "PENDING").
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&requests).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to fetch incoming requests: %v", err)
+	}
+
+	return requests, total, nil
+}
+
+// GetOutgoingFriendRequests lấy danh sách lời mời kết bạn đã gửi đi
+func (s *userService) GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) {
+	var requests []model.Friend
+	var total int64
+
+	// Đếm tổng số lời mời
+	if err := s.repo.DB().Model(&model.Friend{}).
+		Where("user_id = ? AND status = ?", userID, "PENDING").
+		Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count outgoing requests: %v", err)
+	}
+
+	// Lấy danh sách với phân trang
+	if err := s.repo.DB().Where("user_id = ? AND status = ?", userID, "PENDING").
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&requests).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to fetch outgoing requests: %v", err)
+	}
+
+	return requests, total, nil
+}
+
+// Thêm phương thức DB để truy cập trực tiếp database từ repository
+func (s *userService) DB() *gorm.DB {
+	return s.repo.DB()
 }
