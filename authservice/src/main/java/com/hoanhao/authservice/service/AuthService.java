@@ -109,7 +109,7 @@ public class AuthService implements IAuthService {
         userRoleRepository.save(userRoleEntity);
 
         // Gửi thông tin đến UserService, bao gồm userId
-        String userServiceUrl = "http://localhost:8081/api/user/createProfile";
+        String userServiceUrl = "http://localhost:8081/user/createProfile";
         UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
                 userDto.getUsername(),
                 userDto.getEmail(),
