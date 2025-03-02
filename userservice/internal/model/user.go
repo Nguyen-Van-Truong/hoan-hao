@@ -11,7 +11,7 @@ type UserProfileRequestDto struct {
 	DateOfBirth    string `json:"dateOfBirth"`
 	CountryCode    string `json:"countryCode"`
 	PhoneNumber    string `json:"phoneNumber"`
-	UserID         uint   `json:"userId"`                   // Thêm userId để nhận từ AuthService
+	UserID         uint   `json:"userId"`                   // ID từ AuthService
 	Bio            string `json:"bio,omitempty"`            // Optional
 	Location       string `json:"location,omitempty"`       // Optional
 	CountryID      uint   `json:"countryId,omitempty"`      // Optional
@@ -24,8 +24,7 @@ type UserProfileRequestDto struct {
 
 // UserProfile ánh xạ bảng user_profiles trong hoanhao_user
 type UserProfile struct {
-	ID             uint       `json:"id"`      // Khóa chính của user_profiles
-	UserID         uint       `json:"user_id"` // Foreign key đến hoanhao_auth.user.id
+	ID             uint       `json:"id"` // Khóa chính, khớp với hoanhao_auth.user.id
 	Username       string     `json:"username"`
 	FullName       string     `json:"full_name"`
 	IsActive       bool       `json:"is_active"`
@@ -45,7 +44,7 @@ type UserProfile struct {
 }
 
 func (UserProfile) TableName() string {
-	return "user_profiles" // Thêm "s"
+	return "user_profiles"
 }
 
 // UserEmail ánh xạ bảng user_emails
@@ -57,7 +56,7 @@ type UserEmail struct {
 }
 
 func (UserEmail) TableName() string {
-	return "user_emails" // Thêm "s"
+	return "user_emails"
 }
 
 // UserPhoneNumber ánh xạ bảng user_phone_numbers
@@ -70,7 +69,7 @@ type UserPhoneNumber struct {
 }
 
 func (UserPhoneNumber) TableName() string {
-	return "user_phone_numbers" // Thêm "s"
+	return "user_phone_numbers"
 }
 
 // Friend ánh xạ bảng friends
@@ -86,7 +85,7 @@ type Friend struct {
 }
 
 func (Friend) TableName() string {
-	return "friends" // Thêm "s"
+	return "friends"
 }
 
 // UserSetting ánh xạ bảng user_settings
@@ -99,7 +98,7 @@ type UserSetting struct {
 }
 
 func (UserSetting) TableName() string {
-	return "user_settings" // Thêm "s"
+	return "user_settings"
 }
 
 // UserNotification ánh xạ bảng user_notifications
@@ -114,5 +113,5 @@ type UserNotification struct {
 }
 
 func (UserNotification) TableName() string {
-	return "user_notifications" // Thêm "s"
+	return "user_notifications"
 }

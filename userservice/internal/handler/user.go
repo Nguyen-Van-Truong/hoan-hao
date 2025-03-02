@@ -1,3 +1,4 @@
+// userservice/internal/handler/user.go
 package handler
 
 import (
@@ -15,11 +16,13 @@ import (
 func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 	svc := service.NewUserService(repo)
 
+	// Endpoint nội bộ không yêu cầu xác thực
+	r.POST("/user/createProfile", createProfile(svc))
+
 	// Nhóm route yêu cầu xác thực JWT
 	authGroup := r.Group("/user")
-	authGroup.Use(JWTMiddleware()) // Giả định JWTMiddleware đã được định nghĩa trong package handler
+	authGroup.Use(JWTMiddleware())
 	{
-		authGroup.POST("/createProfile", createProfile(svc))
 		authGroup.POST("/friend/request", sendFriendRequest(svc))
 		authGroup.PUT("/friend/update", updateFriendRequest(svc))
 		authGroup.GET("/profile/me", getMyProfile(svc))
@@ -28,7 +31,7 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 	}
 
 	// Route công khai không cần xác thực
-	r.GET("/user/profile/public/:userId", getPublicProfile(svc)) // userId là hoanhao_auth.user.id
+	r.GET("/user/profile/public/:id", getPublicProfile(svc)) // id là hoanhao_auth.user.id
 }
 
 // createProfile xử lý tạo hồ sơ người dùng
@@ -65,30 +68,13 @@ func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Lấy profile của user từ userId
-		userProfile, err := svc.GetMyProfile(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "User profile not found"})
-			return
-		}
-		userProfileID := userProfile.ID // userProfileID là user_profiles.id
-
-		// friendId từ form là hoanhao_auth.user.id
-		friendUserID, err := strconv.ParseUint(c.PostForm("friendId"), 10, 32)
+		friendID, err := strconv.ParseUint(c.PostForm("friendId"), 10, 32) // friendId là hoanhao_auth.user.id
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
 			return
 		}
 
-		// Lấy profile của friend từ friendUserID
-		friendProfile, err := svc.GetMyProfile(uint(friendUserID))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend profile not found"})
-			return
-		}
-		friendProfileID := friendProfile.ID // friendProfileID là user_profiles.id
-
-		if err := svc.SendFriendRequest(userProfileID, friendProfileID); err != nil {
+		if err := svc.SendFriendRequest(userID, uint(friendID)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -120,12 +106,12 @@ func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 // getPublicProfile lấy thông tin hồ sơ công khai
 func getPublicProfile(svc service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, err := strconv.ParseUint(c.Param("userId"), 10, 32) // userId là hoanhao_auth.user.id
+		userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 			return
 		}
-		profile, err := svc.GetPublicProfile(uint(userID)) // Tìm theo user_id
+		profile, err := svc.GetPublicProfile(uint(userID))
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
 			return
@@ -149,7 +135,7 @@ func getMyProfile(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		profile, err := svc.GetMyProfile(userID) // Tìm theo user_id
+		profile, err := svc.GetMyProfile(userID)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
 			return
@@ -173,15 +159,7 @@ func getFriends(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Lấy profile từ userId
-		profile, err := svc.GetMyProfile(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "User profile not found"})
-			return
-		}
-		profileID := profile.ID // profileID là user_profiles.id
-
-		friends, err := svc.GetFriends(profileID)
+		friends, err := svc.GetFriends(userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve friends"})
 			return
@@ -205,19 +183,11 @@ func getFriendSuggestions(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Lấy profile từ userId
-		profile, err := svc.GetMyProfile(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "User profile not found"})
-			return
-		}
-		profileID := profile.ID // profileID là user_profiles.id
-
 		limit, _ := strconv.Atoi(c.Query("limit"))
 		if limit <= 0 {
 			limit = 10 // Mặc định trả về 10 gợi ý
 		}
-		suggestions, err := svc.GetFriendSuggestions(profileID, limit)
+		suggestions, err := svc.GetFriendSuggestions(userID, limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve suggestions"})
 			return

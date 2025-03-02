@@ -1,2 +1,3 @@
 chạy tất cả lệnh thiết lập kong với script Powershell
+docker-compose up -d
 .\setup-kong.ps1

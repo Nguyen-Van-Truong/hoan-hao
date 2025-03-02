@@ -43,9 +43,9 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 		}
 	}
 
-	// Tạo UserProfile
+	// Tạo UserProfile với ID từ AuthService
 	profile := &model.UserProfile{
-		UserID:         req.UserID,
+		ID:             req.UserID, // Gán từ AuthService
 		Username:       req.Username,
 		FullName:       req.FullName,
 		IsActive:       true,
@@ -79,9 +79,9 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 		profile.DistrictID = &req.DistrictID
 	}
 
-	// Lưu profile
+	// Lưu profile với ID từ AuthService
 	if err := s.repo.SaveProfile(profile); err != nil {
-		return err
+		return fmt.Errorf("failed to save profile: %v", err)
 	}
 
 	// Lưu email
@@ -91,7 +91,7 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 		Visibility: "private",
 	}
 	if err := s.repo.SaveEmail(email); err != nil {
-		return err
+		return fmt.Errorf("failed to save email: %v", err)
 	}
 
 	// Lưu số điện thoại nếu có
@@ -103,7 +103,7 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 			Visibility:  "private",
 		}
 		if err := s.repo.SavePhoneNumber(phone); err != nil {
-			return err
+			return fmt.Errorf("failed to save phone number: %v", err)
 		}
 	}
 
@@ -125,11 +125,11 @@ func (s *userService) SendFriendRequest(userID, friendID uint) error {
 		}
 	}
 
-	profile, err := s.repo.FindProfileByUserID(userID)
+	profile, err := s.repo.FindProfileByID(userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
 	}
-	friendProfile, err := s.repo.FindProfileByUserID(friendID)
+	friendProfile, err := s.repo.FindProfileByID(friendID)
 	if err != nil {
 		return fmt.Errorf("friend not found: %v", err)
 	}
@@ -157,7 +157,7 @@ func (s *userService) GetPublicProfile(userID uint) (*model.UserProfile, error) 
 }
 
 func (s *userService) GetMyProfile(userID uint) (*model.UserProfile, error) {
-	return s.repo.FindProfileByUserID(userID)
+	return s.repo.FindProfileByID(userID)
 }
 
 func (s *userService) GetFriends(userID uint) ([]model.Friend, error) {

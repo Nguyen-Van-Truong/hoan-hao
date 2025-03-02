@@ -17,8 +17,6 @@ type UserRepository interface {
 	UpdateFriendStatus(friendID uint, status string) error
 	GetFriends(userID uint) ([]model.Friend, error)
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
-	FindProfileByUserID(userID uint) (*model.UserProfile, error) // Thêm phương thức mới
-
 }
 
 type userRepository struct {
@@ -31,15 +29,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 
 func (r *userRepository) FindProfileByID(id uint) (*model.UserProfile, error) {
 	var profile model.UserProfile
-	if err := r.db.First(&profile, id).Error; err != nil {
-		return nil, err
-	}
-	return &profile, nil
-}
-
-func (r *userRepository) FindProfileByUserID(userID uint) (*model.UserProfile, error) {
-	var profile model.UserProfile
-	if err := r.db.Where("user_id = ?", userID).First(&profile).Error; err != nil {
+	if err := r.db.Where("id = ?", id).First(&profile).Error; err != nil {
 		return nil, err
 	}
 	return &profile, nil
@@ -89,7 +79,7 @@ func (r *userRepository) FindByUsername(username string) (*model.UserProfile, er
 }
 
 func (r *userRepository) SaveProfile(profile *model.UserProfile) error {
-	return r.db.Save(profile).Error
+	return r.db.Create(profile).Error // Sử dụng Create để gán id thủ công
 }
 
 func (r *userRepository) SaveEmail(email *model.UserEmail) error {
