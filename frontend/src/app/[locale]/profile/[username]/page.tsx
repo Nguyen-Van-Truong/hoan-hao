@@ -2,7 +2,7 @@
 "use client";
 
 import Layout from "@/app/layout/Layout";
-import Profile from "@/app/components/Profile";
+import Profile from "@/app/components/profile/Profile";
 import {use} from "react";
 
 export default function ProfilePage({params}: { params: Promise<{ username: string }> }) {

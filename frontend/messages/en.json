@@ -32,7 +32,9 @@
     "no_results": "No results found for \"{keyword}\"",
     "search_results_for": "Search results for:",
     "profile": "Profile",
-    "post": "Post"
+    "post": "Post",
+    "location": "Location"
+
   },
   "MainContent": {
     "create_post_placeholder": "What's on your mind?",

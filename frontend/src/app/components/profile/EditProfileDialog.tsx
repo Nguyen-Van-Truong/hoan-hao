@@ -1,3 +1,4 @@
+// frontend/src/app/components/profile/EditProfileDialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,12 +18,22 @@ export default function EditProfileDialog({
                                               currentDescription,
                                               currentAvatar,
                                           }: EditProfileDialogProps) {
-    const [name, setName] = useState(currentName);
-    const [description, setDescription] = useState(currentDescription);
-    const [avatar, setAvatar] = useState(currentAvatar);
+    // Trạng thái cho các trường từ user_profiles
+    const [name, setName] = useState(currentName); // full_name
+    const [description, setDescription] = useState(currentDescription); // bio
+    const [avatar, setAvatar] = useState(currentAvatar); // profile_picture_url
+    const [location, setLocation] = useState("Hà Nội"); // location
+    const [website, setWebsite] = useState("https://example.com"); // website
 
     const handleSave = () => {
-        console.log("Lưu thông tin:", { name, description, avatar });
+        // Dữ liệu giả lập được lưu (không gọi API)
+        console.log("Lưu thông tin:", {
+            full_name: name,
+            bio: description,
+            profile_picture_url: avatar,
+            location: location,
+            website: website,
+        });
         onClose();
     };
 
@@ -56,6 +67,22 @@ export default function EditProfileDialog({
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
+                        />
+                    </div>
+                    <div className={styles.field}>
+                        <label>Vị trí</label>
+                        <input
+                            type="text"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
+                        />
+                    </div>
+                    <div className={styles.field}>
+                        <label>Website</label>
+                        <input
+                            type="text"
+                            value={website}
+                            onChange={(e) => setWebsite(e.target.value)}
                         />
                     </div>
                     <div className={styles.field}>
