@@ -44,7 +44,7 @@ Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/routes" -Met
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Adding route for PostService (public routes)..."
+Write-Host "Adding route for PostService (public routes - /post)..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
     "paths[]"   = "/post"
     name        = "post-public-route"
@@ -52,8 +52,7 @@ Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Met
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Adding route for PostService (authenticated routes)..."
-# Sử dụng chuỗi body để truyền mảng methods chính xác
+Write-Host "Adding route for PostService (authenticated routes - /post)..."
 $body = "paths[]=/post&name=post-auth-route&methods[]=POST&methods[]=PUT&methods[]=DELETE&strip_path=false"
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
 
@@ -61,6 +60,14 @@ Write-Host "Adding route for Comment in PostService (authenticated routes)..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
     "paths[]"   = "/comment"
     name        = "comment-auth-route"
+    strip_path  = "false"
+} -ContentType "application/x-www-form-urlencoded"
+
+Write-Host "Adding route for PostService (public routes - /user)..."
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
+    "paths[]"   = "/user"
+    name        = "user-public-route"
+    "methods[]" = "GET"
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
