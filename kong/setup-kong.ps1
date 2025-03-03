@@ -10,7 +10,7 @@ if ($kongStatus.StatusCode -ne 200) {
 }
 Write-Host "Kong is running."
 
-# Bước 2: Đăng ký Services
+# Bước 1: Đăng ký Services
 Write-Host "Registering AuthService..."
 Invoke-RestMethod -Uri "http://localhost:8001/services" -Method Post -Body @{
     name = "auth-service"
@@ -29,7 +29,7 @@ Invoke-RestMethod -Uri "http://localhost:8001/services" -Method Post -Body @{
     url  = "http://host.docker.internal:8082"
 } -ContentType "application/x-www-form-urlencoded"
 
-# Bước 3: Đăng ký Routes
+# Bước 2: Đăng ký Routes
 Write-Host "Adding route for AuthService..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/auth-service/routes" -Method Post -Body @{
     "paths[]"   = "/auth"
@@ -44,33 +44,43 @@ Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/routes" -Met
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Adding route for PostService..."
+Write-Host "Adding route for PostService (public routes)..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
     "paths[]"   = "/post"
-    name        = "post-route"
+    name        = "post-public-route"
+    "methods[]" = "GET"
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Adding route for Comment in PostService..."
+Write-Host "Adding route for PostService (authenticated routes)..."
+# Sử dụng chuỗi body để truyền mảng methods chính xác
+$body = "paths[]=/post&name=post-auth-route&methods[]=POST&methods[]=PUT&methods[]=DELETE&strip_path=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
+
+Write-Host "Adding route for Comment in PostService (authenticated routes)..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
     "paths[]"   = "/comment"
-    name        = "comment-route"
+    name        = "comment-auth-route"
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-# Bước 4: Kích hoạt JWT Plugin
+# Bước 3: Kích hoạt JWT Plugin cho các route cần xác thực
 Write-Host "Enabling JWT plugin for UserService..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/plugins" -Method Post -Body @{
     name = "jwt"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Enabling JWT plugin for PostService (post routes)..."
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/plugins" -Method Post -Body @{
-    name        = "jwt"
-    "config.uri_param_names" = "jwt" # Tùy chọn nếu cần thêm vào URI
+Write-Host "Enabling JWT plugin for PostService authenticated routes..."
+Invoke-RestMethod -Uri "http://localhost:8001/routes/post-auth-route/plugins" -Method Post -Body @{
+    name = "jwt"
 } -ContentType "application/x-www-form-urlencoded"
 
-# Bước 5: Tạo Consumer và JWT Credential (giữ nguyên cho test-user)
+Write-Host "Enabling JWT plugin for Comment authenticated routes..."
+Invoke-RestMethod -Uri "http://localhost:8001/routes/comment-auth-route/plugins" -Method Post -Body @{
+    name = "jwt"
+} -ContentType "application/x-www-form-urlencoded"
+
+# Bước 4: Tạo Consumer và JWT Credential
 Write-Host "Creating consumer 'test-user'..."
 Invoke-RestMethod -Uri "http://localhost:8001/consumers" -Method Post -Body @{
     username = "test-user"

@@ -32,3 +32,4 @@ docker volume rm $(docker volume ls -q)
 
 REM Khởi động lại để tạo cơ sở dữ liệu mới
 docker-compose up -d
+.\setup-kong.ps1
