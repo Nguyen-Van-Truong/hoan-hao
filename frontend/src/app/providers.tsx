@@ -17,10 +17,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const locales = SUPPORTED_LOCALES; // ✅ Đưa `locales` vào trong useEffect
-        const token = localStorage.getItem(APP_CONFIG.tokenStorageKey);
+        const accessToken = localStorage.getItem(APP_CONFIG.accessTokenStorageKey);
 
         // Nếu chưa đăng nhập và không ở trang công khai, chuyển hướng đến login
-        if (!token && !PUBLIC_ROUTES.some(route => pathname.includes(route))) {
+        if (!accessToken && !PUBLIC_ROUTES.some(route => pathname.includes(route))) {
             toast.warn("Vui lòng đăng nhập để tiếp tục.");
             router.push(`/${APP_CONFIG.defaultLocale}/login`);
             return;

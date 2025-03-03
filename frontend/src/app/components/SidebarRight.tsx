@@ -30,7 +30,8 @@ export default function SidebarRight() {
 
     // ✅ Cập nhật hàm logout để có locale
     const handleLogout = () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         toast.success(t("logout_success"));
         navigate("/login");
     };

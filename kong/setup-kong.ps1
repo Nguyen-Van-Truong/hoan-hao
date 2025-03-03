@@ -87,7 +87,20 @@ Invoke-RestMethod -Uri "http://localhost:8001/routes/comment-auth-route/plugins"
     name = "jwt"
 } -ContentType "application/x-www-form-urlencoded"
 
-# Bước 4: Tạo Consumer và JWT Credential
+# Bước 4: Thêm plugin CORS cho tất cả services
+Write-Host "Enabling CORS plugin for AuthService..."
+$bodyCorsAuth = "name=cors&config.origins=http://localhost:3000&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/auth-service/plugins" -Method Post -Body $bodyCorsAuth -ContentType "application/x-www-form-urlencoded"
+
+Write-Host "Enabling CORS plugin for UserService..."
+$bodyCorsUser = "name=cors&config.origins=http://localhost:3000&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/plugins" -Method Post -Body $bodyCorsUser -ContentType "application/x-www-form-urlencoded"
+
+Write-Host "Enabling CORS plugin for PostService..."
+$bodyCorsPost = "name=cors&config.origins=http://localhost:3000&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/plugins" -Method Post -Body $bodyCorsPost -ContentType "application/x-www-form-urlencoded"
+
+# Bước 5: Tạo Consumer và JWT Credential
 Write-Host "Creating consumer 'test-user'..."
 Invoke-RestMethod -Uri "http://localhost:8001/consumers" -Method Post -Body @{
     username = "test-user"

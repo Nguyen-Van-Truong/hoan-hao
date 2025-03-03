@@ -13,5 +13,5 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://loca
 export const APP_CONFIG = {
     defaultLocale: "vi",
     fallbackLocale: "en",
-    tokenStorageKey: "token",
+    accessTokenStorageKey: "accessToken",
 };
