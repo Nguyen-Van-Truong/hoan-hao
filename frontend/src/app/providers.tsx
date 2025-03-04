@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SUPPORTED_LOCALES, PUBLIC_ROUTES, APP_CONFIG } from "@/config/config";
+import { getCookie } from "./api/authApi";
 
 const LocaleContext = createContext<string>(APP_CONFIG.defaultLocale);
 
@@ -16,11 +17,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const [locale, setLocale] = useState<string>(APP_CONFIG.defaultLocale);
 
     useEffect(() => {
-        const locales = SUPPORTED_LOCALES; // ✅ Đưa `locales` vào trong useEffect
-        const accessToken = localStorage.getItem(APP_CONFIG.accessTokenStorageKey);
+        const locales = SUPPORTED_LOCALES;
+        const accessToken = getCookie("accessToken"); // Dùng cookie thay vì localStorage
 
-        // Nếu chưa đăng nhập và không ở trang công khai, chuyển hướng đến login
-        if (!accessToken && !PUBLIC_ROUTES.some(route => pathname.includes(route))) {
+        if (!accessToken && !PUBLIC_ROUTES.some((route) => pathname.includes(route))) {
             toast.warn("Vui lòng đăng nhập để tiếp tục.");
             router.push(`/${APP_CONFIG.defaultLocale}/login`);
             return;
@@ -28,7 +28,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
         setIsLoading(false);
 
-        // ✅ Lấy locale từ URL hoặc localStorage
         const pathLocale = pathname.split("/")[1];
         const savedLocale = localStorage.getItem("locale");
 

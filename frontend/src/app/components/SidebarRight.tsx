@@ -1,37 +1,40 @@
 // frontend/src/app/components/SidebarRight.tsx
-import { useState } from "react";
+"use client";
+
+import {useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { useTranslations, useLocale } from "next-intl"; // ✅ Hỗ trợ i18n
+import {useRouter} from "next/navigation";
+import {toast} from "react-toastify";
+import {useTranslations, useLocale} from "next-intl";
+import {removeCookie} from "../api/authApi";
 import styles from "./SidebarRight.module.css";
-import LanguageSwitcher from "./LanguageSwitcher"; // Import LanguageSwitcher component
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const router = useRouter();
-    const locale = useLocale(); // ✅ Lấy locale hiện tại
-    const t = useTranslations("SidebarRight"); // ✅ Lấy dữ liệu dịch từ JSON
+    const locale = useLocale();
+    const t = useTranslations("SidebarRight");
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
-    // ✅ Hàm chuyển hướng theo `locale`
     const navigate = (path: string) => {
         router.push(`/${locale}${path}`);
     };
 
-    // ✅ Cập nhật hàm chuyển hướng profile có locale
     const navigateToProfile = (username: string) => {
         navigate(`/profile/${username}`);
     };
 
-    // ✅ Cập nhật hàm logout để có locale
     const handleLogout = () => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        if (typeof window !== "undefined") {
+            removeCookie("accessToken", {path: "/"});
+            removeCookie("refreshToken", {path: "/"});
+            console.log("Cookies removed"); // Log để kiểm tra
+        }
         toast.success(t("logout_success"));
         navigate("/login");
     };
@@ -59,7 +62,7 @@ export default function SidebarRight() {
                             </li>
                             <li>
                                 <span className={styles.menuIcon}>🌐</span>
-                                <LanguageSwitcher className={styles.languageSwitcher} /> {/* Add LanguageSwitcher */}
+                                <LanguageSwitcher className={styles.languageSwitcher}/>
                             </li>
                             <li onClick={handleLogout}>
                                 <span className={styles.menuIcon}>🚪</span>
@@ -94,31 +97,35 @@ export default function SidebarRight() {
                     </Link>
                 </div>
                 <div className={styles.friendList}>
-                    {[{name: "Julia Smith", username: "juliasmith"},
+                    {[
+                        {name: "Julia Smith", username: "juliasmith"},
                         {name: "Vermillion D. Gray", username: "vermilliongray"},
                         {name: "Mai Senpai", username: "maisenpai"},
                         {name: "Azunyan U. Wu", username: "azunyanudesu"},
-                        {name: "Oarack Babama", username: "obama21"}]
-                        .map((friend, index) => (
-                            <div className={styles.friendItem} key={index}>
-                                <div className={styles.friendInfo} onClick={() => navigateToProfile(friend.username)}>
-                                    <Image
-                                        src="/user-logo.png"
-                                        alt={friend.name}
-                                        className={styles.friendAvatar}
-                                        width={40}
-                                        height={40}
-                                        unoptimized
-                                        loading="lazy"
-                                    />
-                                    <div>
-                                        <p className={styles.friendName}>{friend.name}</p>
-                                        <p className={styles.friendUsername}>@{friend.username}</p>
-                                    </div>
+                        {name: "Oarack Babama", username: "obama21"},
+                    ].map((friend, index) => (
+                        <div className={styles.friendItem} key={index}>
+                            <div
+                                className={styles.friendInfo}
+                                onClick={() => navigateToProfile(friend.username)}
+                            >
+                                <Image
+                                    src="/user-logo.png"
+                                    alt={friend.name}
+                                    className={styles.friendAvatar}
+                                    width={40}
+                                    height={40}
+                                    unoptimized
+                                    loading="lazy"
+                                />
+                                <div>
+                                    <p className={styles.friendName}>{friend.name}</p>
+                                    <p className={styles.friendUsername}>@{friend.username}</p>
                                 </div>
-                                <button className={styles.addFriendButton}>+</button>
                             </div>
-                        ))}
+                            <button className={styles.addFriendButton}>+</button>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

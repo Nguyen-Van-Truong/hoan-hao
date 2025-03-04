@@ -9,17 +9,12 @@ import Link from "next/link";
 import styles from "./Login.module.css";
 import { motion } from "framer-motion";
 import { useLocale } from "next-intl";
-import { login } from "../../api/authApi";
+import { login, getCookie } from "../../api/authApi";
 
 // Define form data types
 interface LoginFormData {
     usernameOrEmailOrPhone: string;
     password: string;
-}
-
-interface LoginResponse {
-    accessToken: string;
-    refreshToken: string;
 }
 
 export default function LoginPage() {
@@ -30,7 +25,7 @@ export default function LoginPage() {
 
     // Kiểm tra token khi load trang
     useEffect(() => {
-        const accessToken = localStorage.getItem("accessToken");
+        const accessToken = getCookie("accessToken");
         if (accessToken) {
             router.push(`/${locale}`);
         }
@@ -39,10 +34,7 @@ export default function LoginPage() {
     const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
         setLoading(true);
         try {
-            const result: LoginResponse = await login(data.usernameOrEmailOrPhone, data.password);
-            // Lưu token vào localStorage
-            localStorage.setItem("accessToken", result.accessToken);
-            localStorage.setItem("refreshToken", result.refreshToken);
+            await login(data.usernameOrEmailOrPhone, data.password); // Gọi hàm login mà không gán biến
             toast.success("Đăng nhập thành công!");
             router.push(`/${locale}`);
         } catch (error) {
