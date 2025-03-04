@@ -63,9 +63,9 @@ Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Met
     strip_path  = "false"
 } -ContentType "application/x-www-form-urlencoded"
 
-Write-Host "Adding route for PostService (public routes - /user)..."
+Write-Host "Adding route for PostService (public routes - /post/user)..."
 Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
-    "paths[]"   = "/user"
+    "paths[]"   = "/post/user"
     name        = "user-public-route"
     "methods[]" = "GET"
     strip_path  = "false"

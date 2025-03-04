@@ -40,10 +40,10 @@ func SetupRoutes(r *gin.Engine, repo repository.PostRepository) {
 	}
 
 	// Route công khai
-	r.GET("/post/:id", GetPostByID(svc))             // Xem chi tiết bài đăng
-	r.GET("/post/:id/comments", GetComments(svc))    // Lấy danh sách bình luận
-	r.GET("/post/:id/shares", GetShares(svc))        // Lấy danh sách chia sẻ
-	r.GET("/user/:user_id/posts", GetUserPosts(svc)) // Lấy danh sách bài đăng của người dùng
+	r.GET("/post/:id", GetPostByID(svc))                  // Xem chi tiết bài đăng
+	r.GET("/post/:id/comments", GetComments(svc))         // Lấy danh sách bình luận
+	r.GET("/post/:id/shares", GetShares(svc))             // Lấy danh sách chia sẻ
+	r.GET("/post/user/:user_id/posts", GetUserPosts(svc)) // Lấy danh sách bài đăng của người dùng
 }
 
 // GetPostByID lấy thông tin chi tiết của một bài đăng
