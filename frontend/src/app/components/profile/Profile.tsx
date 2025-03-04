@@ -1,13 +1,13 @@
 // frontend/src/app/components/profile/Profile.tsx
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import {useState, useEffect} from "react";
+import {useTranslations} from "next-intl";
 import styles from "./Profile.module.css";
 import Image from "next/image";
 import PostsTab from "@/app/components/profile/PostsTab";
 import PhotosTab from "@/app/components/profile/PhotosTab";
 import VideosTab from "@/app/components/profile/VideosTab";
 import EditProfileDialog from "@/app/components/profile/EditProfileDialog";
-import { getMyProfile, getPublicProfile } from "@/app/api/userApi";
+import {getMyProfile, getPublicProfileByUsername} from "@/app/api/userApi"; // Cập nhật import
 
 type ProfileData = {
     id: number;
@@ -17,10 +17,10 @@ type ProfileData = {
     location: string;
     website: string;
     profile_picture_url: string;
-    friend_count?: number; // Có thể thêm từ API sau nếu backend hỗ trợ
+    friend_count?: number;
 };
 
-export default function Profile({ username, isOwnProfile }: { username: string; isOwnProfile: boolean }) {
+export default function Profile({username, isOwnProfile}: { username: string; isOwnProfile: boolean }) {
     const [activeTab, setActiveTab] = useState("posts");
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
@@ -36,8 +36,7 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
                 if (isOwnProfile) {
                     data = await getMyProfile();
                 } else {
-                    // Giả sử username ở đây là userId (cần điều chỉnh nếu backend yêu cầu username thay vì id)
-                    data = await getPublicProfile(username);
+                    data = await getPublicProfileByUsername(username); // Sử dụng username thay vì ID
                 }
                 setProfileData({
                     id: data.id,
@@ -47,7 +46,7 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
                     location: data.location || "",
                     website: data.website || "",
                     profile_picture_url: data.profile_picture_url || "/user-logo.png",
-                    friend_count: data.friend_count || 0, // Nếu API không trả về thì mặc định là 0
+                    friend_count: data.friend_count || 0,
                 });
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : "Lỗi không xác định");
@@ -62,11 +61,11 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
     const renderContent = () => {
         switch (activeTab) {
             case "posts":
-                return <PostsTab />;
+                return <PostsTab/>;
             case "photos":
-                return <PhotosTab />;
+                return <PhotosTab/>;
             case "videos":
-                return <VideosTab />;
+                return <VideosTab/>;
             default:
                 return null;
         }
@@ -94,9 +93,9 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
                 <h1>{profileData.full_name || profileData.username}</h1>
                 <p className={styles.description}>{profileData.bio}</p>
                 {profileData.location && (
-                    <p className={styles.location}>{t("location", { location: profileData.location })}</p>
+                    <p className={styles.location}>{t("location", {location: profileData.location})}</p>
                 )}
-                <p className={styles.friendCount}>{t("friends_count", { count: profileData.friend_count })}</p>
+                <p className={styles.friendCount}>{t("friends_count", {count: profileData.friend_count})}</p>
                 {profileData.website && (
                     <a href={profileData.website} className={styles.website} target="_blank" rel="noopener noreferrer">
                         {profileData.website}

@@ -1,3 +1,4 @@
+// userservice/internal/service/user.go
 package service
 
 import (
@@ -13,11 +14,12 @@ type UserService interface {
 	SendFriendRequest(userID, friendID uint) error
 	UpdateFriendRequest(userID, friendID uint, status string) error
 	GetPublicProfile(userID uint) (*model.UserProfile, error)
+	GetPublicProfileByUsername(username string) (*model.UserProfile, error)
 	GetMyProfile(userID uint) (*model.UserProfile, error)
 	GetFriends(userID uint) ([]model.Friend, error)
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
-	GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) // Thêm API mới
-	GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) // Thêm API mới
+	GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
+	GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
 }
 
 type userService struct {
@@ -171,6 +173,11 @@ func (s *userService) UpdateFriendRequest(userID, friendID uint, status string) 
 
 func (s *userService) GetPublicProfile(userID uint) (*model.UserProfile, error) {
 	return s.repo.FindProfileByID(userID)
+}
+
+// GetPublicProfileByUsername lấy profile công khai bằng username
+func (s *userService) GetPublicProfileByUsername(username string) (*model.UserProfile, error) {
+	return s.repo.FindByUsername(username)
 }
 
 func (s *userService) GetMyProfile(userID uint) (*model.UserProfile, error) {

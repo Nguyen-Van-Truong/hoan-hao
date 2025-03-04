@@ -35,7 +35,7 @@ export const getMyProfile = async () => {
     }
 };
 
-// Lấy thông tin profile công khai của người dùng khác
+// Lấy thông tin profile công khai bằng ID
 export const getPublicProfile = async (userId: string) => {
     try {
         const response = await userApi.get(`/profile/public/${userId}`);
@@ -48,13 +48,26 @@ export const getPublicProfile = async (userId: string) => {
     }
 };
 
+// Lấy thông tin profile công khai bằng username
+export const getPublicProfileByUsername = async (username: string) => {
+    try {
+        const response = await userApi.get(`/profile/public/username/${username}`);
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.error || "Không thể tìm thấy profile theo username");
+        }
+        throw new Error("Không thể tìm thấy profile theo username");
+    }
+};
+
 // Lấy danh sách gợi ý bạn bè
 export const getFriendSuggestions = async (limit: number = 5) => {
     try {
         const response = await userApi.get("/friends/suggestions", {
             params: { limit },
         });
-        return response.data; // Giả sử trả về array [{id, username, full_name, profile_picture_url}]
+        return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw new Error(error.response?.data?.error || "Không thể lấy gợi ý bạn bè");
@@ -67,7 +80,7 @@ export const getFriendSuggestions = async (limit: number = 5) => {
 export const sendFriendRequest = async (friendId: number) => {
     try {
         const response = await userApi.post("/friend/request", { friendId });
-        return response.data; // Giả sử trả về { message: "Friend request sent successfully" }
+        return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw new Error(error.response?.data?.error || "Không thể gửi yêu cầu kết bạn");

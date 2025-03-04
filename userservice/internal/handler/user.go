@@ -1,3 +1,4 @@
+// userservice/internal/handler/user.go
 package handler
 
 import (
@@ -33,6 +34,8 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 
 	// Route công khai không cần xác thực
 	r.GET("/user/profile/public/:id", getPublicProfile(svc))
+	r.GET("/user/profile/public/username/:username", getPublicProfileByUsername(svc)) // Thêm route mới
+
 }
 
 // createProfile xử lý tạo hồ sơ người dùng
@@ -127,6 +130,23 @@ func getPublicProfile(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 		profile, err := svc.GetPublicProfile(uint(userID))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
+			return
+		}
+		c.JSON(http.StatusOK, profile)
+	}
+}
+
+// getPublicProfileByUsername lấy thông tin hồ sơ công khai bằng username
+func getPublicProfileByUsername(svc service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		username := c.Param("username")
+		if username == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Username is required"})
+			return
+		}
+		profile, err := svc.GetPublicProfileByUsername(username)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
 			return
