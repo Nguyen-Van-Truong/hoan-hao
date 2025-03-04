@@ -154,7 +154,7 @@ func (s *userService) UpdateFriendRequest(userID, friendID uint, status string) 
 		return fmt.Errorf("invalid status, must be ACCEPTED or BLOCKED")
 	}
 
-	// Tìm bản ghi friend request theo id
+	// Tìm bản ghi friend request theo friendID (ID của yêu cầu kết bạn)
 	var friend model.Friend
 	if err := s.repo.DB().Where("id = ?", friendID).First(&friend).Error; err != nil {
 		return fmt.Errorf("friend request not found: %v", err)
@@ -175,7 +175,6 @@ func (s *userService) GetPublicProfile(userID uint) (*model.UserProfile, error) 
 	return s.repo.FindProfileByID(userID)
 }
 
-// GetPublicProfileByUsername lấy profile công khai bằng username
 func (s *userService) GetPublicProfileByUsername(username string) (*model.UserProfile, error) {
 	return s.repo.FindByUsername(username)
 }
@@ -192,7 +191,6 @@ func (s *userService) GetFriendSuggestions(userID uint, limit int) ([]model.User
 	return s.repo.GetFriendSuggestions(userID, limit)
 }
 
-// GetIncomingFriendRequests lấy danh sách lời mời kết bạn gửi tới người dùng
 func (s *userService) GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) {
 	var requests []model.Friend
 	var total int64
@@ -216,7 +214,6 @@ func (s *userService) GetIncomingFriendRequests(userID uint, limit, offset int) 
 	return requests, total, nil
 }
 
-// GetOutgoingFriendRequests lấy danh sách lời mời kết bạn đã gửi đi
 func (s *userService) GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error) {
 	var requests []model.Friend
 	var total int64
@@ -240,7 +237,6 @@ func (s *userService) GetOutgoingFriendRequests(userID uint, limit, offset int) 
 	return requests, total, nil
 }
 
-// Thêm phương thức DB để truy cập trực tiếp database từ repository
 func (s *userService) DB() *gorm.DB {
 	return s.repo.DB()
 }

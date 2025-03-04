@@ -12,7 +12,8 @@
     "ads_content": "Advertisement content",
     "suggested_friends": "Suggested Friends",
     "view_all": "View all →",
-    "add_friend": "Add"
+    "add_friend": "Add",
+    "friend_request_sent": "Friend request sent successfully"
   },
   "SidebarLeft": {
     "home": "Home",

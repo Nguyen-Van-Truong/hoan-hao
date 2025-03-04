@@ -35,19 +35,6 @@ export const getMyProfile = async () => {
     }
 };
 
-// Lấy thông tin profile công khai bằng ID
-export const getPublicProfile = async (userId: string) => {
-    try {
-        const response = await userApi.get(`/profile/public/${userId}`);
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.error || "Không thể lấy thông tin profile công khai");
-        }
-        throw new Error("Không thể lấy thông tin profile công khai");
-    }
-};
-
 // Lấy thông tin profile công khai bằng username
 export const getPublicProfileByUsername = async (username: string) => {
     try {

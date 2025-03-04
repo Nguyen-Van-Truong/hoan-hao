@@ -1,4 +1,3 @@
-// userservice/internal/handler/user.go
 package handler
 
 import (
@@ -28,14 +27,13 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 		authGroup.GET("/profile/me", getMyProfile(svc))
 		authGroup.GET("/friends", getFriends(svc))
 		authGroup.GET("/friends/suggestions", getFriendSuggestions(svc))
-		authGroup.GET("/friend/requests/incoming", getIncomingFriendRequests(svc)) // API mới
-		authGroup.GET("/friend/requests/outgoing", getOutgoingFriendRequests(svc)) // API mới
+		authGroup.GET("/friend/requests/incoming", getIncomingFriendRequests(svc))
+		authGroup.GET("/friend/requests/outgoing", getOutgoingFriendRequests(svc))
 	}
 
 	// Route công khai không cần xác thực
 	r.GET("/user/profile/public/:id", getPublicProfile(svc))
-	r.GET("/user/profile/public/username/:username", getPublicProfileByUsername(svc)) // Thêm route mới
-
+	r.GET("/user/profile/public/username/:username", getPublicProfileByUsername(svc))
 }
 
 // createProfile xử lý tạo hồ sơ người dùng
@@ -72,13 +70,22 @@ func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		friendID, err := strconv.ParseUint(c.PostForm("friendId"), 10, 32)
-		if err != nil {
+		// Parse JSON body
+		var req struct {
+			FriendID uint `json:"friendId"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("Failed to bind JSON: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
 			return
 		}
 
-		if err := svc.SendFriendRequest(userID, uint(friendID)); err != nil {
+		if req.FriendID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
+			return
+		}
+
+		if err := svc.SendFriendRequest(userID, req.FriendID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -94,26 +101,33 @@ func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
 			return
 		}
-
 		userID, ok := userIDInterface.(uint)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
 			return
 		}
 
-		friendID, err := strconv.ParseUint(c.PostForm("friendId"), 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
+		// Parse JSON body
+		var req struct {
+			FriendID uint   `json:"friendId"`
+			Status   string `json:"status"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("Failed to bind JSON: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 			return
 		}
 
-		status := c.PostForm("status")
-		if status != "ACCEPTED" && status != "BLOCKED" {
+		if req.FriendID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
+			return
+		}
+		if req.Status != "ACCEPTED" && req.Status != "BLOCKED" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status"})
 			return
 		}
 
-		if err := svc.UpdateFriendRequest(userID, uint(friendID), status); err != nil {
+		if err := svc.UpdateFriendRequest(userID, req.FriendID, req.Status); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

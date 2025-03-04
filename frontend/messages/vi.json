@@ -12,7 +12,9 @@
     "ads_content": "Nội dung quảng cáo",
     "suggested_friends": "Đề xuất bạn bè",
     "view_all": "Xem tất cả →",
-    "add_friend": "Thêm"
+    "add_friend": "Thêm",
+    "friend_request_sent": "Đã gửi lời mời kết bạn"
+
   },
   "SidebarLeft": {
     "home": "Trang chủ",

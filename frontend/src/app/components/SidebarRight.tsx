@@ -8,8 +8,8 @@ import {useRouter} from "next/navigation";
 import {toast} from "react-toastify";
 import {useTranslations, useLocale} from "next-intl";
 import {removeCookie} from "../api/authApi";
-import {UserContext} from "../providers"; // Import UserContext
-import {getFriendSuggestions, sendFriendRequest} from "../api/userApi"; // Import hàm API mới
+import {UserContext} from "../providers";
+import {getFriendSuggestions, sendFriendRequest} from "../api/userApi";
 import styles from "./SidebarRight.module.css";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -28,7 +28,7 @@ export default function SidebarRight() {
     const router = useRouter();
     const locale = useLocale();
     const t = useTranslations("SidebarRight");
-    const currentUser = useContext(UserContext); // Lấy thông tin người dùng hiện tại
+    const currentUser = useContext(UserContext);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -54,23 +54,25 @@ export default function SidebarRight() {
 
     const handleAddFriend = async (friendId: number) => {
         try {
-            await sendFriendRequest(friendId); // Hàm API mới, thêm vào userApi.ts
+            await sendFriendRequest(friendId);
             toast.success(t("friend_request_sent"));
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Lỗi không xác định");
-            console.error(err); // Log the error to the console if needed
+            const errorMessage = err instanceof Error ? err.message : "Lỗi không xác định";
+            toast.error(errorMessage); // Hiển thị lỗi qua toast
+            console.error("Error sending friend request:", err);
         }
-
     };
 
     useEffect(() => {
         const fetchSuggestions = async () => {
             try {
                 setLoading(true);
-                const data = await getFriendSuggestions(5); // Lấy 5 gợi ý bạn bè
+                const data = await getFriendSuggestions(5);
                 setSuggestions(data);
             } catch (err: unknown) {
-                setError(err instanceof Error ? err.message : "Lỗi không xác định");
+                const errorMessage = err instanceof Error ? err.message : "Lỗi không xác định";
+                setError(errorMessage);
+                toast.error(errorMessage); // Hiển thị lỗi khi lấy gợi ý bạn bè
             } finally {
                 setLoading(false);
             }
