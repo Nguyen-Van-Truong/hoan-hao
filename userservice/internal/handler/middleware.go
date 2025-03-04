@@ -1,48 +1,45 @@
-// userservice/internal/handler/middleware.go
 package handler
 
 import (
-	"net/http"
+	"log"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// JWTMiddleware trích xuất userId từ token JWT
+// JWTMiddleware trích xuất userId từ token JWT nếu có
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
-			c.Abort()
+			c.Next() // Tiếp tục xử lý nếu không có token
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid Authorization header format"})
-			c.Abort()
+			log.Printf("Invalid Authorization header format")
+			c.Next() // Tiếp tục thay vì Abort
 			return
 		}
 
 		// Parse token mà không verify (vì Kong đã làm điều này)
 		token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-			c.Abort()
+			log.Printf("Invalid token format: %v", err)
+			c.Next() // Tiếp tục thay vì Abort
 			return
 		}
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			userID, ok := claims["userId"]
 			if !ok {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
-				c.Abort()
+				log.Printf("User ID not found in token")
+				c.Next()
 				return
 			}
 
-			// Xử lý userId có thể là float64 hoặc int
 			var id uint
 			switch v := userID.(type) {
 			case float64:
@@ -52,22 +49,20 @@ func JWTMiddleware() gin.HandlerFunc {
 			case uint:
 				id = v
 			default:
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type in token"})
-				c.Abort()
+				log.Printf("Invalid user ID type in token: %v", userID)
+				c.Next()
 				return
 			}
 
 			if id == 0 {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID value"})
-				c.Abort()
+				log.Printf("Invalid user ID value")
+				c.Next()
 				return
 			}
 
 			c.Set("userId", id)
 		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
-			c.Abort()
-			return
+			log.Printf("Invalid token claims")
 		}
 
 		c.Next()

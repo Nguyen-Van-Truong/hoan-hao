@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,14 +16,27 @@ import (
 func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 	svc := service.NewUserService(repo)
 
+	// Áp dụng JWTMiddleware cho tất cả route, nhưng không chặn nếu không có token
+	r.Use(JWTMiddleware())
+
 	// Endpoint nội bộ không yêu cầu xác thực
 	r.POST("/user/createProfile", createProfile(svc))
 
-	// Nhóm route yêu cầu xác thực JWT
+	// Nhóm route yêu cầu xác thực JWT bắt buộc
 	authGroup := r.Group("/user")
-	authGroup.Use(JWTMiddleware())
+	authGroup.Use(func(c *gin.Context) {
+		if _, exists := c.Get("userId"); !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
 	{
 		authGroup.POST("/friend/request", sendFriendRequest(svc))
+		authGroup.POST("/friend/cancel", cancelFriendRequest(svc))
+		authGroup.POST("/friend/block", blockUser(svc))
+		authGroup.POST("/friend/unblock", unblockUser(svc))
 		authGroup.PUT("/friend/update", updateFriendRequest(svc))
 		authGroup.GET("/profile/me", getMyProfile(svc))
 		authGroup.GET("/friends", getFriends(svc))
@@ -31,8 +45,7 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 		authGroup.GET("/friend/requests/outgoing", getOutgoingFriendRequests(svc))
 	}
 
-	// Route công khai không cần xác thực
-	r.GET("/user/profile/public/:id", getPublicProfile(svc))
+	// Route công khai không bắt buộc xác thực
 	r.GET("/user/profile/public/username/:username", getPublicProfileByUsername(svc))
 }
 
@@ -70,7 +83,6 @@ func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Parse JSON body
 		var req struct {
 			FriendID uint `json:"friendId"`
 		}
@@ -93,6 +105,117 @@ func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
 	}
 }
 
+// cancelFriendRequest hủy yêu cầu kết bạn
+func cancelFriendRequest(svc service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userId")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		var req struct {
+			FriendID uint `json:"friendId"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("Failed to bind JSON: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
+			return
+		}
+
+		if req.FriendID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
+			return
+		}
+
+		if err := svc.CancelFriendRequest(userID, req.FriendID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Friend request cancelled successfully"})
+	}
+}
+
+// blockUser chặn người dùng
+func blockUser(svc service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userId")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		var req struct {
+			FriendID uint `json:"friendId"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("Failed to bind JSON: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
+			return
+		}
+
+		if req.FriendID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
+			return
+		}
+
+		if err := svc.BlockUser(userID, req.FriendID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "User blocked successfully"})
+	}
+}
+
+// unblockUser hủy chặn người dùng
+func unblockUser(svc service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userId")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		var req struct {
+			FriendID uint `json:"friendId"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("Failed to bind JSON: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
+			return
+		}
+
+		if req.FriendID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
+			return
+		}
+
+		if err := svc.UnblockUser(userID, req.FriendID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "User unblocked successfully"})
+	}
+}
+
 // updateFriendRequest cập nhật trạng thái yêu cầu kết bạn
 func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -107,7 +230,6 @@ func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Parse JSON body
 		var req struct {
 			FriendID uint   `json:"friendId"`
 			Status   string `json:"status"`
@@ -135,23 +257,6 @@ func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 	}
 }
 
-// getPublicProfile lấy thông tin hồ sơ công khai
-func getPublicProfile(svc service.UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
-		}
-		profile, err := svc.GetPublicProfile(uint(userID))
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
-			return
-		}
-		c.JSON(http.StatusOK, profile)
-	}
-}
-
 // getPublicProfileByUsername lấy thông tin hồ sơ công khai bằng username
 func getPublicProfileByUsername(svc service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -160,12 +265,29 @@ func getPublicProfileByUsername(svc service.UserService) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Username is required"})
 			return
 		}
-		profile, err := svc.GetPublicProfileByUsername(username)
+
+		var userID uint
+		userIDInterface, exists := c.Get("userId")
+		fmt.Println("userId in handler:", userIDInterface)
+		if exists {
+			if id, ok := userIDInterface.(uint); ok {
+				userID = id
+			} else {
+				log.Printf("Invalid user ID type in context: %v", userIDInterface)
+			}
+		}
+
+		profile, status, err := svc.GetPublicProfileWithFriendStatus(username, userID)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Profile not found"})
 			return
 		}
-		c.JSON(http.StatusOK, profile)
+
+		response := gin.H{
+			"profile":       profile,
+			"friend_status": status,
+		}
+		c.JSON(http.StatusOK, response)
 	}
 }
 
@@ -234,7 +356,7 @@ func getFriendSuggestions(svc service.UserService) gin.HandlerFunc {
 
 		limit, _ := strconv.Atoi(c.Query("limit"))
 		if limit <= 0 {
-			limit = 10 // Mặc định trả về 10 gợi ý
+			limit = 10
 		}
 		suggestions, err := svc.GetFriendSuggestions(userID, limit)
 		if err != nil {
@@ -260,7 +382,6 @@ func getIncomingFriendRequests(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Lấy tham số phân trang
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 		if page < 1 {
@@ -271,14 +392,12 @@ func getIncomingFriendRequests(svc service.UserService) gin.HandlerFunc {
 		}
 		offset := (page - 1) * limit
 
-		// Lấy danh sách lời mời gửi tới
 		requests, total, err := svc.GetIncomingFriendRequests(userID, limit, offset)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve incoming friend requests: " + err.Error()})
 			return
 		}
 
-		// Trả về kết quả với thông tin phân trang
 		c.JSON(http.StatusOK, gin.H{
 			"requests": requests,
 			"total":    total,
@@ -304,7 +423,6 @@ func getOutgoingFriendRequests(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		// Lấy tham số phân trang
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 		if page < 1 {
@@ -315,14 +433,12 @@ func getOutgoingFriendRequests(svc service.UserService) gin.HandlerFunc {
 		}
 		offset := (page - 1) * limit
 
-		// Lấy danh sách lời mời đã gửi
 		requests, total, err := svc.GetOutgoingFriendRequests(userID, limit, offset)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve outgoing friend requests: " + err.Error()})
 			return
 		}
 
-		// Trả về kết quả với thông tin phân trang
 		c.JSON(http.StatusOK, gin.H{
 			"requests": requests,
 			"total":    total,

@@ -90,7 +90,17 @@
     "edit_profile": "Edit profile",
     "posts": "Post",
     "photos": "Photo",
-    "videos": "Video"
+    "videos": "Video",
+    "pending": "Pending",
+    "requested": "Requested",
+    "blocked": "Blocked",
+    "friends": "Friend",
+    "cancel_request": "Cancel Request",
+    "add_friend": "Add Friend",
+    "accept": "Accept",
+    "block": "Block",
+    "reject": "Reject",
+    "unblock": "Unblock"
   },
   "PostsTab": {
     "loading": "Loading more posts..."

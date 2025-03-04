@@ -90,7 +90,19 @@
     "posts": "Bài viết",
     "photos": "Ảnh",
     "videos": "Video",
-    "location": "Sống tại"
+    "location": "Sống tại",
+    "pending": "Đang chờ",
+    "requested": "Đã gửi",
+    "blocked": "Đã Chặn",
+    "friends": "Bạn bè",
+    "cancel_request": "Hủy kết bạn",
+    "add_friend": "Kết bạn",
+    "accept": "Chấp nhận",
+    "block": "Chặn",
+    "reject": "Từ chối",
+    "unblock": "Hủy chặn"
+
+
   },
   "PostsTab": {
     "loading": "Đang tải thêm bài viết..."
