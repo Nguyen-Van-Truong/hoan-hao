@@ -47,18 +47,18 @@ func (s *userService) CreateProfile(req model.UserProfileRequestDto) error {
 	}
 
 	profile := &model.UserProfile{
-		ID:             req.UserID,
-		Username:       req.Username,
-		FullName:       req.FullName,
-		IsActive:       true,
-		IsVerified:     false,
-		Bio:            req.Bio,
-		Location:       req.Location,
-		Website:        req.Website,
-		ProfilePicture: req.ProfilePicture,
-		CoverPicture:   req.CoverPicture,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		ID:                req.UserID,
+		Username:          req.Username,
+		FullName:          req.FullName,
+		IsActive:          true,
+		IsVerified:        false,
+		Bio:               req.Bio,
+		Location:          req.Location,
+		Website:           req.Website,
+		ProfilePictureURL: req.ProfilePictureURL,
+		CoverPictureURL:   req.CoverPictureURL,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
 	}
 
 	if req.DateOfBirth != "" {

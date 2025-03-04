@@ -85,7 +85,7 @@
     "add_friend": "Add friend"
   },
   "Profile": {
-    "avatar_alt": "Avatar",
+    "avatar_alt": "Avatar Photo",
     "friends_count": "Friend: {count}",
     "edit_profile": "Edit profile",
     "posts": "Post",
@@ -100,7 +100,8 @@
     "accept": "Accept",
     "block": "Block",
     "reject": "Reject",
-    "unblock": "Unblock"
+    "unblock": "Unblock",
+    "cover_alt": "Cover Photo"
   },
   "PostsTab": {
     "loading": "Loading more posts..."

@@ -5,42 +5,42 @@ import "time"
 
 // UserProfileRequestDto chứa dữ liệu nhận từ AuthService
 type UserProfileRequestDto struct {
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	FullName       string `json:"fullname"`
-	DateOfBirth    string `json:"dateOfBirth"`
-	CountryCode    string `json:"countryCode"`
-	PhoneNumber    string `json:"phoneNumber"`
-	UserID         uint   `json:"userId"`                   // ID từ AuthService
-	Bio            string `json:"bio,omitempty"`            // Optional
-	Location       string `json:"location,omitempty"`       // Optional
-	CountryID      uint   `json:"countryId,omitempty"`      // Optional
-	ProvinceID     uint   `json:"provinceId,omitempty"`     // Optional
-	DistrictID     uint   `json:"districtId,omitempty"`     // Optional
-	Website        string `json:"website,omitempty"`        // Optional
-	ProfilePicture string `json:"profilePicture,omitempty"` // Optional
-	CoverPicture   string `json:"coverPicture,omitempty"`   // Optional
+	Username          string `json:"username"`
+	Email             string `json:"email"`
+	FullName          string `json:"fullname"`
+	DateOfBirth       string `json:"dateOfBirth"`
+	CountryCode       string `json:"countryCode"`
+	PhoneNumber       string `json:"phoneNumber"`
+	UserID            uint   `json:"userId"`                        // ID từ AuthService
+	Bio               string `json:"bio,omitempty"`                 // Optional
+	Location          string `json:"location,omitempty"`            // Optional
+	CountryID         uint   `json:"countryId,omitempty"`           // Optional
+	ProvinceID        uint   `json:"provinceId,omitempty"`          // Optional
+	DistrictID        uint   `json:"districtId,omitempty"`          // Optional
+	Website           string `json:"website,omitempty"`             // Optional
+	ProfilePictureURL string `json:"profile_picture_url,omitempty"` // Optional
+	CoverPictureURL   string `json:"cover_picture_url,omitempty"`   // Optional
 }
 
 // UserProfile ánh xạ bảng user_profiles trong hoanhao_user
 type UserProfile struct {
-	ID             uint       `json:"id"` // Khóa chính, khớp với hoanhao_auth.user.id
-	Username       string     `json:"username"`
-	FullName       string     `json:"full_name"`
-	IsActive       bool       `json:"is_active"`
-	IsVerified     bool       `json:"is_verified"`
-	LastLoginAt    *time.Time `json:"last_login_at"` // Hỗ trợ NULL
-	Bio            string     `json:"bio"`
-	Location       string     `json:"location"`
-	CountryID      *uint      `json:"country_id"`  // Hỗ trợ NULL
-	ProvinceID     *uint      `json:"province_id"` // Hỗ trợ NULL
-	DistrictID     *uint      `json:"district_id"` // Hỗ trợ NULL
-	Website        string     `json:"website"`
-	ProfilePicture string     `json:"profile_picture_url"`
-	CoverPicture   string     `json:"cover_picture_url"`
-	DateOfBirth    *time.Time `json:"date_of_birth"` // Hỗ trợ NULL
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	ID                uint       `json:"id"`
+	Username          string     `json:"username"`
+	FullName          string     `json:"full_name"`
+	IsActive          bool       `json:"is_active"`
+	IsVerified        bool       `json:"is_verified"`
+	LastLoginAt       *time.Time `json:"last_login_at"`
+	Bio               string     `json:"bio"`
+	Location          string     `json:"location"`
+	CountryID         *uint      `json:"country_id"`
+	ProvinceID        *uint      `json:"province_id"`
+	DistrictID        *uint      `json:"district_id"`
+	Website           string     `json:"website"`
+	ProfilePictureURL string     `json:"profile_picture_url"`
+	CoverPictureURL   string     `json:"cover_picture_url"`
+	DateOfBirth       *time.Time `json:"date_of_birth"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 func (UserProfile) TableName() string {

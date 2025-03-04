@@ -24,6 +24,7 @@ type ProfileData = {
     location: string;
     website: string;
     profile_picture_url: string;
+    cover_picture_url?: string; // Thêm trường ảnh bìa
     friend_count?: number;
     friend_status?: "SELF" | "NONE" | "PENDING" | "REQUESTED" | "FRIENDS" | "BLOCKED";
 };
@@ -51,6 +52,7 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
                         location: data.location || "",
                         website: data.website || "",
                         profile_picture_url: data.profile_picture_url || "/user-logo.png",
+                        cover_picture_url: data.cover_picture_url || "/default-cover-photo.png", // Ảnh bìa mặc định
                         friend_count: data.friend_count || 0,
                         friend_status: "SELF",
                     });
@@ -64,6 +66,7 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
                         location: response.profile.location || "",
                         website: response.profile.website || "",
                         profile_picture_url: response.profile.profile_picture_url || "/user-logo.png",
+                        cover_picture_url: response.profile.cover_picture_url || "/default-cover-photo.png", // Ảnh bìa mặc định
                         friend_count: response.profile.friend_count || 0,
                         friend_status: response.friend_status || "NONE",
                     });
@@ -221,8 +224,18 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
     return (
         <div className={styles.profile}>
             <div className={styles.infoSection}>
+                <div className={styles.coverContainer}>
+                    <Image
+                        src={profileData.cover_picture_url || "/default-cover-photo.png"}
+                        alt={t("cover_alt")}
+                        layout="fill"
+                        objectFit="cover"
+                        className={styles.coverImage}
+                        unoptimized
+                    />
+                </div>
                 <Image
-                    src={profileData.profile_picture_url}
+                    src={profileData.profile_picture_url || "/user-logo.png"}
                     alt={t("avatar_alt")}
                     width={150}
                     height={150}

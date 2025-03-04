@@ -4,11 +4,11 @@
     align-items: center;
     gap: 20px;
     padding: 20px;
-    background-color: var(--primary-mid-color, #f5f7fa); /* Màu nền nhẹ nhàng */
-    min-height: 100vh; /* Đảm bảo chiếm toàn bộ chiều cao */
+    background-color: var(--primary-mid-color, #f5f7fa);
+    min-height: 100vh;
     width: 100%;
-    max-width: 900px; /* Giới hạn chiều rộng tối đa */
-    margin: 0 auto; /* Căn giữa */
+    max-width: 900px;
+    margin: 0 auto;
     box-sizing: border-box;
 }
 
@@ -16,54 +16,71 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px; /* Khoảng cách vừa phải giữa các phần tử */
+    gap: 12px;
     text-align: center;
-    background: #fff; /* Nền trắng cho phần thông tin */
+    background: #fff;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     width: 100%;
-    max-width: 600px; /* Giới hạn chiều rộng phần info */
-    margin-top: 60px; /* Đẩy xuống để nhường chỗ cho avatar */
+    max-width: 600px;
+    position: relative; /* Để avatar chồng lên ảnh bìa */
+}
+
+.coverContainer {
+    width: 100%;
+    height: 200px; /* Chiều cao cố định cho ảnh bìa */
+    position: relative;
+    overflow: hidden;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.coverImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Đảm bảo ảnh bìa full khung */
 }
 
 .avatar {
-    border: 4px solid #fff; /* Viền trắng nổi bật */
+    border: 4px solid #fff;
     border-radius: 50%;
     object-fit: cover;
-    margin-top: -75px; /* Đưa avatar lên trên phần info */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Hiệu ứng bóng cho avatar */
+    margin-top: -75px; /* Đưa avatar chồng lên ảnh bìa */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1; /* Đảm bảo avatar nằm trên ảnh bìa */
 }
 
 .description {
     font-size: 14px;
-    color: #666; /* Màu xám dịu */
-    line-height: 1.5; /* Giãn dòng cho dễ đọc */
+    color: #666;
+    line-height: 1.5;
     margin: 5px 0;
 }
 
 .friendCount {
     font-size: 14px;
-    color: #444; /* Màu đậm hơn một chút */
+    color: #444;
     font-weight: 500;
 }
 
 .website {
     font-size: 14px;
-    color: var(--component-color, #007bff); /* Màu liên kết nổi bật */
+    color: var(--component-color, #007bff);
     text-decoration: none;
     transition: color 0.3s;
 }
 
 .website:hover {
-    color: var(--component-hover-color, #0056b3); /* Hiệu ứng hover cho liên kết */
+    color: var(--component-hover-color, #0056b3);
 }
 
 .actions {
     display: flex;
-    flex-wrap: wrap; /* Cho phép wrap khi nhiều nút */
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 10px; /* Khoảng cách giữa các nút */
+    gap: 10px;
     margin-top: 15px;
 }
 
@@ -71,34 +88,34 @@
 .editButton {
     padding: 8px 16px;
     font-size: 14px;
-    background-color: var(--component-color, #007bff); /* Màu chủ đạo */
+    background-color: var(--component-color, #007bff);
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease; /* Hiệu ứng mượt mà */
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .actionButton:hover,
 .editButton:hover {
-    background-color: var(--component-hover-color, #0056b3); /* Màu khi hover */
-    transform: translateY(-2px); /* Nâng nhẹ khi hover */
+    background-color: var(--component-hover-color, #0056b3);
+    transform: translateY(-2px);
 }
 
 .editButton {
-    background-color: #28a745; /* Màu xanh lá cho nút chỉnh sửa */
+    background-color: #28a745;
 }
 
 .editButton:hover {
-    background-color: #218838; /* Màu xanh đậm hơn khi hover */
+    background-color: #218838;
 }
 
 .statusText {
     font-size: 14px;
-    color: #888; /* Màu xám nhạt cho trạng thái */
+    color: #888;
     font-style: italic;
     margin-right: 10px;
-    align-self: center; /* Căn giữa theo chiều dọc */
+    align-self: center;
 }
 
 .tabs {
@@ -106,13 +123,13 @@
     justify-content: center;
     gap: 10px;
     margin: 20px 0;
-    flex-wrap: wrap; /* Responsive cho màn hình nhỏ */
+    flex-wrap: wrap;
 }
 
 .tabButton {
     padding: 10px 20px;
     font-size: 16px;
-    background-color: #f4f4f4; /* Màu nền nhẹ */
+    background-color: #f4f4f4;
     border: 1px solid #ddd;
     border-radius: 6px;
     cursor: pointer;
@@ -120,19 +137,19 @@
 }
 
 .tabButton:hover {
-    background-color: #e0e0e0; /* Màu sáng hơn khi hover */
-    color: var(--component-color, #007bff); /* Màu chữ nổi bật */
+    background-color: #e0e0e0;
+    color: var(--component-color, #007bff);
     border-color: var(--component-color, #007bff);
 }
 
 .activeTab {
-    background-color: var(--component-color, #007bff); /* Màu chủ đạo khi active */
+    background-color: var(--component-color, #007bff);
     color: #fff;
     border-color: var(--component-color, #007bff);
 }
 
 .activeTab:hover {
-    background-color: var(--component-hover-color, #0056b3); /* Màu đậm hơn khi hover */
+    background-color: var(--component-hover-color, #0056b3);
     color: #fff;
 }
 
@@ -141,12 +158,12 @@
     margin-top: 20px;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Đổi align-items để nội dung không bị ép giữa */
-    min-height: 300px; /* Chiều cao tối thiểu */
+    align-items: flex-start;
+    min-height: 300px;
     padding: 20px;
-    background: #fff; /* Nền trắng cho nội dung */
+    background: #fff;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Đổ bóng nhẹ */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     box-sizing: border-box;
 }
 
@@ -154,11 +171,15 @@
 @media (max-width: 600px) {
     .infoSection {
         padding: 15px;
-        margin-top: 40px; /* Giảm margin-top cho màn hình nhỏ */
+        margin-top: 40px;
+    }
+
+    .coverContainer {
+        height: 150px; /* Giảm chiều cao ảnh bìa trên mobile */
     }
 
     .avatar {
-        width: 120px !important; /* Giảm kích thước avatar */
+        width: 120px !important;
         height: 120px !important;
         margin-top: -60px;
     }
