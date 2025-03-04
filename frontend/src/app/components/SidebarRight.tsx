@@ -1,21 +1,34 @@
 // frontend/src/app/components/SidebarRight.tsx
 "use client";
 
-import {useState} from "react";
+import {useState, useEffect, useContext} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
 import {toast} from "react-toastify";
 import {useTranslations, useLocale} from "next-intl";
 import {removeCookie} from "../api/authApi";
+import {UserContext} from "../providers"; // Import UserContext
+import {getFriendSuggestions, sendFriendRequest} from "../api/userApi"; // Import hàm API mới
 import styles from "./SidebarRight.module.css";
 import LanguageSwitcher from "./LanguageSwitcher";
 
+type FriendSuggestion = {
+    id: number;
+    username: string;
+    full_name: string;
+    profile_picture_url: string;
+};
+
 export default function SidebarRight() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const locale = useLocale();
     const t = useTranslations("SidebarRight");
+    const currentUser = useContext(UserContext); // Lấy thông tin người dùng hiện tại
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -33,19 +46,46 @@ export default function SidebarRight() {
         if (typeof window !== "undefined") {
             removeCookie("accessToken", {path: "/"});
             removeCookie("refreshToken", {path: "/"});
-            console.log("Cookies removed"); // Log để kiểm tra
+            console.log("Cookies removed");
         }
         toast.success(t("logout_success"));
         navigate("/login");
     };
+
+    const handleAddFriend = async (friendId: number) => {
+        try {
+            await sendFriendRequest(friendId); // Hàm API mới, thêm vào userApi.ts
+            toast.success(t("friend_request_sent"));
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Lỗi không xác định");
+            console.error(err); // Log the error to the console if needed
+        }
+
+    };
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            try {
+                setLoading(true);
+                const data = await getFriendSuggestions(5); // Lấy 5 gợi ý bạn bè
+                setSuggestions(data);
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Lỗi không xác định");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSuggestions();
+    }, []);
 
     return (
         <div className={styles.sidebarRight}>
             {/* Logo người dùng */}
             <div className={styles.userProfile}>
                 <Image
-                    src="/user-logo.png"
-                    alt="User Profile"
+                    src={currentUser?.profile_picture_url || "/user-logo.png"}
+                    alt={currentUser?.username || "User Profile"}
                     className={styles.userImage}
                     width={50}
                     height={50}
@@ -56,7 +96,7 @@ export default function SidebarRight() {
                 {isMenuOpen && (
                     <div className={styles.userMenu}>
                         <ul>
-                            <li onClick={() => navigateToProfile("my-profile")}>
+                            <li onClick={() => navigateToProfile(currentUser?.username || "my-profile")}>
                                 <span className={styles.menuIcon}>👤</span>
                                 {t("profile")}
                             </li>
@@ -96,37 +136,42 @@ export default function SidebarRight() {
                         {t("view_all")}
                     </Link>
                 </div>
-                <div className={styles.friendList}>
-                    {[
-                        {name: "Julia Smith", username: "juliasmith"},
-                        {name: "Vermillion D. Gray", username: "vermilliongray"},
-                        {name: "Mai Senpai", username: "maisenpai"},
-                        {name: "Azunyan U. Wu", username: "azunyanudesu"},
-                        {name: "Oarack Babama", username: "obama21"},
-                    ].map((friend, index) => (
-                        <div className={styles.friendItem} key={index}>
-                            <div
-                                className={styles.friendInfo}
-                                onClick={() => navigateToProfile(friend.username)}
-                            >
-                                <Image
-                                    src="/user-logo.png"
-                                    alt={friend.name}
-                                    className={styles.friendAvatar}
-                                    width={40}
-                                    height={40}
-                                    unoptimized
-                                    loading="lazy"
-                                />
-                                <div>
-                                    <p className={styles.friendName}>{friend.name}</p>
-                                    <p className={styles.friendUsername}>@{friend.username}</p>
+                {loading ? (
+                    <p>Đang tải gợi ý bạn bè...</p>
+                ) : error ? (
+                    <p>Lỗi: {error}</p>
+                ) : (
+                    <div className={styles.friendList}>
+                        {suggestions.map((friend) => (
+                            <div className={styles.friendItem} key={friend.id}>
+                                <div
+                                    className={styles.friendInfo}
+                                    onClick={() => navigateToProfile(friend.username)}
+                                >
+                                    <Image
+                                        src={friend.profile_picture_url || "/user-logo.png"}
+                                        alt={friend.full_name}
+                                        className={styles.friendAvatar}
+                                        width={40}
+                                        height={40}
+                                        unoptimized
+                                        loading="lazy"
+                                    />
+                                    <div>
+                                        <p className={styles.friendName}>{friend.full_name}</p>
+                                        <p className={styles.friendUsername}>@{friend.username}</p>
+                                    </div>
                                 </div>
+                                <button
+                                    className={styles.addFriendButton}
+                                    onClick={() => handleAddFriend(friend.id)}
+                                >
+                                    +
+                                </button>
                             </div>
-                            <button className={styles.addFriendButton}>+</button>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

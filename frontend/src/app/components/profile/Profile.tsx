@@ -1,5 +1,5 @@
 // frontend/src/app/components/profile/Profile.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import styles from "./Profile.module.css";
 import Image from "next/image";
@@ -7,22 +7,57 @@ import PostsTab from "@/app/components/profile/PostsTab";
 import PhotosTab from "@/app/components/profile/PhotosTab";
 import VideosTab from "@/app/components/profile/VideosTab";
 import EditProfileDialog from "@/app/components/profile/EditProfileDialog";
+import { getMyProfile, getPublicProfile } from "@/app/api/userApi";
+
+type ProfileData = {
+    id: number;
+    username: string;
+    full_name: string;
+    bio: string;
+    location: string;
+    website: string;
+    profile_picture_url: string;
+    friend_count?: number; // Có thể thêm từ API sau nếu backend hỗ trợ
+};
 
 export default function Profile({ username, isOwnProfile }: { username: string; isOwnProfile: boolean }) {
     const [activeTab, setActiveTab] = useState("posts");
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [profileData, setProfileData] = useState<ProfileData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const t = useTranslations("Profile");
 
-    // Dữ liệu giả lập từ user_profiles
-    const mockProfileData = {
-        username: username,
-        full_name: "John Doe",
-        bio: "Đây là một lập trình viên yêu thích học hỏi và phát triển dự án.",
-        location: "Hà Nội",
-        website: "https://example.com",
-        profile_picture_url: "/user-logo.png",
-        friend_count: 123,
-    };
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setLoading(true);
+                let data;
+                if (isOwnProfile) {
+                    data = await getMyProfile();
+                } else {
+                    // Giả sử username ở đây là userId (cần điều chỉnh nếu backend yêu cầu username thay vì id)
+                    data = await getPublicProfile(username);
+                }
+                setProfileData({
+                    id: data.id,
+                    username: data.username,
+                    full_name: data.full_name,
+                    bio: data.bio || "",
+                    location: data.location || "",
+                    website: data.website || "",
+                    profile_picture_url: data.profile_picture_url || "/user-logo.png",
+                    friend_count: data.friend_count || 0, // Nếu API không trả về thì mặc định là 0
+                });
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : "Lỗi không xác định");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, [username, isOwnProfile]);
 
     const renderContent = () => {
         switch (activeTab) {
@@ -37,26 +72,34 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
         }
     };
 
+    if (loading) {
+        return <div className={styles.profile}>Đang tải...</div>;
+    }
+
+    if (error || !profileData) {
+        return <div className={styles.profile}>Lỗi: {error || "Không tìm thấy thông tin profile"}</div>;
+    }
+
     return (
         <div className={styles.profile}>
             <div className={styles.infoSection}>
                 <Image
-                    src={mockProfileData.profile_picture_url}
+                    src={profileData.profile_picture_url}
                     alt={t("avatar_alt")}
                     width={150}
                     height={150}
                     className={styles.avatar}
                     unoptimized
                 />
-                <h1>{mockProfileData.full_name || mockProfileData.username}</h1>
-                <p className={styles.description}>{mockProfileData.bio}</p>
-                {mockProfileData.location && (
-                    <p className={styles.location}>{t("location", { location: mockProfileData.location })}</p>
+                <h1>{profileData.full_name || profileData.username}</h1>
+                <p className={styles.description}>{profileData.bio}</p>
+                {profileData.location && (
+                    <p className={styles.location}>{t("location", { location: profileData.location })}</p>
                 )}
-                <p className={styles.friendCount}>{t("friends_count", { count: mockProfileData.friend_count })}</p>
-                {mockProfileData.website && (
-                    <a href={mockProfileData.website} className={styles.website} target="_blank" rel="noopener noreferrer">
-                        {mockProfileData.website}
+                <p className={styles.friendCount}>{t("friends_count", { count: profileData.friend_count })}</p>
+                {profileData.website && (
+                    <a href={profileData.website} className={styles.website} target="_blank" rel="noopener noreferrer">
+                        {profileData.website}
                     </a>
                 )}
                 {isOwnProfile && (
@@ -92,9 +135,9 @@ export default function Profile({ username, isOwnProfile }: { username: string; 
             {showEditDialog && (
                 <EditProfileDialog
                     onClose={() => setShowEditDialog(false)}
-                    currentName={mockProfileData.full_name || mockProfileData.username}
-                    currentDescription={mockProfileData.bio}
-                    currentAvatar={mockProfileData.profile_picture_url}
+                    currentName={profileData.full_name || profileData.username}
+                    currentDescription={profileData.bio}
+                    currentAvatar={profileData.profile_picture_url}
                 />
             )}
         </div>

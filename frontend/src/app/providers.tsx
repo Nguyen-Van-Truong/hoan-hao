@@ -7,7 +7,16 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SUPPORTED_LOCALES, PUBLIC_ROUTES, APP_CONFIG } from "@/config/config";
 import { getCookie } from "./api/authApi";
+import { getMyProfile } from "./api/userApi";
 
+type User = {
+    id: number;
+    username: string;
+    full_name: string;
+    profile_picture_url?: string; // Thêm thuộc tính này
+} | null;
+
+export const UserContext = createContext<User>(null);
 const LocaleContext = createContext<string>(APP_CONFIG.defaultLocale);
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -15,40 +24,61 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isLoading, setIsLoading] = useState(true);
     const [locale, setLocale] = useState<string>(APP_CONFIG.defaultLocale);
+    const [currentUser, setCurrentUser] = useState<User>(null);
 
     useEffect(() => {
         const locales = SUPPORTED_LOCALES;
-        const accessToken = getCookie("accessToken"); // Dùng cookie thay vì localStorage
+        const accessToken = getCookie("accessToken");
 
-        if (!accessToken && !PUBLIC_ROUTES.some((route) => pathname.includes(route))) {
-            toast.warn("Vui lòng đăng nhập để tiếp tục.");
-            router.push(`/${APP_CONFIG.defaultLocale}/login`);
-            return;
-        }
+        const fetchUser = async () => {
+            if (accessToken) {
+                try {
+                    const profile = await getMyProfile();
+                    setCurrentUser({
+                        id: profile.id,
+                        username: profile.username,
+                        full_name: profile.full_name,
+                        profile_picture_url: profile.profile_picture_url || "/user-logo.png",
+                    });
+                } catch (error) {
+                    console.error("Failed to fetch user profile:", error);
+                    setCurrentUser(null);
+                }
+            }
 
-        setIsLoading(false);
+            if (!accessToken && !PUBLIC_ROUTES.some((route) => pathname.includes(route))) {
+                toast.warn("Vui lòng đăng nhập để tiếp tục.");
+                router.push(`/${APP_CONFIG.defaultLocale}/login`);
+            }
 
-        const pathLocale = pathname.split("/")[1];
-        const savedLocale = localStorage.getItem("locale");
+            setIsLoading(false);
 
-        if (pathLocale && locales.includes(pathLocale)) {
-            setLocale(pathLocale);
-            localStorage.setItem("locale", pathLocale);
-        } else if (savedLocale && savedLocale !== pathLocale) {
-            setLocale(savedLocale);
-            router.push(`/${savedLocale}${pathname.slice(pathLocale.length + 1)}`);
-        } else {
-            setLocale(APP_CONFIG.defaultLocale);
-            router.push(`/${APP_CONFIG.defaultLocale}${pathname}`);
-        }
+            const pathLocale = pathname.split("/")[1];
+            const savedLocale = localStorage.getItem("locale");
+
+            if (pathLocale && locales.includes(pathLocale)) {
+                setLocale(pathLocale);
+                localStorage.setItem("locale", pathLocale);
+            } else if (savedLocale && savedLocale !== pathLocale) {
+                setLocale(savedLocale);
+                router.push(`/${savedLocale}${pathname.slice(pathLocale.length + 1)}`);
+            } else {
+                setLocale(APP_CONFIG.defaultLocale);
+                router.push(`/${APP_CONFIG.defaultLocale}${pathname}`);
+            }
+        };
+
+        fetchUser();
     }, [pathname, router]);
 
     if (isLoading) return null;
 
     return (
-        <LocaleContext.Provider value={locale}>
-            {children}
-            <ToastContainer position="top-center" autoClose={3000} />
-        </LocaleContext.Provider>
+        <UserContext.Provider value={currentUser}>
+            <LocaleContext.Provider value={locale}>
+                {children}
+                <ToastContainer position="top-center" autoClose={3000} />
+            </LocaleContext.Provider>
+        </UserContext.Provider>
     );
 }

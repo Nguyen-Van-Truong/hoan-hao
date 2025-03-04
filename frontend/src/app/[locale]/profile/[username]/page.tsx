@@ -4,12 +4,14 @@
 import Layout from "@/app/layout/Layout";
 import Profile from "@/app/components/profile/Profile";
 import {use} from "react";
+import {useContext} from "react";
+import {UserContext} from "@/app/providers";
 
 export default function ProfilePage({params}: { params: Promise<{ username: string }> }) {
-    const {username} = use(params); // Giải nén params bằng hook use
-    const currentUser = "my-profile"; // Người dùng hiện tại (có thể lấy từ session hoặc context)
+    const {username} = use(params);
+    const currentUser = useContext(UserContext);
 
-    const isOwnProfile = username === currentUser; // Kiểm tra xem có phải profile cá nhân không
+    const isOwnProfile = currentUser?.username === username;
 
     return (
         <Layout>
