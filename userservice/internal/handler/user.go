@@ -315,7 +315,7 @@ func getMyProfile(svc service.UserService) gin.HandlerFunc {
 	}
 }
 
-// getFriends lấy danh sách bạn bè
+// getFriends lấy danh sách bạn bè với thông tin chi tiết từ user_profiles và phân trang
 func getFriends(svc service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDInterface, exists := c.Get("userId")
@@ -330,12 +330,29 @@ func getFriends(svc service.UserService) gin.HandlerFunc {
 			return
 		}
 
-		friends, err := svc.GetFriends(userID)
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+		if page < 1 {
+			page = 1
+		}
+		if limit < 1 {
+			limit = 10
+		}
+		offset := (page - 1) * limit
+
+		friendProfiles, total, err := svc.GetFriendProfiles(userID, limit, offset)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve friends"})
 			return
 		}
-		c.JSON(http.StatusOK, friends)
+
+		c.JSON(http.StatusOK, gin.H{
+			"friends": friendProfiles,
+			"total":   total,
+			"page":    page,
+			"limit":   limit,
+			"pages":   (total + int64(limit) - 1) / int64(limit),
+		})
 	}
 }
 

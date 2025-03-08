@@ -46,13 +46,28 @@ export const getPublicProfileByUsername = async (username: string) => {
     }
 };
 
+// Lấy danh sách bạn bè với phân trang
+export const getFriends = async (page: number = 1, limit: number = 12) => {
+    try {
+        const response = await userApi.get("/friends", {
+            params: { page, limit },
+        });
+        return response.data; // { friends: [], total: number, page: number, limit: number, pages: number }
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.error || "Không thể lấy danh sách bạn bè");
+        }
+        throw new Error("Không thể lấy danh sách bạn bè");
+    }
+};
+
 // Lấy danh sách gợi ý bạn bè
-export const getFriendSuggestions = async (limit: number = 5) => {
+export const getFriendSuggestions = async (limit: number = 12) => {
     try {
         const response = await userApi.get("/friends/suggestions", {
             params: { limit },
         });
-        return response.data;
+        return response.data; // Trả về mảng UserProfile
     } catch (error) {
         if (axios.isAxiosError(error)) {
             throw new Error(error.response?.data?.error || "Không thể lấy gợi ý bạn bè");

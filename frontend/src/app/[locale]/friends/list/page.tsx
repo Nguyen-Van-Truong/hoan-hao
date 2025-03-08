@@ -1,3 +1,4 @@
+// frontend/src/app/[locale]/friends/list/page.tsx
 "use client";
 
 import Layout from "@/app/layout/Layout";

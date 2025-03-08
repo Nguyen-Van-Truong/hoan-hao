@@ -75,11 +75,13 @@
   },
   "MyFriends": {
     "title": "Friends List",
-    "loading": "Loading more friends..."
+    "loading": "Loading more friends...",
+    "noFriends": "No friends found"
   },
   "SuggestedFriends": {
     "title": "Suggested Friends",
-    "loading": "Loading more friends..."
+    "loading": "Loading more friends...",
+    "noSuggestions": "No suggestions available"
   },
   "FriendCard": {
     "add_friend": "Add friend"

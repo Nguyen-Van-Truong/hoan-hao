@@ -1,78 +1,106 @@
-// frontend/src/app/components/MyFriends.tsx
 "use client";
 
 import {useState, useEffect, useCallback} from "react";
-import {useTranslations, useLocale} from "next-intl";
+import {useTranslations} from "next-intl";
 import styles from "./MyFriends.module.css";
 import FriendCard from "./FriendCard";
+import {getFriends} from "../api/userApi";
+
+// Định nghĩa kiểu cho hàm debounce tương thích với EventListener
+type DebouncedFunction = () => void; // Không cần tham số vì scroll không truyền args trực tiếp
+
+// Hàm debounce với kiểu rõ ràng
+const debounce = (func: DebouncedFunction, wait: number): EventListener => {
+    let timeout: NodeJS.Timeout;
+    return (() => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(), wait);
+    }) as EventListener;
+};
 
 interface Friend {
-    name: string;
+    id: number;
     username: string;
-    avatar: string;
+    full_name: string;
+    profile_picture_url: string;
+    bio?: string;
+    location?: string;
 }
 
-// Danh sách bạn bè ban đầu
-const initialFriends: Friend[] = Array.from({length: 12}, (_, i) => ({
-    name: `Friend ${i + 1}`,
-    username: `@friend${i + 1}`,
-    avatar: "/user-logo.png",
-}));
-
 export default function MyFriends() {
-    const t = useTranslations("MyFriends"); // ✅ Hỗ trợ i18n
-    useLocale();
-// ✅ Lấy locale hiện tại
-    const [friends, setFriends] = useState<Friend[]>(initialFriends);
+    const t = useTranslations("MyFriends");
+    const [friends, setFriends] = useState<Friend[]>([]);
     const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
-    const fetchMoreFriends = useCallback(async () => {
-        if (loading) return;
-        setLoading(true);
+    const fetchFriends = useCallback(
+        async (pageNum: number, isInitial = false) => {
+            if (loading || pageNum > totalPages || !hasMore) return;
+            setLoading(true);
 
-        // Mô phỏng gọi API thêm bạn bè
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+            try {
+                const data = await getFriends(pageNum, 10);
+                const newFriends = data.friends.filter(
+                    (newFriend: Friend) => !friends.some((f) => f.id === newFriend.id)
+                );
 
-        const newFriends: Friend[] = Array.from({length: 8}, (_, i) => ({
-            name: `New Friend ${friends.length + i + 1}`,
-            username: `@newfriend${friends.length + i + 1}`,
-            avatar: "/user-logo.png",
-        }));
+                if (isInitial) {
+                    setFriends(newFriends); // Reset danh sách khi fetch lần đầu
+                } else {
+                    setFriends((prevFriends) => [...prevFriends, ...newFriends]);
+                }
 
-        setFriends((prevFriends) => [...prevFriends, ...newFriends]);
-        setLoading(false);
-    }, [loading, friends.length]);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            const {scrollTop, clientHeight, scrollHeight} = document.documentElement;
-
-            // Kiểm tra nếu cuộn đến gần cuối trang
-            if (scrollTop + clientHeight >= scrollHeight - 5 && !loading) {
-                fetchMoreFriends();
+                if (newFriends.length < 10 || data.total === friends.length + newFriends.length) {
+                    setHasMore(false); // Hết dữ liệu nếu ít hơn limit hoặc đạt tổng số
+                }
+                setTotalPages(data.pages);
+                setPage(pageNum + 1);
+            } catch (error) {
+                console.error("Error fetching friends:", error);
+                setHasMore(false);
+            } finally {
+                setLoading(false);
             }
-        };
+        },
+        [loading, totalPages, friends, hasMore]
+    );
 
-        // Lắng nghe sự kiện cuộn của toàn bộ trang
+    // Fetch lần đầu khi component mount
+    useEffect(() => {
+        fetchFriends(1, true); // Reset danh sách khi mount
+    }, [fetchFriends]);
+
+    // Infinite scroll với debounce
+    useEffect(() => {
+        const handleScroll = debounce(() => {
+            const {scrollTop, clientHeight, scrollHeight} = document.documentElement;
+            if (scrollTop + clientHeight >= scrollHeight - 50 && !loading && hasMore) {
+                fetchFriends(page);
+            }
+        }, 300);
+
         window.addEventListener("scroll", handleScroll);
-
-        return () => {
-            window.removeEventListener("scroll", handleScroll);
-        };
-    }, [fetchMoreFriends, loading]);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, [fetchFriends, loading, page, hasMore]);
 
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>{t("title")}</h1>
             <div className={styles.friendList}>
-                {friends.map((friend, index) => (
-                    <FriendCard
-                        key={index}
-                        name={friend.name}
-                        username={friend.username}
-                        avatar={friend.avatar}
-                    />
-                ))}
+                {friends.length > 0 ? (
+                    friends.map((friend) => (
+                        <FriendCard
+                            key={friend.id}
+                            name={friend.full_name}
+                            username={`@${friend.username}`}
+                            avatar={friend.profile_picture_url || "/user-logo.png"}
+                        />
+                    ))
+                ) : (
+                    !loading && <p>{t("noFriends") || "No friends found"}</p>
+                )}
             </div>
             {loading && (
                 <div className={styles.loadingContainer}>

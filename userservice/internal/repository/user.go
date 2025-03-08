@@ -1,4 +1,3 @@
-// userservice/internal/repository/user.go
 package repository
 
 import (
@@ -16,8 +15,9 @@ type UserRepository interface {
 	SaveFriend(friend *model.Friend) error
 	UpdateFriendStatus(friendID uint, status string) error
 	GetFriends(userID uint) ([]model.Friend, error)
+	GetFriendProfiles(userID uint, limit, offset int) ([]model.UserProfile, int64, error) // Thêm phương thức mới với phân trang
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
-	DB() *gorm.DB // Thêm phương thức để truy cập db
+	DB() *gorm.DB
 }
 
 type userRepository struct {
@@ -58,6 +58,35 @@ func (r *userRepository) GetFriends(userID uint) ([]model.Friend, error) {
 	return friends, err
 }
 
+func (r *userRepository) GetFriendProfiles(userID uint, limit, offset int) ([]model.UserProfile, int64, error) {
+	var friendProfiles []model.UserProfile
+	var total int64
+
+	// Đếm tổng số bạn bè
+	err := r.db.Model(&model.Friend{}).
+		Where("user_id = ? AND status = ?", userID, "ACCEPTED").
+		Or("friend_id = ? AND status = ?", userID, "ACCEPTED").
+		Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Lấy danh sách bạn bè với thông tin chi tiết từ user_profiles
+	err = r.db.Raw(`
+        SELECT up.*
+        FROM user_profiles up
+        INNER JOIN friends f ON (f.user_id = ? AND f.friend_id = up.id AND f.status = 'ACCEPTED')
+            OR (f.friend_id = ? AND f.user_id = up.id AND f.status = 'ACCEPTED')
+        ORDER BY f.created_at DESC
+        LIMIT ? OFFSET ?
+    `, userID, userID, limit, offset).Scan(&friendProfiles).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return friendProfiles, total, nil
+}
+
 func (r *userRepository) GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error) {
 	var suggestions []model.UserProfile
 	err := r.db.Raw(`
@@ -67,8 +96,8 @@ func (r *userRepository) GetFriendSuggestions(userID uint, limit int) ([]model.U
             UNION
             SELECT user_id FROM friends WHERE friend_id = ? AND status = 'ACCEPTED'
         ) AND id != ?
-        LIMIT ?`, userID, userID, userID, limit).
-		Scan(&suggestions).Error
+        LIMIT ?
+    `, userID, userID, userID, limit).Scan(&suggestions).Error
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +113,7 @@ func (r *userRepository) FindByUsername(username string) (*model.UserProfile, er
 }
 
 func (r *userRepository) SaveProfile(profile *model.UserProfile) error {
-	return r.db.Create(profile).Error // Sử dụng Create để gán id thủ công
+	return r.db.Create(profile).Error
 }
 
 func (r *userRepository) SaveEmail(email *model.UserEmail) error {

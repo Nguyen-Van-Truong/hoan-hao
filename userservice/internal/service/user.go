@@ -2,10 +2,11 @@ package service
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"time"
 	"userservice/internal/model"
 	"userservice/internal/repository"
+
+	"github.com/jinzhu/gorm"
 )
 
 type UserService interface {
@@ -18,6 +19,7 @@ type UserService interface {
 	GetPublicProfileWithFriendStatus(username string, currentUserID uint) (*model.UserProfile, string, error)
 	GetMyProfile(userID uint) (*model.UserProfile, error)
 	GetFriends(userID uint) ([]model.Friend, error)
+	GetFriendProfiles(userID uint, limit, offset int) ([]model.UserProfile, int64, error) // Cập nhật để hỗ trợ phân trang
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
 	GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
 	GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
@@ -144,7 +146,6 @@ func (s *userService) CancelFriendRequest(userID, friendID uint) error {
 		return fmt.Errorf("cannot cancel friend request to yourself")
 	}
 
-	// Tìm bản ghi PENDING từ phía người gửi hoặc người nhận
 	var friend model.Friend
 	err := s.repo.DB().Where("(user_id = ? AND friend_id = ? AND status = ?) OR (user_id = ? AND friend_id = ? AND status = ?)",
 		userID, friendID, "PENDING", friendID, userID, "PENDING").
@@ -153,7 +154,6 @@ func (s *userService) CancelFriendRequest(userID, friendID uint) error {
 		return fmt.Errorf("friend request not found or already cancelled: %v", err)
 	}
 
-	// Xóa bản ghi
 	if err := s.repo.DB().Delete(&friend).Error; err != nil {
 		return fmt.Errorf("failed to cancel friend request: %v", err)
 	}
@@ -166,20 +166,17 @@ func (s *userService) BlockUser(userID, friendID uint) error {
 		return fmt.Errorf("cannot block yourself")
 	}
 
-	// Kiểm tra xem đã có quan hệ trong bảng friends chưa
 	var friend model.Friend
 	err := s.repo.DB().Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
 		userID, friendID, friendID, userID).
 		First(&friend).Error
 
 	if err == nil {
-		// Nếu đã có quan hệ, cập nhật thành BLOCKED
 		friend.Status = "BLOCKED"
 		friend.ActionBy = &userID
 		return s.repo.DB().Save(&friend).Error
 	}
 
-	// Nếu chưa có quan hệ, tạo bản ghi mới với trạng thái BLOCKED
 	profile, err := s.repo.FindProfileByID(userID)
 	if err != nil {
 		return fmt.Errorf("user not found: %v", err)
@@ -206,7 +203,6 @@ func (s *userService) UnblockUser(userID, friendID uint) error {
 		return fmt.Errorf("cannot unblock yourself")
 	}
 
-	// Tìm bản ghi BLOCKED mà userID đã chặn
 	var friend model.Friend
 	err := s.repo.DB().Where("user_id = ? AND friend_id = ? AND status = ?", userID, friendID, "BLOCKED").
 		First(&friend).Error
@@ -214,7 +210,6 @@ func (s *userService) UnblockUser(userID, friendID uint) error {
 		return fmt.Errorf("block record not found or already unblocked: %v", err)
 	}
 
-	// Xóa bản ghi
 	if err := s.repo.DB().Delete(&friend).Error; err != nil {
 		return fmt.Errorf("failed to unblock user: %v", err)
 	}
@@ -286,12 +281,16 @@ func (s *userService) GetPublicProfileWithFriendStatus(username string, currentU
 }
 
 func (s *userService) GetFriends(userID uint) ([]model.Friend, error) {
-	fmt.Printf("User ID: %d", userID)
+	fmt.Printf("User ID: %d\n", userID)
 	return s.repo.GetFriends(userID)
 }
 
+func (s *userService) GetFriendProfiles(userID uint, limit, offset int) ([]model.UserProfile, int64, error) {
+	return s.repo.GetFriendProfiles(userID, limit, offset)
+}
+
 func (s *userService) GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error) {
-	fmt.Printf("User ID: %d", userID)
+	fmt.Printf("User ID: %d\n", userID)
 	return s.repo.GetFriendSuggestions(userID, limit)
 }
 

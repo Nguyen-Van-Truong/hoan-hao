@@ -4,7 +4,7 @@
 import { useRouter } from "next/navigation";
 import styles from "./FriendCard.module.css";
 import Image from "next/image";
-import {useLocale, useTranslations} from "next-intl"; // ✅ Hỗ trợ i18n
+import {useLocale, useTranslations} from "next-intl";
 
 interface FriendCardProps {
     name: string;

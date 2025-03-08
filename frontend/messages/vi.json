@@ -74,14 +74,16 @@
   },
   "MyFriends": {
     "title": "Danh sách bạn bè",
-    "loading": "Đang tải thêm bạn bè..."
+    "loading": "Đang tải thêm bạn bè...",
+    "noFriends": "Không tìm thấy bạn bè nào"
   },
   "FriendCard": {
     "add_friend": "Kết bạn"
   },
   "SuggestedFriends": {
     "title": "Đề xuất bạn bè",
-    "loading": "Đang tải thêm bạn bè..."
+    "loading": "Đang tải thêm bạn bè...",
+    "noSuggestions": "Không có gợi ý nào"
   },
   "Profile": {
     "avatar_alt": "Ảnh đại diện",
