@@ -12,14 +12,25 @@ type Post struct {
 	CreatedAt  time.Time   `json:"created_at"`
 	UpdatedAt  time.Time   `json:"updated_at"`
 	IsDeleted  bool        `json:"is_deleted" gorm:"default:0"`
-	Media      []PostMedia `json:"media" gorm:"foreignKey:PostID"`    // Quan hệ 1-nhiều với PostMedia
-	Comments   []Comment   `json:"comments" gorm:"foreignKey:PostID"` // Quan hệ 1-nhiều với Comment
-	Shares     []PostShare `json:"shares" gorm:"foreignKey:PostID"`   // Quan hệ 1-nhiều với PostShare
-	Likes      []PostLike  `json:"likes" gorm:"foreignKey:PostID"`    // Quan hệ 1-nhiều với PostLike
+	Media      []PostMedia `json:"media" gorm:"foreignKey:PostID"`
 }
 
 func (Post) TableName() string {
 	return "posts"
+}
+
+// PostResponse dùng để trả về dữ liệu bài đăng với thông tin bổ sung
+type PostResponse struct {
+	ID            uint64      `json:"id"`
+	UserID        uint64      `json:"user_id"`
+	Content       string      `json:"content"`
+	Visibility    string      `json:"visibility"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	Media         []PostMedia `json:"media"`
+	TotalLikes    int         `json:"total_likes"`
+	TotalComments int         `json:"total_comments"`
+	TotalShares   int         `json:"total_shares"`
 }
 
 // PostMedia ánh xạ bảng post_media

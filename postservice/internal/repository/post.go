@@ -1,19 +1,20 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/jinzhu/gorm"
 	"postservice/internal/model"
-	"time"
 )
 
 type PostRepository interface {
-	FindByID(id uint64) (*model.Post, error)
+	FindByID(id uint64) (*model.PostResponse, error)
 	CreatePost(post *model.Post) error
 	UpdatePost(post *model.Post) error
 	DeletePost(id uint64) error
 	CreateComment(comment *model.Comment) error
 	FindCommentsByPostID(postID uint64, limit, offset int) ([]model.Comment, int64, error)
-	FindCommentByID(id uint64, comment *model.Comment) error // Thêm phương thức mới
+	FindCommentByID(id uint64, comment *model.Comment) error
 	UpdateComment(comment *model.Comment) error
 	DeleteComment(id uint64) error
 	CreatePostLike(postID, userID uint64) error
@@ -22,7 +23,8 @@ type PostRepository interface {
 	DeleteCommentLike(commentID, userID uint64) error
 	CreateShare(share *model.PostShare) error
 	FindSharesByPostID(postID uint64, limit, offset int) ([]model.PostShare, int64, error)
-	FindPostsByUserID(userID uint64, limit, offset int) ([]model.Post, int64, error)
+	FindPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error)
+	FindFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error)
 }
 
 type postRepository struct {
@@ -33,14 +35,94 @@ func NewPostRepository(db *gorm.DB) PostRepository {
 	return &postRepository{db: db}
 }
 
-func (r *postRepository) FindByID(id uint64) (*model.Post, error) {
+func (r *postRepository) FindByID(id uint64) (*model.PostResponse, error) {
 	var post model.Post
 	if err := r.db.Preload("Media").Where("id = ? AND is_deleted = false", id).First(&post).Error; err != nil {
 		return nil, err
 	}
-	return &post, nil
+
+	var totalLikes, totalComments, totalShares int64
+	r.db.Model(&model.PostLike{}).Where("post_id = ?", id).Count(&totalLikes)
+	r.db.Model(&model.Comment{}).Where("post_id = ? AND is_deleted = false", id).Count(&totalComments)
+	r.db.Model(&model.PostShare{}).Where("post_id = ?", id).Count(&totalShares)
+
+	postResponse := &model.PostResponse{
+		ID:            post.ID,
+		UserID:        post.UserID,
+		Content:       post.Content,
+		Visibility:    post.Visibility,
+		CreatedAt:     post.CreatedAt,
+		UpdatedAt:     post.UpdatedAt,
+		Media:         post.Media,
+		TotalLikes:    int(totalLikes),
+		TotalComments: int(totalComments),
+		TotalShares:   int(totalShares),
+	}
+
+	return postResponse, nil
 }
 
+func (r *postRepository) FindFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error) {
+	var posts []model.Post
+	var total int64
+
+	// Truy vấn tất cả bài đăng không bị xóa
+	query := r.db.Preload("Media").Where("is_deleted = false")
+
+	if err := query.Model(&model.Post{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Mặc định sắp xếp theo thời gian tạo mới nhất
+	if mode == "popular" {
+		query = query.Order("created_at DESC") // Sẽ sắp xếp lại sau khi tính điểm số
+	} else {
+		query = query.Order("created_at DESC")
+	}
+
+	if err := query.Limit(limit).Offset(offset).Find(&posts).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Chuyển đổi sang PostResponse
+	var postResponses []model.PostResponse
+	for _, post := range posts {
+		var totalLikes, totalComments, totalShares int64
+		r.db.Model(&model.PostLike{}).Where("post_id = ?", post.ID).Count(&totalLikes)
+		r.db.Model(&model.Comment{}).Where("post_id = ? AND is_deleted = false", post.ID).Count(&totalComments)
+		r.db.Model(&model.PostShare{}).Where("post_id = ?", post.ID).Count(&totalShares)
+
+		postResponses = append(postResponses, model.PostResponse{
+			ID:            post.ID,
+			UserID:        post.UserID,
+			Content:       post.Content,
+			Visibility:    post.Visibility,
+			CreatedAt:     post.CreatedAt,
+			UpdatedAt:     post.UpdatedAt,
+			Media:         post.Media,
+			TotalLikes:    int(totalLikes),
+			TotalComments: int(totalComments),
+			TotalShares:   int(totalShares),
+		})
+	}
+
+	// Sắp xếp theo popular nếu cần
+	if mode == "popular" {
+		for i := 0; i < len(postResponses)-1; i++ {
+			for j := i + 1; j < len(postResponses); j++ {
+				scoreI := postResponses[i].TotalLikes + postResponses[i].TotalComments*2 + postResponses[i].TotalShares*3
+				scoreJ := postResponses[j].TotalLikes + postResponses[j].TotalComments*2 + postResponses[j].TotalShares*3
+				if scoreI < scoreJ {
+					postResponses[i], postResponses[j] = postResponses[j], postResponses[i]
+				}
+			}
+		}
+	}
+
+	return postResponses, total, nil
+}
+
+// Các hàm khác giữ nguyên
 func (r *postRepository) CreatePost(post *model.Post) error {
 	return r.db.Create(post).Error
 }
@@ -122,7 +204,7 @@ func (r *postRepository) FindSharesByPostID(postID uint64, limit, offset int) ([
 	return shares, total, nil
 }
 
-func (r *postRepository) FindPostsByUserID(userID uint64, limit, offset int) ([]model.Post, int64, error) {
+func (r *postRepository) FindPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error) {
 	var posts []model.Post
 	var total int64
 
@@ -135,5 +217,26 @@ func (r *postRepository) FindPostsByUserID(userID uint64, limit, offset int) ([]
 		return nil, 0, err
 	}
 
-	return posts, total, nil
+	var postResponses []model.PostResponse
+	for _, post := range posts {
+		var totalLikes, totalComments, totalShares int64
+		r.db.Model(&model.PostLike{}).Where("post_id = ?", post.ID).Count(&totalLikes)
+		r.db.Model(&model.Comment{}).Where("post_id = ? AND is_deleted = false", post.ID).Count(&totalComments)
+		r.db.Model(&model.PostShare{}).Where("post_id = ?", post.ID).Count(&totalShares)
+
+		postResponses = append(postResponses, model.PostResponse{
+			ID:            post.ID,
+			UserID:        post.UserID,
+			Content:       post.Content,
+			Visibility:    post.Visibility,
+			CreatedAt:     post.CreatedAt,
+			UpdatedAt:     post.UpdatedAt,
+			Media:         post.Media,
+			TotalLikes:    int(totalLikes),
+			TotalComments: int(totalComments),
+			TotalShares:   int(totalShares),
+		})
+	}
+
+	return postResponses, total, nil
 }

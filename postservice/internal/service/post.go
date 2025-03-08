@@ -8,9 +8,9 @@ import (
 )
 
 type PostService interface {
-	GetPostByID(id uint64) (*model.Post, error)
-	CreatePost(userID uint, req model.CreatePostRequest) (*model.Post, error)
-	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.Post, error)
+	GetPostByID(id uint64) (*model.PostResponse, error)
+	CreatePost(userID uint, req model.CreatePostRequest) (*model.PostResponse, error)
+	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.PostResponse, error)
 	DeletePost(id uint64, userID uint64) error
 	CreateComment(postID, userID uint64, content string, parentID *uint64) (*model.Comment, error)
 	UpdateComment(id uint64, userID uint64, content string) (*model.Comment, error)
@@ -22,8 +22,9 @@ type PostService interface {
 	UnlikeComment(commentID, userID uint64) error
 	SharePost(postID, userID uint64, content string) (*model.PostShare, error)
 	GetSharesByPostID(postID uint64, limit, offset int) ([]model.PostShare, int64, error)
-	GetPostsByUserID(userID uint64, limit, offset int) ([]model.Post, int64, error)
-	GetCommentByID(id uint64) (*model.Comment, error) // Thêm vào interface
+	GetPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error)
+	GetCommentByID(id uint64) (*model.Comment, error)
+	GetFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error)
 }
 
 type postService struct {
@@ -34,11 +35,12 @@ func NewPostService(repo repository.PostRepository) PostService {
 	return &postService{repo: repo}
 }
 
-func (s *postService) GetPostByID(id uint64) (*model.Post, error) {
+func (s *postService) GetPostByID(id uint64) (*model.PostResponse, error) {
 	return s.repo.FindByID(id)
 }
 
-func (s *postService) CreatePost(userID uint, req model.CreatePostRequest) (*model.Post, error) {
+func (s *postService) CreatePost(userID uint, req model.CreatePostRequest) (*model.PostResponse, error) {
+	// Sử dụng model.Post để tạo bài đăng trong DB
 	post := &model.Post{
 		UserID:     uint64(userID),
 		Content:    req.Content,
@@ -58,22 +60,34 @@ func (s *postService) CreatePost(userID uint, req model.CreatePostRequest) (*mod
 	if err := s.repo.CreatePost(post); err != nil {
 		return nil, err
 	}
-	return post, nil
+
+	// Sau khi tạo, lấy dữ liệu đầy đủ bằng FindByID để trả về PostResponse
+	return s.repo.FindByID(post.ID)
 }
 
-func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.Post, error) {
-	post, err := s.repo.FindByID(id)
+func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.PostResponse, error) {
+	// Lấy bài đăng từ DB bằng FindByID (trả về PostResponse)
+	postResp, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
-	if post.UserID != userID {
+	if postResp.UserID != userID {
 		return nil, errors.New("forbidden")
 	}
 
-	post.Content = req.Content
-	post.Visibility = req.Visibility
-	post.UpdatedAt = time.Now()
-	post.Media = nil // Xóa media cũ
+	// Chuyển đổi sang model.Post để cập nhật
+	post := &model.Post{
+		ID:         id,
+		UserID:     postResp.UserID,
+		Content:    req.Content,
+		Visibility: req.Visibility,
+		CreatedAt:  postResp.CreatedAt,
+		UpdatedAt:  time.Now(),
+		IsDeleted:  false, // Đảm bảo không thay đổi trạng thái xóa
+	}
+
+	// Xóa media cũ và thêm media mới
+	post.Media = nil
 	for _, url := range req.MediaURLs {
 		post.Media = append(post.Media, model.PostMedia{
 			MediaURL:  url,
@@ -85,7 +99,9 @@ func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostR
 	if err := s.repo.UpdatePost(post); err != nil {
 		return nil, err
 	}
-	return post, nil
+
+	// Sau khi cập nhật, lấy dữ liệu đầy đủ để trả về
+	return s.repo.FindByID(id)
 }
 
 func (s *postService) DeletePost(id uint64, userID uint64) error {
@@ -179,7 +195,7 @@ func (s *postService) GetSharesByPostID(postID uint64, limit, offset int) ([]mod
 	return s.repo.FindSharesByPostID(postID, limit, offset)
 }
 
-func (s *postService) GetPostsByUserID(userID uint64, limit, offset int) ([]model.Post, int64, error) {
+func (s *postService) GetPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error) {
 	return s.repo.FindPostsByUserID(userID, limit, offset)
 }
 
@@ -189,4 +205,8 @@ func (s *postService) GetCommentByID(id uint64) (*model.Comment, error) {
 		return nil, err
 	}
 	return &comment, nil
+}
+
+func (s *postService) GetFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error) {
+	return s.repo.FindFeed(userID, mode, limit, offset)
 }
