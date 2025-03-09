@@ -74,11 +74,20 @@
     "image_preview": "Image preview",
     "loading": "Loading",
     "write_comment": "Write a comment...",
+    "write_reply": "Write a reply...",
+    "reply": "Reply",
+    "cancel_reply": "Cancel",
     "view_more_comments": "View more comments",
     "close": "Close",
     "share_copy_success": "Link copied successfully!",
     "share_copy_error": "Failed to copy link.",
-    "comment": "Bình luận"
+    "comment": "Comment",
+    "fetch_comments_error": "Failed to fetch comments",
+    "create_comment_error": "Failed to create comment",
+    "like_error": "Failed to like post",
+    "already_liked": "You have already liked this post",
+    "like_comment_error": "Failed to like comment",
+    "already_liked_comment": "You have already liked this comment"
   },
   "MyFriends": {
     "title": "Friends List",

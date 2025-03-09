@@ -74,11 +74,20 @@
     "image_preview": "Ảnh xem trước",
     "loading": "Đang tải",
     "write_comment": "Viết bình luận...",
+    "write_reply": "Viết trả lời...",
+    "reply": "Trả lời",
+    "cancel_reply": "Hủy",
     "view_more_comments": "Xem thêm bình luận",
     "close": "Đóng",
     "share_copy_success": "Đã sao chép liên kết!",
     "share_copy_error": "Lỗi khi sao chép liên kết.",
-    "comment": "Bình luận"
+    "comment": "Bình luận",
+    "fetch_comments_error": "Lỗi khi tải bình luận",
+    "create_comment_error": "Lỗi khi tạo bình luận",
+    "like_error": "Lỗi khi thích bài viết",
+    "already_liked": "Bạn đã thích bài viết này",
+    "like_comment_error": "Lỗi khi thích bình luận",
+    "already_liked_comment": "Bạn đã thích bình luận này"
   },
   "MyFriends": {
     "title": "Danh sách bạn bè",

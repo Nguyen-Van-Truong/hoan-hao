@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState, useCallback} from "react";
 import {v4 as uuidv4} from "uuid";
 import {toast} from "react-toastify";
-import {fetchFeed, type RawPost, type Media, Author} from "../api/postApi";
+import {fetchFeed, fetchPostById, type RawPost, type Media, Author} from "../api/postApi";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -26,6 +26,7 @@ interface PostType {
 }
 
 interface MainContentProps {
+    username?: string; // Thêm username vào props
     hashcodeIDPost?: string;
 }
 
@@ -65,6 +66,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         return transformed;
     };
 
+    // Fetch danh sách bài đăng (feed)
     const fetchPosts = useCallback(
         async (newOffset: number, reset = false) => {
             if (loading || (!reset && !hasMore)) return;
@@ -88,15 +90,47 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         [mode, t]
     );
 
+    // Fetch bài đăng chi tiết khi có hashcodeIDPost
     useEffect(() => {
-        setOffset(0);
-        setHasMore(true);
-        setPosts([]);
-        fetchPosts(0, true);
-    }, [mode, fetchPosts]);
+        if (!hashcodeIDPost) {
+            // Nếu không có hashcodeIDPost, fetch feed bình thường
+            setOffset(0);
+            setHasMore(true);
+            setPosts([]);
+            fetchPosts(0, true);
+            return;
+        }
 
+        const postId = parseInt(hashcodeIDPost.replace("post-", ""), 10);
+        if (isNaN(postId)) {
+            toast.error("Invalid post ID");
+            return;
+        }
+
+        const fetchPostDetail = async () => {
+            setLoading(true);
+            try {
+                const post = await fetchPostById(postId);
+                const transformedPost = transformPost(post);
+                setPosts([transformedPost]); // Chỉ hiển thị bài đăng chi tiết
+                setSelectedPost(transformedPost); // Mở dialog chi tiết ngay lập tức
+                setHasMore(false); // Không fetch thêm feed
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Unknown error";
+                toast.error(`${t("fetch_error")}: ${errorMessage}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPostDetail();
+    }, [hashcodeIDPost, t]);
+
+    // Infinite scroll cho feed (chỉ khi không có hashcodeIDPost)
     const scrollRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
+        if (hashcodeIDPost) return; // Không scroll nếu đang xem chi tiết bài đăng
+
         const handleScroll = () => {
             if (scrollRef.current) clearTimeout(scrollRef.current);
 
@@ -116,38 +150,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
             window.removeEventListener("scroll", handleScroll);
             if (scrollRef.current) clearTimeout(scrollRef.current);
         };
-    }, [fetchPosts, offset, loading, hasMore]);
-
-    useEffect(() => {
-        if (!hashcodeIDPost) return;
-
-        const foundPost = posts.find((p) => p.hashcodeIDPost === hashcodeIDPost);
-        if (foundPost) {
-            setSelectedPost(foundPost);
-        } else {
-            const fetchPostDetail = async () => {
-                try {
-                    const {posts: fetchedPosts} = await fetchFeed(1, 0, "latest");
-                    const post = fetchedPosts.find((p) => `post-${p.id}` === hashcodeIDPost);
-                    setSelectedPost(
-                        post
-                            ? transformPost(post)
-                            : {
-                                author: null,
-                                content: `Post from API: ${hashcodeIDPost}`,
-                                time: "Just now",
-                                images: [],
-                                hashcodeIDPost,
-                            }
-                    );
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-                    toast.error(`${t("fetch_error")}: ${errorMessage}`);
-                }
-            };
-            fetchPostDetail();
-        }
-    }, [hashcodeIDPost, posts, t, fetchPosts]);
+    }, [fetchPosts, offset, loading, hasMore, hashcodeIDPost]);
 
     const closeDialog = () => {
         setSelectedPost(null);
@@ -203,83 +206,87 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
 
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
-            <div className={styles.createPost}>
-                <textarea
-                    className={styles.postInput}
-                    placeholder={t("create_post_placeholder")}
-                    value={newPostContent}
-                    onChange={handlePostContentChange}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onPaste={handlePaste}
-                />
-                <div className={styles.previewImages}>
-                    {newPostImages.map((file, index) => (
-                        <div key={index} className={styles.previewImageWrapper}>
+            {!hashcodeIDPost && ( // Chỉ hiển thị phần tạo bài đăng khi không xem chi tiết
+                <div className={styles.createPost}>
+                    <textarea
+                        className={styles.postInput}
+                        placeholder={t("create_post_placeholder")}
+                        value={newPostContent}
+                        onChange={handlePostContentChange}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onPaste={handlePaste}
+                    />
+                    <div className={styles.previewImages}>
+                        {newPostImages.map((file, index) => (
+                            <div key={index} className={styles.previewImageWrapper}>
+                                <Image
+                                    src={URL.createObjectURL(file)}
+                                    alt={`preview-${index}`}
+                                    width={60}
+                                    height={60}
+                                    className={styles.previewImage}
+                                    loading="lazy"
+                                />
+                                <button className={styles.removeImage} onClick={() => removeImage(index)}>
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    <div className={styles.actionBar}>
+                        <label htmlFor="fileInput" className={styles.imageIcon}>
                             <Image
-                                src={URL.createObjectURL(file)}
-                                alt={`preview-${index}`}
-                                width={60}
-                                height={60}
-                                className={styles.previewImage}
+                                src="/icon/icon_choose_image.svg"
+                                alt={t("image_select_icon_alt")}
+                                width={45}
+                                height={45}
+                                style={{width: "auto", height: "auto"}}
                                 loading="lazy"
                             />
-                            <button className={styles.removeImage} onClick={() => removeImage(index)}>
-                                ×
-                            </button>
-                        </div>
-                    ))}
-                </div>
-                <div className={styles.actionBar}>
-                    <label htmlFor="fileInput" className={styles.imageIcon}>
-                        <Image
-                            src="/icon/icon_choose_image.svg"
-                            alt={t("image_select_icon_alt")}
-                            width={45}
-                            height={45}
-                            style={{width: "auto", height: "auto"}}
-                            loading="lazy"
+                        </label>
+                        <input
+                            id="fileInput"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleFileChange}
+                            className={styles.hiddenInput}
                         />
-                    </label>
-                    <input
-                        id="fileInput"
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleFileChange}
-                        className={styles.hiddenInput}
-                    />
+                        <button
+                            className={styles.postButton}
+                            onClick={handleSubmitPost}
+                            disabled={!newPostContent.trim() && newPostImages.length === 0}
+                        >
+                            {t("post_button")}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {!hashcodeIDPost && ( // Chỉ hiển thị mode selector khi không xem chi tiết
+                <div className={styles.modeSelector}>
                     <button
-                        className={styles.postButton}
-                        onClick={handleSubmitPost}
-                        disabled={!newPostContent.trim() && newPostImages.length === 0}
+                        className={`${styles.modeButton} ${mode === "latest" ? styles.active : ""}`}
+                        onClick={() => setMode("latest")}
                     >
-                        {t("post_button")}
+                        {t("mode_latest")}
+                    </button>
+                    <button
+                        className={`${styles.modeButton} ${mode === "popular" ? styles.active : ""}`}
+                        onClick={() => setMode("popular")}
+                    >
+                        {t("mode_popular")}
                     </button>
                 </div>
-            </div>
-
-            <div className={styles.modeSelector}>
-                <button
-                    className={`${styles.modeButton} ${mode === "latest" ? styles.active : ""}`}
-                    onClick={() => setMode("latest")}
-                >
-                    {t("mode_latest")}
-                </button>
-                <button
-                    className={`${styles.modeButton} ${mode === "popular" ? styles.active : ""}`}
-                    onClick={() => setMode("popular")}
-                >
-                    {t("mode_popular")}
-                </button>
-            </div>
+            )}
 
             {posts.map((post) => (
                 <Post
                     key={post.hashcodeIDPost}
                     author={post.author?.full_name ?? "Unknown"}
                     username={post.author?.username ?? "unknown"}
-                    avatarUrl={post.author?.profile_picture_url ?? "/user-logo.png"} // Truyền profile_picture_url
+                    avatarUrl={post.author?.profile_picture_url ?? "/user-logo.png"}
                     content={post.content}
                     time={post.time}
                     images={post.images}
@@ -297,7 +304,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                 </div>
             )}
 
-            {!loading && !hasMore && posts.length > 0 && (
+            {!loading && !hasMore && posts.length > 0 && !hashcodeIDPost && (
                 <div className={styles.noMorePosts}>
                     <p>{t("no_more_posts")}</p>
                 </div>
@@ -307,7 +314,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                 <DetailPostDialog
                     author={selectedPost.author?.full_name ?? "Unknown"}
                     username={selectedPost.author?.username ?? "unknown"}
-                    avatarUrl={selectedPost.author?.profile_picture_url ?? "/user-logo.png"} // Truyền profile_picture_url
+                    avatarUrl={selectedPost.author?.profile_picture_url ?? "/user-logo.png"}
                     time={selectedPost.time}
                     content={selectedPost.content}
                     images={selectedPost.images}
