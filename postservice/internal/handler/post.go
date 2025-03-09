@@ -16,33 +16,33 @@ func SetupRoutes(r *gin.Engine, repo repository.PostRepository) {
 	svc := service.NewPostService(repo)
 
 	// Route công khai
-	r.GET("/post/:id", GetPostByID(svc))                  // Xem chi tiết bài đăng
-	r.GET("/post/:id/comments", GetComments(svc))         // Lấy danh sách bình luận
-	r.GET("/post/:id/shares", GetShares(svc))             // Lấy danh sách chia sẻ
-	r.GET("/post/user/:user_id/posts", GetUserPosts(svc)) // Lấy danh sách bài đăng của người dùng
+	r.GET("/post/:id", GetPostByID(svc))
+	r.GET("/post/:id/comments", GetComments(svc))
+	r.GET("/post/:id/shares", GetShares(svc))
+	r.GET("/post/user/:user_id/posts", GetUserPosts(svc))
 
 	// Nhóm route yêu cầu xác thực JWT
 	postGroup := r.Group("/post")
 	postGroup.Use(JWTMiddleware())
 	{
-		postGroup.POST("", CreatePost(svc))                // Tạo bài đăng mới
-		postGroup.PUT("/:id", UpdatePost(svc))             // Cập nhật bài đăng
-		postGroup.DELETE("/:id", DeletePost(svc))          // Xóa bài đăng
-		postGroup.POST("/:id/comment", CreateComment(svc)) // Thêm bình luận
-		postGroup.POST("/:id/like", LikePost(svc))         // Thích bài đăng
-		postGroup.DELETE("/:id/like", UnlikePost(svc))     // Bỏ thích bài đăng
-		postGroup.POST("/:id/share", SharePost(svc))       // Chia sẻ bài đăng
-		postGroup.GET("/feed", GetFeed(svc))               // Lấy feed (thay vì /api/feed)
+		postGroup.POST("", CreatePost(svc))
+		postGroup.PUT("/:id", UpdatePost(svc))
+		postGroup.DELETE("/:id", DeletePost(svc))
+		postGroup.POST("/:id/comment", CreateComment(svc))
+		postGroup.POST("/:id/like", LikePost(svc))
+		postGroup.DELETE("/:id/like", UnlikePost(svc))
+		postGroup.POST("/:id/share", SharePost(svc))
+		postGroup.GET("/feed", GetFeed(svc))
 	}
 
 	commentGroup := r.Group("/comment")
 	commentGroup.Use(JWTMiddleware())
 	{
-		commentGroup.POST("/:id/reply", ReplyComment(svc))   // Thêm bình luận trả lời
-		commentGroup.PUT("/:id", UpdateComment(svc))         // Cập nhật bình luận
-		commentGroup.DELETE("/:id", DeleteComment(svc))      // Xóa bình luận
-		commentGroup.POST("/:id/like", LikeComment(svc))     // Thích bình luận
-		commentGroup.DELETE("/:id/like", UnlikeComment(svc)) // Bỏ thích bình luận
+		commentGroup.POST("/:id/reply", ReplyComment(svc))
+		commentGroup.PUT("/:id", UpdateComment(svc))
+		commentGroup.DELETE("/:id", DeleteComment(svc))
+		commentGroup.POST("/:id/like", LikeComment(svc))
+		commentGroup.DELETE("/:id/like", UnlikeComment(svc))
 	}
 }
 
@@ -80,7 +80,7 @@ func CreatePost(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		post, err := svc.CreatePost(uint(userID), req)
+		post, err := svc.CreatePost(userID, req) // Đã đồng bộ uint64
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post: " + err.Error()})
 			return
@@ -552,10 +552,16 @@ func getUserID(c *gin.Context) (uint64, error) {
 		return 0, errors.New("user ID not found in context")
 	}
 
-	userID, ok := userIDInterface.(uint)
-	if !ok {
+	switch v := userIDInterface.(type) {
+	case uint:
+		return uint64(v), nil
+	case uint64:
+		return v, nil
+	case int:
+		return uint64(v), nil
+	case float64:
+		return uint64(v), nil
+	default:
 		return 0, errors.New("invalid user ID type")
 	}
-
-	return uint64(userID), nil
 }

@@ -1,7 +1,14 @@
-// internal/model/post.go
 package model
 
 import "time"
+
+// UserInfo chứa thông tin cơ bản của user
+type UserInfo struct {
+	ID                uint64 `json:"id"`
+	Username          string `json:"username"`
+	FullName          string `json:"full_name"`
+	ProfilePictureURL string `json:"profile_picture_url"`
+}
 
 // Post ánh xạ bảng posts
 type Post struct {
@@ -23,6 +30,7 @@ func (Post) TableName() string {
 type PostResponse struct {
 	ID            uint64      `json:"id"`
 	UserID        uint64      `json:"user_id"`
+	Author        *UserInfo   `json:"author"` // Thêm thông tin user
 	Content       string      `json:"content"`
 	Visibility    string      `json:"visibility"`
 	CreatedAt     time.Time   `json:"created_at"`
@@ -51,12 +59,13 @@ type Comment struct {
 	ID              uint64        `json:"id" gorm:"primary_key"`
 	PostID          uint64        `json:"post_id" gorm:"not null"`
 	UserID          uint64        `json:"user_id" gorm:"not null"`
-	ParentCommentID *uint64       `json:"parent_comment_id"` // Có thể null nếu là bình luận gốc
+	Author          *UserInfo     `json:"author"` // Thêm thông tin user
+	ParentCommentID *uint64       `json:"parent_comment_id"`
 	Content         string        `json:"content" gorm:"type:text;not null"`
 	CreatedAt       time.Time     `json:"created_at"`
 	UpdatedAt       time.Time     `json:"updated_at"`
 	IsDeleted       bool          `json:"is_deleted" gorm:"default:0"`
-	Likes           []CommentLike `json:"likes" gorm:"foreignKey:CommentID"` // Quan hệ 1-nhiều với CommentLike
+	Likes           []CommentLike `json:"likes" gorm:"foreignKey:CommentID"`
 }
 
 func (Comment) TableName() string {
@@ -68,6 +77,7 @@ type PostShare struct {
 	ID            uint64    `json:"id" gorm:"primary_key"`
 	PostID        uint64    `json:"post_id" gorm:"not null"`
 	UserID        uint64    `json:"user_id" gorm:"not null"`
+	Author        *UserInfo `json:"author"` // Thêm thông tin user
 	SharedContent string    `json:"shared_content" gorm:"type:text"`
 	CreatedAt     time.Time `json:"created_at"`
 }
@@ -101,6 +111,6 @@ func (CommentLike) TableName() string {
 // CreatePostRequest dùng cho API tạo bài đăng
 type CreatePostRequest struct {
 	Content    string   `json:"content" binding:"required"`
-	MediaURLs  []string `json:"media_urls"` // Danh sách URL media (ảnh hoặc video)
+	MediaURLs  []string `json:"media_urls"`
 	Visibility string   `json:"visibility" binding:"oneof=PUBLIC FRIENDS PRIVATE"`
 }
