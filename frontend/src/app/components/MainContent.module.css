@@ -1,9 +1,9 @@
-/*frontend/src/app/components/MainContent.module.css*/
+/* frontend/src/app/components/MainContent.module.css */
 .mainContent {
     overflow-y: auto;
-    padding-left: 5vh; /* Khoảng cách nội dung */
-    padding-right: 5vh; /* Khoảng cách nội dung */
-    background-color: var(--primary-mid-color); /* Màu nền */
+    padding-left: 5vh;
+    padding-right: 5vh;
+    background-color: var(--primary-mid-color);
 }
 
 .createPost {
@@ -27,29 +27,16 @@
     outline: none;
 }
 
-.mediaUpload {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.uploadInput {
-    margin-top: 10px;
-    padding: 6px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-}
-
 .previewImages {
     display: flex;
-    flex-wrap: wrap; /* Cho phép xuống dòng khi không đủ chỗ */
-    gap: 10px; /* Khoảng cách giữa các ảnh */
+    flex-wrap: wrap;
+    gap: 10px;
     margin-top: 10px;
-    justify-content: flex-start; /* Căn các ảnh từ bên trái */
+    justify-content: flex-start;
 }
 
 .previewImageWrapper {
-    position: relative; /* Để nút xóa ảnh có thể đặt ở góc */
+    position: relative;
 }
 
 .previewImage {
@@ -57,7 +44,7 @@
     height: 60px;
     object-fit: cover;
     border-radius: 8px;
-    border: 1px solid #ddd; /* Đường viền để ảnh nổi bật hơn */
+    border: 1px solid #ddd;
 }
 
 .removeImage {
@@ -80,7 +67,7 @@
 }
 
 .removeImage:hover {
-    background: #e04142; /* Đổi màu nút khi hover */
+    background: #e04142;
 }
 
 .postButton {
@@ -101,9 +88,9 @@
 }
 
 .postButton:disabled {
-    background-color: #ccc; /* Màu nền khi bị vô hiệu hóa */
-    cursor: not-allowed; /* Hiển thị trạng thái không cho phép */
-    color: #888; /* Màu chữ khi bị vô hiệu hóa */
+    background-color: #ccc;
+    cursor: not-allowed;
+    color: #888;
 }
 
 .actionBar {
@@ -123,13 +110,38 @@
 .imageIcon img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* Đảm bảo ảnh không bị cắt méo */
+    object-fit: contain;
 }
 
 .hiddenInput {
     display: none;
 }
 
+.modeSelector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.modeButton {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modeButton:hover {
+    background-color: #f0f0f0;
+}
+
+.modeButton.active {
+    background-color: var(--component-color);
+    color: #fff;
+    border-color: var(--component-color);
+}
 
 .loadingContainer {
     display: flex;
@@ -137,14 +149,6 @@
     gap: 10px;
     margin-top: 20px;
     justify-content: center;
-}
-
-.loadingContainer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-    justify-content: center; /* Căn giữa nội dung */
 }
 
 .spinner {
@@ -166,7 +170,6 @@
 }
 
 @media (max-width: 1025px) {
-
     .main-content {
         width: 100%;
     }

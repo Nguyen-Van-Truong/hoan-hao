@@ -45,31 +45,20 @@ Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/routes" -Met
 } -ContentType "application/x-www-form-urlencoded"
 
 Write-Host "Adding route for PostService (public routes - /post)..."
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
-    "paths[]"   = "/post"
-    name        = "post-public-route"
-    "methods[]" = "GET"
-    strip_path  = "false"
-} -ContentType "application/x-www-form-urlencoded"
+$bodyPostPublic = "paths[]=/post&name=post-public-route&methods[]=GET&methods[]=OPTIONS&strip_path=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $bodyPostPublic -ContentType "application/x-www-form-urlencoded"
 
 Write-Host "Adding route for PostService (authenticated routes - /post)..."
-$body = "paths[]=/post&name=post-auth-route&methods[]=POST&methods[]=PUT&methods[]=DELETE&strip_path=false"
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $body -ContentType "application/x-www-form-urlencoded"
+$bodyPostAuth = "paths[]=/post&name=post-auth-route&methods[]=POST&methods[]=PUT&methods[]=DELETE&methods[]=OPTIONS&strip_path=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $bodyPostAuth -ContentType "application/x-www-form-urlencoded"
 
 Write-Host "Adding route for Comment in PostService (authenticated routes)..."
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
-    "paths[]"   = "/comment"
-    name        = "comment-auth-route"
-    strip_path  = "false"
-} -ContentType "application/x-www-form-urlencoded"
+$bodyCommentAuth = "paths[]=/comment&name=comment-auth-route&methods[]=POST&methods[]=PUT&methods[]=DELETE&methods[]=OPTIONS&strip_path=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $bodyCommentAuth -ContentType "application/x-www-form-urlencoded"
 
 Write-Host "Adding route for PostService (public routes - /post/user)..."
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
-    "paths[]"   = "/post/user"
-    name        = "user-public-route"
-    "methods[]" = "GET"
-    strip_path  = "false"
-} -ContentType "application/x-www-form-urlencoded"
+$bodyUserPublic = "paths[]=/post/user&name=user-public-route&methods[]=GET&methods[]=OPTIONS&strip_path=false"
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body $bodyUserPublic -ContentType "application/x-www-form-urlencoded"
 
 # Bước 3: Kích hoạt JWT Plugin cho các route cần xác thực
 Write-Host "Enabling JWT plugin for UserService..."

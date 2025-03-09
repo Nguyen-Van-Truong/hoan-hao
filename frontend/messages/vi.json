@@ -43,7 +43,14 @@
     "loading_more_posts": "Đang tải thêm bài viết...",
     "remove_image": "Xóa ảnh",
     "max_image_limit": "Bạn chỉ được tải lên tối đa 6 ảnh.",
-    "no_content_to_post": "Vui lòng nhập nội dung hoặc chọn ảnh để đăng bài."
+    "no_content_to_post": "Vui lòng nhập nội dung hoặc chọn ảnh để đăng bài.",
+
+    "fetch_error": "Lỗi khi gọi tới server",
+    "max_images_error": "Bạn chỉ có thể chọn tối đa {{max}} ảnh",
+    "mode_latest": "Mới nhất",
+    "mode_popular": "Phổ biến",
+    "no_more_posts": "Không còn bài viết"
+
   },
   "Post": {
     "like": "Thích",

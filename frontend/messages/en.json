@@ -44,7 +44,13 @@
     "loading_more_posts": "Loading more posts...",
     "remove_image": "Remove image",
     "max_image_limit": "You can upload a maximum of 6 images.",
-    "no_content_to_post": "Please enter content or select images to post."
+    "no_content_to_post": "Please enter content or select images to post.",
+
+    "fetch_error": "Failed to fetch posts",
+    "max_images_error": "You can only upload a maximum of {{max}} images",
+    "mode_latest": "Latest",
+    "mode_popular": "Popular",
+    "no_more_posts": "No more posts"
   },
   "Post": {
     "like": "Like",

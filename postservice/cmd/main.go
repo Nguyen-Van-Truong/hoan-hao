@@ -1,4 +1,3 @@
-// cmd/main.go
 package main
 
 import (
@@ -7,6 +6,7 @@ import (
 	"postservice/internal/handler"
 	"postservice/internal/repository"
 
+	"github.com/gin-contrib/cors" // Thêm package cors
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,6 +26,16 @@ func main() {
 
 	// Khởi tạo router Gin
 	r := gin.Default()
+
+	// Thêm middleware CORS
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"}, // Origin của frontend
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 60 * 60, // 12 giờ
+	}))
 
 	// Đăng ký route
 	handler.SetupRoutes(r, repo)
