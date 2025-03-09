@@ -1,9 +1,8 @@
-// frontend/src/app/components/Post.tsx
-import { useState } from "react";
+import {useState} from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import { toast } from "react-toastify";
+import {useRouter} from "next/navigation";
+import {useLocale, useTranslations} from "next-intl";
+import {toast} from "react-toastify";
 import styles from "./Post.module.css";
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
@@ -11,6 +10,7 @@ import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
 interface PostProps {
     author: string;
     username: string;
+    avatarUrl: string; // Thêm prop avatarUrl
     content: string;
     time: string;
     images?: string[];
@@ -23,6 +23,7 @@ interface PostProps {
 export default function Post({
                                  author,
                                  username,
+                                 avatarUrl, // Nhận avatarUrl từ MainContent
                                  content,
                                  time,
                                  images = [],
@@ -55,7 +56,9 @@ export default function Post({
     };
 
     const renderImages = () => {
-        if (images.length === 0) return null;
+        if (!images || images.length === 0) return null;
+        console.log("Rendering images in Post:", images); // Debug
+
         if (images.length === 1) {
             return (
                 <div className={styles.singleImageWrapper}>
@@ -120,7 +123,7 @@ export default function Post({
         <div className={styles.post}>
             <div className={styles.header}>
                 <Image
-                    src="/user-logo.png"
+                    src={avatarUrl} // Sử dụng avatarUrl thay cho "/user-logo.png"
                     alt="User Avatar"
                     className={styles.avatar}
                     width={50}
@@ -205,6 +208,7 @@ export default function Post({
                 <DetailPostDialog
                     author={author}
                     username={username}
+                    avatarUrl={avatarUrl} // Truyền avatarUrl vào dialog
                     time={time}
                     images={images}
                     content={content}

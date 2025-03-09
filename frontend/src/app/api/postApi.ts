@@ -10,9 +10,17 @@ export interface Media {
     created_at: string;
 }
 
+export interface Author {
+    id: number;
+    username: string;
+    full_name: string;
+    profile_picture_url: string;
+}
+
 export interface RawPost {
     id: number;
     user_id: number;
+    author: Author | null;
     content: string;
     visibility: string;
     created_at: string;

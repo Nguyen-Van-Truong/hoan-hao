@@ -1,8 +1,7 @@
-// frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
 import {v4 as uuidv4} from "uuid";
 import {toast} from "react-toastify";
-import {fetchFeed, type RawPost, type Media} from "../api/postApi";
+import {fetchFeed, type RawPost, type Media, Author} from "../api/postApi";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -20,22 +19,20 @@ interface PostType {
     total_likes?: number;
     total_comments?: number;
     total_shares?: number;
-    author: string;
-    username: string;
+    author: Author | null;
     time: string;
     images: string[];
     hashcodeIDPost: string;
 }
 
 interface MainContentProps {
-    username?: string;
     hashcodeIDPost?: string;
 }
 
 const MAX_IMAGES = 6;
-const LIMIT = 2;
+const LIMIT = 3;
 
-export default function MainContent({username, hashcodeIDPost}: MainContentProps) {
+export default function MainContent({hashcodeIDPost}: MainContentProps) {
     const [posts, setPosts] = useState<PostType[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<PostType | null>(null);
@@ -47,23 +44,26 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
     const mainContentRef = useRef<HTMLDivElement>(null);
     const t = useTranslations("MainContent");
 
-    const transformPost = (post: RawPost): PostType => ({
-        id: post.id,
-        user_id: post.user_id,
-        content: post.content,
-        visibility: post.visibility,
-        created_at: post.created_at,
-        updated_at: post.updated_at,
-        media: post.media,
-        total_likes: post.total_likes,
-        total_comments: post.total_comments,
-        total_shares: post.total_shares,
-        author: `User ${post.user_id}`,
-        username: `@user${post.user_id}`,
-        time: new Date(post.created_at).toLocaleString(),
-        images: post.media?.map((m) => m.media_url) ?? [],
-        hashcodeIDPost: `post-${post.id}`,
-    });
+    const transformPost = (post: RawPost): PostType => {
+        const transformed = {
+            id: post.id,
+            user_id: post.user_id,
+            content: post.content,
+            visibility: post.visibility,
+            created_at: post.created_at,
+            updated_at: post.updated_at,
+            media: post.media,
+            total_likes: post.total_likes,
+            total_comments: post.total_comments,
+            total_shares: post.total_shares,
+            author: post.author,
+            time: new Date(post.created_at).toLocaleString(),
+            images: post.media?.map((m) => m.media_url) ?? [],
+            hashcodeIDPost: `post-${post.id}`,
+        };
+        console.log("Transformed post:", transformed);
+        return transformed;
+    };
 
     const fetchPosts = useCallback(
         async (newOffset: number, reset = false) => {
@@ -77,7 +77,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
                 const newPosts = fetchedPosts.map(transformPost);
                 setPosts((prev) => (reset ? newPosts : [...prev, ...newPosts]));
                 setOffset(newOffset + LIMIT);
-                setHasMore(fetchedPosts.length === LIMIT && newOffset + LIMIT < total); // Chỉ có thêm nếu đủ LIMIT và chưa hết
+                setHasMore(fetchedPosts.length === LIMIT && newOffset + LIMIT < total);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 toast.error(`${t("fetch_error")}: ${errorMessage}`);
@@ -85,34 +85,39 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
                 setLoading(false);
             }
         },
-        [mode, hasMore, loading, t]
+        [mode, t]
     );
 
-    // Tải bài viết ban đầu khi component mount hoặc mode thay đổi
     useEffect(() => {
         setOffset(0);
         setHasMore(true);
         setPosts([]);
         fetchPosts(0, true);
-    }, [mode]);
+    }, [mode, fetchPosts]);
 
-    // Infinite scroll
+    const scrollRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
         const handleScroll = () => {
-            if (
-                window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100 &&
-                !loading &&
-                hasMore
-            ) {
-                fetchPosts(offset);
-            }
+            if (scrollRef.current) clearTimeout(scrollRef.current);
+
+            scrollRef.current = setTimeout(() => {
+                if (
+                    window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100 &&
+                    !loading &&
+                    hasMore
+                ) {
+                    fetchPosts(offset);
+                }
+            }, 200);
         };
 
         window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            if (scrollRef.current) clearTimeout(scrollRef.current);
+        };
     }, [fetchPosts, offset, loading, hasMore]);
 
-    // Tự động mở dialog nếu có hashcodeIDPost
     useEffect(() => {
         if (!hashcodeIDPost) return;
 
@@ -128,8 +133,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
                         post
                             ? transformPost(post)
                             : {
-                                author: username ?? "Unknown",
-                                username: `@${username ?? "unknown"}`,
+                                author: null,
                                 content: `Post from API: ${hashcodeIDPost}`,
                                 time: "Just now",
                                 images: [],
@@ -143,7 +147,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
             };
             fetchPostDetail();
         }
-    }, [hashcodeIDPost, posts, username, t]);
+    }, [hashcodeIDPost, posts, t, fetchPosts]);
 
     const closeDialog = () => {
         setSelectedPost(null);
@@ -185,8 +189,7 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
         if (!newPostContent.trim() && newPostImages.length === 0) return;
 
         const newPost: PostType = {
-            author: "Current User",
-            username: "@currentUser",
+            author: {id: 0, username: "currentUser", full_name: "Current User", profile_picture_url: ""},
             content: newPostContent,
             time: "Just now",
             images: newPostImages.map((file) => URL.createObjectURL(file)),
@@ -201,15 +204,15 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
             <div className={styles.createPost}>
-        <textarea
-            className={styles.postInput}
-            placeholder={t("create_post_placeholder")}
-            value={newPostContent}
-            onChange={handlePostContentChange}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onPaste={handlePaste}
-        />
+                <textarea
+                    className={styles.postInput}
+                    placeholder={t("create_post_placeholder")}
+                    value={newPostContent}
+                    onChange={handlePostContentChange}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onPaste={handlePaste}
+                />
                 <div className={styles.previewImages}>
                     {newPostImages.map((file, index) => (
                         <div key={index} className={styles.previewImageWrapper}>
@@ -274,8 +277,9 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
             {posts.map((post) => (
                 <Post
                     key={post.hashcodeIDPost}
-                    author={post.author}
-                    username={post.username}
+                    author={post.author?.full_name ?? "Unknown"}
+                    username={post.author?.username ?? "unknown"}
+                    avatarUrl={post.author?.profile_picture_url ?? "/user-logo.png"} // Truyền profile_picture_url
                     content={post.content}
                     time={post.time}
                     images={post.images}
@@ -301,8 +305,9 @@ export default function MainContent({username, hashcodeIDPost}: MainContentProps
 
             {selectedPost && (
                 <DetailPostDialog
-                    author={selectedPost.author}
-                    username={selectedPost.username}
+                    author={selectedPost.author?.full_name ?? "Unknown"}
+                    username={selectedPost.author?.username ?? "unknown"}
+                    avatarUrl={selectedPost.author?.profile_picture_url ?? "/user-logo.png"} // Truyền profile_picture_url
                     time={selectedPost.time}
                     content={selectedPost.content}
                     images={selectedPost.images}

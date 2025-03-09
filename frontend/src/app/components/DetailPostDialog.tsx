@@ -1,4 +1,3 @@
-// frontend/src/app/components/DetailPostDialog.tsx
 import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
 import {useLocale, useTranslations} from "next-intl";
@@ -18,6 +17,7 @@ interface Comment {
 interface DetailPostDialogProps {
     author: string;
     username: string;
+    avatarUrl: string; // Thêm prop avatarUrl
     time: string;
     images: string[];
     content: string;
@@ -31,6 +31,7 @@ interface DetailPostDialogProps {
 export default function DetailPostDialog({
                                              author,
                                              username,
+                                             avatarUrl, // Nhận avatarUrl từ MainContent
                                              time,
                                              images,
                                              content,
@@ -154,7 +155,7 @@ export default function DetailPostDialog({
                 <div className={styles.body}>
                     <div className={styles.postInfo}>
                         <Image
-                            src="/user-logo.png"
+                            src={avatarUrl} // Sử dụng avatarUrl thay cho "/user-logo.png"
                             alt={t("avatar_alt")}
                             width={50}
                             height={50}
