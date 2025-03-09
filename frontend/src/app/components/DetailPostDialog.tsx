@@ -1,10 +1,11 @@
+// frontend/src/app/components/DetailPostDialog.tsx
 import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
 import {useLocale, useTranslations} from "next-intl";
+import {toast} from "react-toastify";
 import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
-import {toast} from "react-toastify";
 
 interface Comment {
     avatar: string;
@@ -14,13 +15,16 @@ interface Comment {
     image?: string | null;
 }
 
-interface CommentDialogProps {
+interface DetailPostDialogProps {
     author: string;
     username: string;
     time: string;
     images: string[];
     content: string;
     hashcodeIDPost: string;
+    total_likes: number;
+    total_comments: number;
+    total_shares: number;
     onClose: () => void;
 }
 
@@ -31,8 +35,11 @@ export default function DetailPostDialog({
                                              images,
                                              content,
                                              hashcodeIDPost,
+                                             total_likes,
+                                             total_comments,
+                                             total_shares,
                                              onClose,
-                                         }: CommentDialogProps) {
+                                         }: DetailPostDialogProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
     const [newCommentImage, setNewCommentImage] = useState<string | null>(null);
@@ -44,32 +51,29 @@ export default function DetailPostDialog({
     const dialogRef = useRef<HTMLDivElement | null>(null);
     const locale = useLocale();
     const t = useTranslations("DetailPostDialog");
-
     const MAX_LENGTH = 100;
 
-    // Cập nhật URL và tiêu đề khi mở dialog
     useEffect(() => {
-        if (username && hashcodeIDPost) {
-            const truncatedContent =
-                content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
+        const truncatedContent =
+            content.length > MAX_LENGTH ? `${content.slice(0, MAX_LENGTH)}...` : content;
+        const newUrl = `/${locale}/${username}/post/${hashcodeIDPost}`;
+        window.history.pushState(null, "", newUrl);
+        document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
 
-            // Cập nhật URL đầy đủ với `locale`, `username` và `hashcodeIDPost`
-            const newUrl = `/${locale}/${username}/post/${hashcodeIDPost}`;
-            window.history.pushState(null, "", newUrl);
-
-            // Cập nhật tiêu đề trang
-            document.title = `${author} - ${truncatedContent} - Hoàn Hảo`;
-
-            return () => {
-                // Khôi phục URL và tiêu đề gốc khi dialog bị đóng
-                const defaultUrl = window.location.origin;
-                window.history.pushState(null, "", defaultUrl);
-                document.title = "Hoàn Hảo";
-            };
-        }
+        return () => {
+            window.history.pushState(null, "", window.location.origin);
+            document.title = "Hoàn Hảo";
+        };
     }, [author, username, content, hashcodeIDPost, locale]);
 
-    // Giả lập tải thêm bình luận
+    useEffect(() => {
+        const loadInitialComments = async () => {
+            const initialComments = await fetchMoreComments(0);
+            setComments(initialComments);
+        };
+        loadInitialComments();
+    }, []);
+
     const fetchMoreComments = async (currentCount: number): Promise<Comment[]> => {
         await new Promise((res) => setTimeout(res, 1000));
         return [
@@ -97,29 +101,16 @@ export default function DetailPostDialog({
         ];
     };
 
-    // Tải bình luận ban đầu
-    useEffect(() => {
-        const loadInitialComments = async () => {
-            const initialComments = await fetchMoreComments(0);
-            setComments(initialComments);
-        };
-        loadInitialComments();
-    }, []);
-
     const toggleContent = () => setIsExpanded(!isExpanded);
-
     const addComment = () => {
-        const trimmedComment = newComment.trim();
-        if (trimmedComment === "" && !newCommentImage) return;
-
+        if (!newComment.trim() && !newCommentImage) return;
         const newCommentData: Comment = {
             avatar: "/user-logo.png",
             name: "Bạn",
             time: "Vừa xong",
-            content: trimmedComment,
+            content: newComment.trim(),
             image: newCommentImage,
         };
-
         setComments((prev) => [newCommentData, ...prev]);
         setNewComment("");
         setNewCommentImage(null);
@@ -133,47 +124,22 @@ export default function DetailPostDialog({
         setIsLoadingMore(false);
     };
 
-    // Đóng form khi nhấp bên ngoài
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dialogRef.current && !dialogRef.current.contains(event.target as Node)) {
                 onClose();
             }
         };
-
         document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [onClose]);
 
-    // Hàm sao chép đường dẫn và hiển thị thông báo
     const handleShare = () => {
         const currentUrl = `${window.location.origin}/${locale}/${username}/post/${hashcodeIDPost}`;
-
-        // Kiểm tra xem navigator.clipboard có hỗ trợ hay không
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(currentUrl)
-                .then(() => {
-                    toast.success(t("share_copy_success"));
-                })
-                .catch((err) => {
-                    toast.error(t("share_copy_error"));
-                    console.error('Error copying to clipboard', err);
-                });
-        } else {
-            const textArea = document.createElement('textarea');
-            textArea.value = currentUrl;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                toast.success(t("share_copy_success"));
-            } catch (err) {
-                toast.error(t("share_copy_error:" + err));
-            }
-            document.body.removeChild(textArea);
-        }
+        navigator.clipboard
+            .writeText(currentUrl)
+            .then(() => toast.success(t("share_copy_success")))
+            .catch(() => toast.error(t("share_copy_error")));
     };
 
     return (
@@ -186,7 +152,6 @@ export default function DetailPostDialog({
                     </button>
                 </div>
                 <div className={styles.body}>
-                    {/* Author info */}
                     <div className={styles.postInfo}>
                         <Image
                             src="/user-logo.png"
@@ -204,8 +169,6 @@ export default function DetailPostDialog({
                             <p className={styles.postTime}>{time}</p>
                         </div>
                     </div>
-
-                    {/* Post content */}
                     <div className={styles.postDescription}>
                         <p>
                             {isExpanded
@@ -220,8 +183,6 @@ export default function DetailPostDialog({
                             </button>
                         )}
                     </div>
-
-                    {/* Post images */}
                     <div className={images.length === 1 ? styles.singleImageWrapper : styles.imageGrid}>
                         {images.map((img, index) => (
                             <div key={index} className={styles.imageWrapper}>
@@ -239,7 +200,6 @@ export default function DetailPostDialog({
                             </div>
                         ))}
                     </div>
-
                     <div className={styles.actions}>
                         <div className={styles.action} onClick={() => setLiked(!liked)}>
                             <Image
@@ -251,7 +211,19 @@ export default function DetailPostDialog({
                                 loading="lazy"
                                 unoptimized
                             />
-                            {liked ? `13 ${t("liked")}` : `12 ${t("like")}`}
+                            {liked ? `${total_likes + 1} ${t("liked")}` : `${total_likes} ${t("like")}`}
+                        </div>
+                        <div className={styles.action}>
+                            <Image
+                                src="/icon/comment.svg"
+                                alt={t("comment")}
+                                width={28}
+                                height={28}
+                                className={styles.icon}
+                                loading="lazy"
+                                unoptimized
+                            />
+                            {total_comments} {t("comment")}
                         </div>
                         <div className={styles.action} onClick={handleShare}>
                             <Image
@@ -263,11 +235,9 @@ export default function DetailPostDialog({
                                 loading="lazy"
                                 unoptimized
                             />
-                            {t("share")}
+                            {total_shares} {t("share")}
                         </div>
                     </div>
-
-                    {/* Comments */}
                     <div className={styles.commentSection}>
                         {comments.map((comment, index) => (
                             <div key={index} className={styles.commentWrapper}>
@@ -314,8 +284,6 @@ export default function DetailPostDialog({
                         </div>
                     </div>
                 </div>
-
-                {/* Footer */}
                 <div className={styles.footer}>
                     <textarea
                         placeholder={t("write_comment")}
@@ -342,7 +310,6 @@ export default function DetailPostDialog({
                         }}
                         className={styles.commentTextarea}
                     />
-
                     <label className={styles.imageUploadLabel}>
                         📷
                         <input
@@ -367,8 +334,6 @@ export default function DetailPostDialog({
                         ➤
                     </button>
                 </div>
-
-                {/* Image previews */}
                 {newCommentImage && (
                     <div className={styles.previewImageWrapper}>
                         <div style={{position: "relative", display: "inline-block"}}>
@@ -391,8 +356,6 @@ export default function DetailPostDialog({
                     </div>
                 )}
             </div>
-
-            {/* Image carousel */}
             {previewIndex !== null && (
                 <ImagePreviewCarousel
                     images={images}
@@ -403,7 +366,10 @@ export default function DetailPostDialog({
                 />
             )}
             {previewCommentImage && (
-                <ImagePreviewSingle imageSrc={previewCommentImage} onClose={() => setPreviewCommentImage(null)}/>
+                <ImagePreviewSingle
+                    imageSrc={previewCommentImage}
+                    onClose={() => setPreviewCommentImage(null)}
+                />
             )}
         </div>
     );

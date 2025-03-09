@@ -77,7 +77,8 @@
     "view_more_comments": "View more comments",
     "close": "Close",
     "share_copy_success": "Link copied successfully!",
-    "share_copy_error": "Failed to copy link."
+    "share_copy_error": "Failed to copy link.",
+    "comment": "Bình luận"
   },
   "MyFriends": {
     "title": "Friends List",

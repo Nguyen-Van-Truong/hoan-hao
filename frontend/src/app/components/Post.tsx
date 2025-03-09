@@ -1,13 +1,24 @@
 // frontend/src/app/components/Post.tsx
-import {useState} from "react";
+import { useState } from "react";
 import Image from "next/image";
-import {useRouter} from "next/navigation";
-import {useLocale} from "next-intl"; // Lấy locale hiện tại
-import {toast} from "react-toastify"; // Đảm bảo toast được import
-import {useTranslations} from "next-intl"; // ✅ Thêm i18n
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "react-toastify";
 import styles from "./Post.module.css";
 import DetailPostDialog from "./DetailPostDialog";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
+
+interface PostProps {
+    author: string;
+    username: string;
+    content: string;
+    time: string;
+    images?: string[];
+    hashcodeIDPost: string;
+    total_likes: number;
+    total_comments: number;
+    total_shares: number;
+}
 
 export default function Post({
                                  author,
@@ -16,18 +27,13 @@ export default function Post({
                                  time,
                                  images = [],
                                  hashcodeIDPost,
-                             }: {
-    author: string;
-    username: string;
-    content: string;
-    time: string;
-    images?: string[];
-    hashcodeIDPost: string;
-    onClick?: () => void;
-}) {
+                                 total_likes,
+                                 total_comments,
+                                 total_shares,
+                             }: PostProps) {
     const router = useRouter();
-    const locale = useLocale(); // Lấy locale hiện tại
-    const t = useTranslations("Post"); // ✅ Thêm i18n cho Post
+    const locale = useLocale();
+    const t = useTranslations("Post");
     const MAX_LENGTH = 100;
     const [isExpanded, setIsExpanded] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -36,7 +42,6 @@ export default function Post({
 
     const toggleLike = () => setLiked(!liked);
     const toggleContent = () => setIsExpanded(!isExpanded);
-
     const closePreview = () => setPreviewIndex(null);
     const showNextImage = () => {
         if (previewIndex !== null) {
@@ -50,9 +55,8 @@ export default function Post({
     };
 
     const renderImages = () => {
-        const numImages = images.length;
-        if (numImages === 0) return null;
-        if (numImages === 1) {
+        if (images.length === 0) return null;
+        if (images.length === 1) {
             return (
                 <div className={styles.singleImageWrapper}>
                     <Image
@@ -70,7 +74,7 @@ export default function Post({
         }
 
         const displayImages = images.slice(0, 6);
-        const isMoreImages = numImages > 6;
+        const isMoreImages = images.length > 6;
 
         return (
             <div className={styles.imageGrid}>
@@ -91,7 +95,7 @@ export default function Post({
                         />
                         {isMoreImages && index === 5 && (
                             <div className={styles.overlay}>
-                                <span>+{numImages - 6}</span>
+                                <span>+{images.length - 6}</span>
                             </div>
                         )}
                     </div>
@@ -100,47 +104,20 @@ export default function Post({
         );
     };
 
-    // Cập nhật hàm navigateToProfile để thêm locale vào URL
     const navigateToProfile = () => {
         router.push(`/${locale}/profile/${username}`);
     };
 
-    // Hàm sao chép đường dẫn và hiển thị thông báo
     const handleShare = () => {
         const currentUrl = `${window.location.origin}/${locale}/${username}/post/${hashcodeIDPost}`;
-
-        // Kiểm tra xem navigator.clipboard có hỗ trợ hay không
-        if (navigator.clipboard) {
-            // Dùng Clipboard API khi có hỗ trợ
-            navigator.clipboard.writeText(currentUrl)
-                .then(() => {
-                    toast.success(t("share_copy_success"));
-                })
-                .catch((err) => {
-                    toast.error(t("share_copy_error"));
-                    console.error('Error copying to clipboard', err); // Xem chi tiết lỗi
-                });
-        } else {
-            // Sử dụng phương pháp thủ công cho các trình duyệt không hỗ trợ clipboard API
-            const textArea = document.createElement('textarea');
-            textArea.value = currentUrl;
-            document.body.appendChild(textArea);
-            textArea.select();  // Chọn toàn bộ văn bản trong textarea
-            try {
-                // Sử dụng phương pháp cũ document.execCommand('copy')
-                document.execCommand('copy');
-                toast.success(t("share_copy_success"));
-            } catch (err) {
-                toast.error(t("share_copy_error:" + err));
-            }
-            document.body.removeChild(textArea);  // Xóa textarea sau khi sao chép
-        }
+        navigator.clipboard
+            .writeText(currentUrl)
+            .then(() => toast.success(t("share_copy_success")))
+            .catch(() => toast.error(t("share_copy_error")));
     };
-
 
     return (
         <div className={styles.post}>
-            {/* Header */}
             <div className={styles.header}>
                 <Image
                     src="/user-logo.png"
@@ -154,20 +131,20 @@ export default function Post({
                 />
                 <div className={styles.headerInfo}>
                     <div>
-                        <p className={styles.author} onClick={navigateToProfile}>{author}</p>
-                        <p className={styles.username} onClick={navigateToProfile}>{username}</p>
+                        <p className={styles.author} onClick={navigateToProfile}>
+                            {author}
+                        </p>
+                        <p className={styles.username} onClick={navigateToProfile}>
+                            {username}
+                        </p>
                     </div>
-                    <p
-                        className={styles.time}
-                        onClick={() => setShowDialog(true)}
-                    >
+                    <p className={styles.time} onClick={() => setShowDialog(true)}>
                         {time}
                     </p>
                 </div>
                 <div className={styles.moreOptions}>⋮</div>
             </div>
 
-            {/* Content */}
             <div className={styles.content}>
                 <p>
                     {isExpanded
@@ -183,10 +160,8 @@ export default function Post({
                 )}
             </div>
 
-            {/* Images */}
             {renderImages()}
 
-            {/* Actions */}
             <div className={styles.actions}>
                 <div className={styles.action} onClick={toggleLike}>
                     <Image
@@ -198,9 +173,8 @@ export default function Post({
                         unoptimized
                         loading="lazy"
                     />
-                    {liked ? `13 ${t("liked")}` : `12 ${t("like")}`}
+                    {liked ? `${total_likes + 1} ${t("liked")}` : `${total_likes} ${t("like")}`}
                 </div>
-
                 <div className={styles.action} onClick={() => setShowDialog(true)}>
                     <Image
                         src="/icon/comment.svg"
@@ -211,9 +185,8 @@ export default function Post({
                         unoptimized
                         loading="lazy"
                     />
-                    25 {t("comment")}
+                    {total_comments} {t("comment")}
                 </div>
-
                 <div className={styles.action} onClick={handleShare}>
                     <Image
                         src="/icon/share.svg"
@@ -224,11 +197,10 @@ export default function Post({
                         unoptimized
                         loading="lazy"
                     />
-                    {t("share")}
+                    {total_shares} {t("share")}
                 </div>
             </div>
 
-            {/* Detail Post Dialog */}
             {showDialog && (
                 <DetailPostDialog
                     author={author}
@@ -237,11 +209,13 @@ export default function Post({
                     images={images}
                     content={content}
                     hashcodeIDPost={hashcodeIDPost}
+                    total_likes={total_likes}
+                    total_comments={total_comments}
+                    total_shares={total_shares}
                     onClose={() => setShowDialog(false)}
                 />
             )}
 
-            {/* Image Preview */}
             {previewIndex !== null && (
                 <ImagePreviewCarousel
                     images={images}

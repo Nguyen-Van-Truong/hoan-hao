@@ -77,7 +77,8 @@
     "view_more_comments": "Xem thêm bình luận",
     "close": "Đóng",
     "share_copy_success": "Đã sao chép liên kết!",
-    "share_copy_error": "Lỗi khi sao chép liên kết."
+    "share_copy_error": "Lỗi khi sao chép liên kết.",
+    "comment": "Bình luận"
   },
   "MyFriends": {
     "title": "Danh sách bạn bè",

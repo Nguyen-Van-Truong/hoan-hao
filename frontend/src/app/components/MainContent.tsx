@@ -1,13 +1,13 @@
 // frontend/src/app/components/MainContent.tsx
-import { useEffect, useRef, useState, useCallback } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { toast } from "react-toastify";
-import { fetchFeed, type RawPost, type Media } from "../api/postApi";
+import {useEffect, useRef, useState, useCallback} from "react";
+import {v4 as uuidv4} from "uuid";
+import {toast} from "react-toastify";
+import {fetchFeed, type RawPost, type Media} from "../api/postApi";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
+import {useTranslations} from "next-intl";
 
 interface PostType {
     id?: number;
@@ -35,7 +35,7 @@ interface MainContentProps {
 const MAX_IMAGES = 6;
 const LIMIT = 2;
 
-export default function MainContent({ username, hashcodeIDPost }: MainContentProps) {
+export default function MainContent({username, hashcodeIDPost}: MainContentProps) {
     const [posts, setPosts] = useState<PostType[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<PostType | null>(null);
@@ -71,7 +71,7 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
 
             setLoading(true);
             try {
-                const { posts: fetchedPosts, total } = await fetchFeed(LIMIT, newOffset, mode);
+                const {posts: fetchedPosts, total} = await fetchFeed(LIMIT, newOffset, mode);
                 console.log(`Offset: ${newOffset}, Fetched: ${fetchedPosts.length}, Total: ${total}`);
 
                 const newPosts = fetchedPosts.map(transformPost);
@@ -122,7 +122,7 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
         } else {
             const fetchPostDetail = async () => {
                 try {
-                    const { posts: fetchedPosts } = await fetchFeed(1, 0, "latest");
+                    const {posts: fetchedPosts} = await fetchFeed(1, 0, "latest");
                     const post = fetchedPosts.find((p) => `post-${p.id}` === hashcodeIDPost);
                     setSelectedPost(
                         post
@@ -152,7 +152,7 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
 
     const handleFiles = (files: File[]) => {
         if (newPostImages.length + files.length > MAX_IMAGES) {
-            toast.error(t("max_images_error", { max: MAX_IMAGES }));
+            toast.error(t("max_images_error", {max: MAX_IMAGES}));
             return;
         }
         setNewPostImages((prev) => [...prev, ...files.filter((file) => file.type.startsWith("image/"))]);
@@ -234,7 +234,7 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                             alt={t("image_select_icon_alt")}
                             width={45}
                             height={45}
-                            style={{ width: "auto", height: "auto" }}
+                            style={{width: "auto", height: "auto"}}
                             loading="lazy"
                         />
                     </label>
@@ -280,13 +280,15 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                     time={post.time}
                     images={post.images}
                     hashcodeIDPost={post.hashcodeIDPost}
-                    onClick={() => setSelectedPost(post)}
+                    total_likes={post.total_likes ?? 0}
+                    total_comments={post.total_comments ?? 0}
+                    total_shares={post.total_shares ?? 0}
                 />
             ))}
 
             {loading && (
                 <div className={styles.loadingContainer}>
-                    <div className={styles.spinner} />
+                    <div className={styles.spinner}/>
                     <p>{t("loading_more_posts")}</p>
                 </div>
             )}
@@ -305,6 +307,9 @@ export default function MainContent({ username, hashcodeIDPost }: MainContentPro
                     content={selectedPost.content}
                     images={selectedPost.images}
                     hashcodeIDPost={selectedPost.hashcodeIDPost}
+                    total_likes={selectedPost.total_likes ?? 0}
+                    total_comments={selectedPost.total_comments ?? 0}
+                    total_shares={selectedPost.total_shares ?? 0}
                     onClose={closeDialog}
                 />
             )}
