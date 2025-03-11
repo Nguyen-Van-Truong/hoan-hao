@@ -57,7 +57,7 @@ func (u *CloudinaryUploader) UploadImage(file interface{}, publicID string) (str
 		PublicID:       publicID,
 		Folder:         "posts",
 		Overwrite:      api.Bool(true),
-		ResourceType:   "image",
+		ResourceType:   "image", // Chỉ hỗ trợ ảnh
 		UniqueFilename: api.Bool(false),
 	})
 	if err != nil {
@@ -84,6 +84,13 @@ func (u *CloudinaryUploader) UploadImages(files []interface{}) ([]string, error)
 	if len(files) == 0 {
 		log.Println("No files to upload")
 		return nil, nil
+	}
+
+	// Giới hạn tối đa 8 ảnh
+	const maxImages = 8
+	if len(files) > maxImages {
+		log.Printf("Too many files: %d, maximum allowed is %d", len(files), maxImages)
+		return nil, fmt.Errorf("maximum of %d images allowed, got %d", maxImages, len(files))
 	}
 
 	var urls []string

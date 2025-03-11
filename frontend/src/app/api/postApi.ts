@@ -1,6 +1,5 @@
-// frontend/src/app/api/postApi.ts
 import axios from "axios";
-import { getCookie } from "./authApi";
+import {getCookie} from "./authApi";
 
 export interface Media {
     id: number;
@@ -64,8 +63,7 @@ export interface CommentsResponse {
 }
 
 const postApi = axios.create({
-    baseURL: "http://localhost:8000",
-    headers: { "Content-Type": "application/json" },
+    baseURL: "http://localhost:8082", // Thay đổi baseURL thành port của backend (8082)
     withCredentials: true,
 });
 
@@ -80,24 +78,64 @@ postApi.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Tạo bài đăng mới
+// Tạo bài đăng mới với file ảnh hoặc media_urls
 export const createPost = async (
     content: string,
-    media_urls: string[],
-    visibility: "PUBLIC" | "FRIENDS" | "PRIVATE"
+    visibility: "PUBLIC" | "FRIENDS" | "PRIVATE",
+    files?: File[],
+    media_urls?: string[]
 ): Promise<RawPost> => {
     try {
-        const response = await postApi.post("/post", {
-            content,
-            media_urls,
-            visibility,
+        const formData = new FormData();
+        formData.append("content", content);
+        formData.append("visibility", visibility);
+
+        if (files && files.length > 0) {
+            files.forEach((file) => formData.append("images", file));
+        } else if (media_urls && media_urls.length > 0) {
+            media_urls.forEach((url) => formData.append("media_urls[]", url));
+        }
+
+        const response = await postApi.post("/post", formData, {
+            headers: {"Content-Type": "multipart/form-data"},
         });
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.message ?? "Failed to create post");
+            throw new Error(error.response?.data?.error ?? "Failed to create post");
         }
         throw new Error("Failed to create post");
+    }
+};
+
+// Cập nhật bài đăng với file ảnh hoặc media_urls
+export const updatePost = async (
+    postId: number,
+    content: string,
+    visibility: "PUBLIC" | "FRIENDS" | "PRIVATE",
+    files?: File[],
+    media_urls?: string[]
+): Promise<RawPost> => {
+    try {
+        const formData = new FormData();
+        formData.append("content", content);
+        formData.append("visibility", visibility);
+
+        if (files && files.length > 0) {
+            files.forEach((file) => formData.append("images", file));
+        } else if (media_urls && media_urls.length > 0) {
+            media_urls.forEach((url) => formData.append("media_urls[]", url));
+        }
+
+        const response = await postApi.put(`/post/${postId}`, formData, {
+            headers: {"Content-Type": "multipart/form-data"},
+        });
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.error ?? "Failed to update post");
+        }
+        throw new Error("Failed to update post");
     }
 };
 
@@ -108,7 +146,7 @@ export const fetchFeed = async (
     mode: "latest" | "popular"
 ): Promise<FeedResponse> => {
     try {
-        const response = await postApi.get("/post/feed", { params: { limit, offset, mode } });
+        const response = await postApi.get("/post/feed", {params: {limit, offset, mode}});
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -136,7 +174,7 @@ export const fetchCommentsByPostId = async (
     offset: number
 ): Promise<CommentsResponse> => {
     try {
-        const response = await postApi.get(`/post/${postId}/comments`, { params: { limit, offset } });
+        const response = await postApi.get(`/post/${postId}/comments`, {params: {limit, offset}});
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {
@@ -151,8 +189,8 @@ export const createComment = async (postId: number, content: string): Promise<Co
     try {
         const response = await postApi.post(
             `/post/${postId}/comment`,
-            { content },
-            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            {content},
+            {headers: {"Content-Type": "application/x-www-form-urlencoded"}}
         );
         return response.data;
     } catch (error) {
@@ -168,8 +206,8 @@ export const replyComment = async (commentId: number, content: string): Promise<
     try {
         const response = await postApi.post(
             `/comment/${commentId}/reply`,
-            { content },
-            { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+            {content},
+            {headers: {"Content-Type": "application/x-www-form-urlencoded"}}
         );
         return response.data;
     } catch (error) {

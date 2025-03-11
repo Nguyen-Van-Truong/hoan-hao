@@ -1,8 +1,7 @@
 // frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
-import {v4 as uuidv4} from "uuid";
 import {toast} from "react-toastify";
-import {fetchFeed, fetchPostById, createPost, type RawPost, type Media, Author} from "../api/postApi";
+import {fetchFeed, fetchPostById, createPost, updatePost, type RawPost, type Media, Author} from "../api/postApi";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -31,7 +30,7 @@ interface MainContentProps {
     hashcodeIDPost?: string;
 }
 
-const MAX_IMAGES = 6;
+const MAX_IMAGES = 8; // Cập nhật giới hạn tối đa 8 ảnh
 const LIMIT = 3;
 
 export default function MainContent({hashcodeIDPost}: MainContentProps) {
@@ -155,11 +154,16 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
     };
 
     const handleFiles = (files: File[]) => {
-        if (newPostImages.length + files.length > MAX_IMAGES) {
+        const imageFiles = files.filter((file) => file.type.startsWith("image/")); // Chỉ cho phép ảnh
+        if (newPostImages.length + imageFiles.length > MAX_IMAGES) {
             toast.error(t("max_images_error", {max: MAX_IMAGES}));
             return;
         }
-        setNewPostImages((prev) => [...prev, ...files.filter((file) => file.type.startsWith("image/"))]);
+        if (files.some((file) => file.type.startsWith("video/"))) {
+            toast.error(t("video_not_supported"));
+            return;
+        }
+        setNewPostImages((prev) => [...prev, ...imageFiles]);
     };
 
     const handlePostContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -193,12 +197,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
 
         setLoading(true);
         try {
-            // Tạm thời dùng URL tĩnh vì chưa có upload ảnh
-            const mediaUrls = newPostImages.length > 0
-                ? ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
-                : [];
-
-            const newPost = await createPost(newPostContent, mediaUrls, "PUBLIC");
+            const newPost = await createPost(newPostContent, "PUBLIC", newPostImages);
             const transformedPost = transformPost(newPost);
 
             setPosts((prev) => [transformedPost, ...prev]);
@@ -208,6 +207,24 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
             toast.error(`${t("create_post_error")}: ${errorMessage}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdatePost = async (postId: number, content: string, images: File[]) => {
+        setLoading(true);
+        try {
+            const updatedPost = await updatePost(postId, content, "PUBLIC", images);
+            const transformedPost = transformPost(updatedPost);
+
+            setPosts((prev) =>
+                prev.map((post) => (post.id === postId ? transformedPost : post))
+            );
+            toast.success(t("post_updated_success"));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            toast.error(`${t("update_post_error")}: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
@@ -250,14 +267,13 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                                 alt={t("image_select_icon_alt")}
                                 width={45}
                                 height={45}
-                                style={{width: "auto", height: "auto"}}
                                 loading="lazy"
                             />
                         </label>
                         <input
                             id="fileInput"
                             type="file"
-                            accept="image/*"
+                            accept="image/*" // Chỉ cho phép ảnh
                             multiple
                             onChange={handleFileChange}
                             className={styles.hiddenInput}
@@ -303,6 +319,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                     total_likes={post.total_likes ?? 0}
                     total_comments={post.total_comments ?? 0}
                     total_shares={post.total_shares ?? 0}
+                    onUpdate={handleUpdatePost}
                 />
             ))}
 

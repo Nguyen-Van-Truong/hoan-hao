@@ -46,15 +46,16 @@
     "no_content_to_post": "Vui lòng nhập nội dung hoặc chọn ảnh để đăng bài.",
 
     "fetch_error": "Lỗi khi gọi tới server",
-    "max_images_error": "Bạn chỉ có thể chọn tối đa {{max}} ảnh",
+    "max_images_error": "Bạn chỉ có thể chọn tối đa {max} ảnh",
     "mode_latest": "Mới nhất",
     "mode_popular": "Phổ biến",
     "no_more_posts": "Không còn bài viết",
 
     "create_post_error": "Lỗi tạo bài viết",
     "empty_post_error": "Nội dung bài viết không được để trống",
-    "post_created_success": "Bài viết đã được tạo thành công"
-
+    "post_created_success": "Bài viết đã được tạo thành công",
+    "post_updated_success": "Bài viết đã cập nhật thành công",
+    "video_not_supported": "Tải lên video chưa được hỗ trợ."
   },
   "Post": {
     "like": "Thích",
@@ -65,7 +66,18 @@
     "view_less": "Ẩn bớt",
     "loading": "Đang tải",
     "share_copy_success": "Đã sao chép liên kết!",
-    "share_copy_error": "Lỗi khi sao chép liên kết."
+    "share_copy_error": "Lỗi khi sao chép liên kết.",
+
+    "save": "Lưu",
+    "cancel": "Hủy bỏ",
+    "save_post": "Lưu bài viết",
+    "edit_post": "Chỉnh sửa bài viết",
+    "save_post_success": "Lưu bài viết thành công!",
+    "edit_post_placeholder": "Chỉnh sửa bài viết của bạn...",
+    "add_images": "Thêm ảnh",
+    "image_select_icon_alt": "Chọn ảnh",
+    "max_images_error": "Bạn chỉ có thể tải lên tối đa {max} ảnh.",
+    "video_not_supported": "Tải lên video chưa được hỗ trợ."
   },
   "DetailPostDialog": {
     "post_of": "Bài viết của",

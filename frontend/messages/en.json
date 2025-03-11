@@ -47,14 +47,17 @@
     "no_content_to_post": "Please enter content or select images to post.",
 
     "fetch_error": "Failed to fetch posts",
-    "max_images_error": "You can only upload a maximum of {{max}} images",
+    "max_images_error": "You can only upload a maximum of {max} images",
     "mode_latest": "Latest",
     "mode_popular": "Popular",
     "no_more_posts": "No more posts",
 
     "create_post_error": "Error creating post",
     "empty_post_error": "Post content cannot be empty",
-    "post_created_success": "Post created successfully"
+    "post_created_success": "Post created successfully",
+    "post_updated_success": "Post updated successfully",
+    "video_not_supported": "Video upload is not supported yet."
+
   },
   "Post": {
     "like": "Like",
@@ -65,7 +68,18 @@
     "view_less": "View less",
     "loading": "Loading",
     "share_copy_success": "Link copied successfully!",
-    "share_copy_error": "Failed to copy link."
+    "share_copy_error": "Failed to copy link.",
+
+    "save": "Save",
+    "cancel": "Cancel",
+    "save_post": "Save Post",
+    "edit_post": "Edit Post",
+    "save_post_success": "Post saved successfully!",
+    "edit_post_placeholder": "Edit your post...",
+    "add_images": "Add Images",
+    "image_select_icon_alt": "Choose image",
+    "max_images_error": "You can only upload a maximum of {max} images.",
+    "video_not_supported": "Video upload is not supported yet."
   },
   "DetailPostDialog": {
     "post_of": "Post of",
