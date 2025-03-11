@@ -1,8 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import {useState, useEffect, useRef} from "react";
 import Image from "next/image";
-import { useLocale, useTranslations } from "next-intl";
-import { toast } from "react-toastify";
-import { fetchCommentsByPostId, createComment, replyComment, likePost, unlikePost, likeComment, unlikeComment } from "../api/postApi";
+import {useLocale, useTranslations} from "next-intl";
+import {toast} from "react-toastify";
+import {
+    fetchCommentsByPostId,
+    createComment,
+    replyComment,
+    likePost,
+    unlikePost,
+    likeComment,
+    unlikeComment,
+} from "../api/postApi";
 import styles from "./DetailPostDialog.module.css";
 import ImagePreviewSingle from "./image_preview/ImagePreviewSingle";
 import ImagePreviewCarousel from "./image_preview/ImagePreviewCarousel";
@@ -30,7 +38,7 @@ interface Comment {
     };
     time: string;
     content: string;
-    image?: string | null;
+    media_url?: string | null;
     parent_comment_id?: number | null;
     replies?: Comment[];
     liked?: boolean;
@@ -52,7 +60,7 @@ export default function DetailPostDialog({
                                          }: DetailPostDialogProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState("");
-    const [newCommentImage, setNewCommentImage] = useState<string | null>(null);
+    const [newCommentFile, setNewCommentFile] = useState<File | null>(null);
     const [replyToCommentId, setReplyToCommentId] = useState<number | null>(null);
     const [previewIndex, setPreviewIndex] = useState<number | null>(null);
     const [previewCommentImage, setPreviewCommentImage] = useState<string | null>(null);
@@ -86,7 +94,7 @@ export default function DetailPostDialog({
     useEffect(() => {
         const loadInitialComments = async () => {
             try {
-                const { comments: fetchedComments, total } = await fetchCommentsByPostId(postId, LIMIT, 0);
+                const {comments: fetchedComments, total} = await fetchCommentsByPostId(postId, LIMIT, 0);
                 const transformedComments = fetchedComments.map((c) => ({
                     id: c.id,
                     author: {
@@ -96,7 +104,7 @@ export default function DetailPostDialog({
                     },
                     time: new Date(c.created_at).toLocaleString(),
                     content: c.content,
-                    image: null,
+                    media_url: c.media_url,
                     parent_comment_id: c.parent_comment_id,
                     replies: [],
                     liked: false,
@@ -140,11 +148,11 @@ export default function DetailPostDialog({
     const toggleContent = () => setIsExpanded(!isExpanded);
 
     const addComment = async () => {
-        if (!newComment.trim() && !newCommentImage) return;
+        if (!newComment.trim() && !newCommentFile) return;
 
         try {
             if (replyToCommentId) {
-                const newReply = await replyComment(replyToCommentId, newComment.trim());
+                const newReply = await replyComment(replyToCommentId, newComment.trim(), newCommentFile || undefined);
                 const transformedReply: Comment = {
                     id: newReply.id,
                     author: {
@@ -154,7 +162,7 @@ export default function DetailPostDialog({
                     },
                     time: new Date(newReply.created_at).toLocaleString(),
                     content: newReply.content,
-                    image: newCommentImage,
+                    media_url: newReply.media_url,
                     parent_comment_id: newReply.parent_comment_id,
                     replies: [],
                     liked: false,
@@ -163,12 +171,12 @@ export default function DetailPostDialog({
                 setComments((prev) =>
                     prev.map((c) =>
                         c.id === replyToCommentId
-                            ? { ...c, replies: [transformedReply, ...(c.replies || [])] }
+                            ? {...c, replies: [transformedReply, ...(c.replies || [])]}
                             : c
                     )
                 );
             } else {
-                const newCommentData = await createComment(postId, newComment.trim());
+                const newCommentData = await createComment(postId, newComment.trim(), newCommentFile || undefined);
                 const transformedComment: Comment = {
                     id: newCommentData.id,
                     author: {
@@ -178,7 +186,7 @@ export default function DetailPostDialog({
                     },
                     time: new Date(newCommentData.created_at).toLocaleString(),
                     content: newCommentData.content,
-                    image: newCommentImage,
+                    media_url: newCommentData.media_url,
                     parent_comment_id: null,
                     replies: [],
                     liked: false,
@@ -187,7 +195,7 @@ export default function DetailPostDialog({
                 setComments((prev) => [transformedComment, ...prev]);
             }
             setNewComment("");
-            setNewCommentImage(null);
+            setNewCommentFile(null);
             setReplyToCommentId(null);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -195,11 +203,12 @@ export default function DetailPostDialog({
         }
     };
 
+
     const loadMoreComments = async () => {
         if (isLoadingMore || !hasMoreComments) return;
         setIsLoadingMore(true);
         try {
-            const { comments: fetchedComments, total } = await fetchCommentsByPostId(postId, LIMIT, offset);
+            const {comments: fetchedComments, total} = await fetchCommentsByPostId(postId, LIMIT, offset);
             const transformedComments = fetchedComments.map((c) => ({
                 id: c.id,
                 author: {
@@ -209,7 +218,7 @@ export default function DetailPostDialog({
                 },
                 time: new Date(c.created_at).toLocaleString(),
                 content: c.content,
-                image: null,
+                media_url: c.media_url,
                 parent_comment_id: c.parent_comment_id,
                 replies: [],
                 liked: false,
@@ -239,11 +248,7 @@ export default function DetailPostDialog({
             setLiked(!liked);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            if (errorMessage.includes("Duplicate entry")) {
-                toast.error(t("already_liked"));
-            } else {
-                toast.error(`${t("like_error")}: ${errorMessage}`);
-            }
+            toast.error(`${t("like_error")}: ${errorMessage}`);
         }
     };
 
@@ -258,11 +263,7 @@ export default function DetailPostDialog({
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            if (errorMessage.includes("Duplicate entry")) {
-                toast.error(t("already_liked_comment"));
-            } else {
-                toast.error(`${t("like_comment_error")}: ${errorMessage}`);
-            }
+            toast.error(`${t("like_comment_error")}: ${errorMessage}`);
         }
     };
 
@@ -270,10 +271,10 @@ export default function DetailPostDialog({
         const updateComments = (comments: Comment[]): Comment[] =>
             comments.map((c) => {
                 if (c.id === commentId) {
-                    return { ...c, liked, likeCount };
+                    return {...c, liked, likeCount};
                 }
                 if (c.replies) {
-                    return { ...c, replies: updateComments(c.replies) };
+                    return {...c, replies: updateComments(c.replies)};
                 }
                 return c;
             });
@@ -300,48 +301,76 @@ export default function DetailPostDialog({
 
     const renderComments = (comments: Comment[], depth = 0) => {
         return comments.map((comment) => (
-            <div key={comment.id} className={styles.commentWrapper} style={{ marginLeft: `${depth * 20}px` }}>
-                <Image
-                    src={comment.author.profile_picture_url}
-                    alt={t("avatar_alt")}
-                    width={40}
-                    height={40}
-                    className={styles.commentAvatar}
-                    style={{ borderRadius: "50%" }}
-                    loading="lazy"
-                    unoptimized
-                />
-                <div className={styles.commentContent}>
-                    <div className={styles.commentHeader}>
-                        <span className={styles.commentName}>{comment.author.full_name}</span>
-                    </div>
-                    <p className={styles.commentText}>{comment.content}</p>
-                    <div className={styles.commentActions}>
-                        <button
-                            className={styles.replyButton}
-                            onClick={() => setReplyToCommentId(comment.id)}
-                        >
-                            {t("reply")}
-                        </button>
-                        <div
-                            className={styles.likeButton}
-                            onClick={() => toggleCommentLike(comment.id, comment.liked ?? false, comment.likeCount ?? 0)}
-                        >
-                            <Image
-                                src={comment.liked ? "/icon/heart-like-solid.svg" : "/icon/heart-like-no-solid.svg"}
-                                alt={t("like")}
-                                width={16}
-                                height={16}
-                                className={styles.likeIcon}
-                                loading="lazy"
-                                unoptimized
-                            />
-                            <span>{comment.likeCount ?? 0}</span>
+            <div
+                key={comment.id}
+                className={styles.commentWrapper}
+                style={{marginLeft: `${depth * 40}px`}} // Thụt đầu dòng cho reply
+            >
+                {/* Container cho avatar và nội dung chính */}
+                <div className={styles.commentMain}>
+                    <Image
+                        src={comment.author.profile_picture_url}
+                        alt={t("avatar_alt")}
+                        width={40}
+                        height={40}
+                        className={styles.commentAvatar}
+                        loading="lazy"
+                        unoptimized
+                    />
+                    <div className={styles.commentContent}>
+                        <div className={styles.commentHeader}>
+                            <span className={styles.commentName}>{comment.author.full_name}</span>
                         </div>
+                        <div className={styles.commentText}>{comment.content}</div>
+                        {comment.media_url && (
+                            <div className={styles.commentImageWrapper}>
+                                <Image
+                                    src={comment.media_url}
+                                    alt={t("comment_image_alt")}
+                                    width={200}
+                                    height={200}
+                                    className={styles.commentImage}
+                                    onClick={() => setPreviewCommentImage(comment.media_url ?? null)}
+                                    loading="lazy"
+                                    unoptimized
+                                />
+                            </div>
+                        )}
+                        <div className={styles.commentActions}>
+                            <button
+                                className={styles.replyButton}
+                                onClick={() => setReplyToCommentId(comment.id)}
+                            >
+                                {t("reply")}
+                            </button>
+                            <div
+                                className={styles.likeButton}
+                                onClick={() =>
+                                    toggleCommentLike(comment.id, comment.liked ?? false, comment.likeCount ?? 0)
+                                }
+                            >
+                                <Image
+                                    src={comment.liked ? "/icon/heart-like-solid.svg" : "/icon/heart-like-no-solid.svg"}
+                                    alt={t("like")}
+                                    width={16}
+                                    height={16}
+                                    className={styles.likeIcon}
+                                    loading="lazy"
+                                    unoptimized
+                                />
+                                <span>{comment.likeCount ?? 0}</span>
+                            </div>
+                        </div>
+                        <div className={styles.commentTime}>{comment.time}</div>
                     </div>
-                    <span className={styles.commentTime}>{comment.time}</span>
                 </div>
-                {comment.replies && comment.replies.length > 0 && renderComments(comment.replies, depth + 1)}
+
+                {/* Container cho các reply */}
+                {comment.replies && comment.replies.length > 0 && (
+                    <div className={styles.repliesContainer}>
+                        {renderComments(comment.replies, depth + 1)}
+                    </div>
+                )}
             </div>
         ));
     };
@@ -350,7 +379,9 @@ export default function DetailPostDialog({
         <div className={styles.dialog}>
             <div className={styles.dialogContent} ref={dialogRef}>
                 <div className={styles.header}>
-                    <span>{t("post_of")} {author}</span>
+                    <span>
+                        {t("post_of")} {author}
+                    </span>
                     <button className={styles.closeButton} onClick={onClose}>
                         ✖
                     </button>
@@ -363,7 +394,6 @@ export default function DetailPostDialog({
                             width={50}
                             height={50}
                             className={styles.postAvatar}
-                            style={{ borderRadius: "50%" }}
                             loading="lazy"
                             unoptimized
                         />
@@ -397,7 +427,6 @@ export default function DetailPostDialog({
                                     height={200}
                                     className={styles.dialogImage}
                                     onClick={() => setPreviewIndex(index)}
-                                    style={{ objectFit: "cover" }}
                                     loading="lazy"
                                     unoptimized
                                 />
@@ -466,19 +495,6 @@ export default function DetailPostDialog({
                                 addComment();
                             }
                         }}
-                        onPaste={(e) => {
-                            const items = e.clipboardData.items;
-                            for (const item of items) {
-                                if (item.type.startsWith("image/")) {
-                                    const file = item.getAsFile();
-                                    if (file) {
-                                        const reader = new FileReader();
-                                        reader.onload = () => setNewCommentImage(reader.result as string);
-                                        reader.readAsDataURL(file);
-                                    }
-                                }
-                            }
-                        }}
                         className={styles.commentTextarea}
                     />
                     <label className={styles.imageUploadLabel}>
@@ -489,9 +505,7 @@ export default function DetailPostDialog({
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = () => setNewCommentImage(reader.result as string);
-                                    reader.readAsDataURL(file);
+                                    setNewCommentFile(file);
                                 }
                             }}
                             className={styles.imageUploadInput}
@@ -500,40 +514,42 @@ export default function DetailPostDialog({
                     <button
                         className={styles.commentButton}
                         onClick={addComment}
-                        disabled={!newComment.trim() && !newCommentImage}
+                        disabled={!newComment.trim() && !newCommentFile}
                     >
                         ➤
                     </button>
                     {replyToCommentId && (
                         <button
                             className={styles.cancelReplyButton}
-                            onClick={() => setReplyToCommentId(null)}
+                            onClick={() => {
+                                setReplyToCommentId(null);
+                                setNewCommentFile(null);
+                            }}
                         >
                             {t("cancel_reply")}
                         </button>
                     )}
-                </div>
-                {newCommentImage && (
-                    <div className={styles.previewImageWrapper}>
-                        <div style={{ position: "relative", display: "inline-block" }}>
-                            <Image
-                                src={newCommentImage}
-                                alt={t("image_preview")}
-                                width={100}
-                                height={100}
-                                className={styles.commentPreviewImage}
-                                style={{ objectFit: "cover", borderRadius: "8px" }}
-                                unoptimized
-                            />
-                            <button
-                                className={styles.removeImageButton}
-                                onClick={() => setNewCommentImage(null)}
-                            >
-                                ✖
-                            </button>
+                    {newCommentFile && (
+                        <div className={styles.previewImageWrapper}>
+                            <div style={{position: "relative", display: "inline-block"}}>
+                                <Image
+                                    src={URL.createObjectURL(newCommentFile)}
+                                    alt={t("image_preview")}
+                                    width={100}
+                                    height={100}
+                                    className={styles.commentPreviewImage}
+                                    unoptimized
+                                />
+                                <button
+                                    className={styles.removeImageButton}
+                                    onClick={() => setNewCommentFile(null)}
+                                >
+                                    ✖
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
             {previewIndex !== null && (
                 <ImagePreviewCarousel

@@ -103,7 +103,8 @@
     "like_error": "Lỗi khi thích bài viết",
     "already_liked": "Bạn đã thích bài viết này",
     "like_comment_error": "Lỗi khi thích bình luận",
-    "already_liked_comment": "Bạn đã thích bình luận này"
+    "already_liked_comment": "Bạn đã thích bình luận này",
+    "comment_image_alt": "Ảnh bình luận"
   },
   "MyFriends": {
     "title": "Danh sách bạn bè",

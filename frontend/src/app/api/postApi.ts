@@ -42,6 +42,7 @@ export interface Comment {
     author: Author;
     parent_comment_id: number | null;
     content: string;
+    media_url?: string | null; // Thêm media_url để đồng bộ với backend
     created_at: string;
     updated_at: string;
     is_deleted: boolean;
@@ -63,7 +64,7 @@ export interface CommentsResponse {
 }
 
 const postApi = axios.create({
-    baseURL: "http://localhost:8082", // Thay đổi baseURL thành port của backend (8082)
+    baseURL: "http://localhost:8000", // Cập nhật port backend nếu cần (8000 thay vì 8082)
     withCredentials: true,
 });
 
@@ -108,38 +109,6 @@ export const createPost = async (
     }
 };
 
-// Cập nhật bài đăng với file ảnh hoặc media_urls
-export const updatePost = async (
-    postId: number,
-    content: string,
-    visibility: "PUBLIC" | "FRIENDS" | "PRIVATE",
-    files?: File[],
-    media_urls?: string[]
-): Promise<RawPost> => {
-    try {
-        const formData = new FormData();
-        formData.append("content", content);
-        formData.append("visibility", visibility);
-
-        if (files && files.length > 0) {
-            files.forEach((file) => formData.append("images", file));
-        } else if (media_urls && media_urls.length > 0) {
-            media_urls.forEach((url) => formData.append("media_urls[]", url));
-        }
-
-        const response = await postApi.put(`/post/${postId}`, formData, {
-            headers: {"Content-Type": "multipart/form-data"},
-        });
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.error ?? "Failed to update post");
-        }
-        throw new Error("Failed to update post");
-    }
-};
-
-// Các hàm khác giữ nguyên
 export const fetchFeed = async (
     limit: number,
     offset: number,
@@ -168,6 +137,49 @@ export const fetchPostById = async (postId: number): Promise<RawPost> => {
     }
 };
 
+// Tạo bình luận mới với ảnh (nếu có)
+export const createComment = async (postId: number, content: string, image?: File): Promise<Comment> => {
+    try {
+        const formData = new FormData();
+        formData.append("content", content);
+        if (image) {
+            formData.append("image", image); // Key phải là "image" để khớp backend
+        }
+
+        const response = await postApi.post(`/post/${postId}/comment`, formData, {
+            headers: {"Content-Type": "multipart/form-data"},
+        });
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.error ?? "Failed to create comment");
+        }
+        throw new Error("Failed to create comment");
+    }
+};
+
+// Trả lời bình luận với ảnh (nếu có)
+export const replyComment = async (commentId: number, content: string, image?: File): Promise<Comment> => {
+    try {
+        const formData = new FormData();
+        formData.append("content", content);
+        if (image) {
+            formData.append("image", image); // Key phải là "image" để khớp backend
+        }
+
+        const response = await postApi.post(`/comment/${commentId}/reply`, formData, {
+            headers: {"Content-Type": "multipart/form-data"},
+        });
+        return response.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.error ?? "Failed to reply comment");
+        }
+        throw new Error("Failed to reply comment");
+    }
+};
+
+// Các hàm khác giữ nguyên
 export const fetchCommentsByPostId = async (
     postId: number,
     limit: number,
@@ -184,41 +196,6 @@ export const fetchCommentsByPostId = async (
     }
 };
 
-// Tạo bình luận mới
-export const createComment = async (postId: number, content: string): Promise<Comment> => {
-    try {
-        const response = await postApi.post(
-            `/post/${postId}/comment`,
-            {content},
-            {headers: {"Content-Type": "application/x-www-form-urlencoded"}}
-        );
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.message ?? "Failed to create comment");
-        }
-        throw new Error("Failed to create comment");
-    }
-};
-
-// Trả lời bình luận
-export const replyComment = async (commentId: number, content: string): Promise<Comment> => {
-    try {
-        const response = await postApi.post(
-            `/comment/${commentId}/reply`,
-            {content},
-            {headers: {"Content-Type": "application/x-www-form-urlencoded"}}
-        );
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.message ?? "Failed to reply comment");
-        }
-        throw new Error("Failed to reply comment");
-    }
-};
-
-// Thích bài đăng
 export const likePost = async (postId: number): Promise<void> => {
     try {
         await postApi.post(`/post/${postId}/like`);

@@ -105,7 +105,8 @@
     "like_error": "Failed to like post",
     "already_liked": "You have already liked this post",
     "like_comment_error": "Failed to like comment",
-    "already_liked_comment": "You have already liked this comment"
+    "already_liked_comment": "You have already liked this comment",
+    "comment_image_alt": "Comment image"
   },
   "MyFriends": {
     "title": "Friends List",

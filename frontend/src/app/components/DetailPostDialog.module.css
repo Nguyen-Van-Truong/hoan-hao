@@ -238,9 +238,12 @@
 
 /*info comment*/
 .commentWrapper {
-    display: flex;
+    margin-bottom: 15px; /* Khoảng cách giữa các comment */
+}
+
+.commentMain {
+    display: flex; /* Avatar và nội dung chính nằm trên cùng một hàng */
     align-items: flex-start;
-    margin-bottom: 15px;
 }
 
 .commentAvatar {
@@ -248,19 +251,23 @@
     height: 40px;
     border-radius: 50%;
     margin-right: 10px;
+    flex-shrink: 0; /* Đảm bảo avatar không bị co lại */
 }
 
 .commentContent {
+    display: flex;
+    flex-direction: column; /* Nội dung chính xếp theo cột */
     flex: 1;
-    background-color: #f9f9f9; /* Nền màu xám nhạt */
-    padding: 10px; /* Khoảng cách giữa nội dung và viền */
-    border-radius: 8px; /* Bo góc */
-    margin-left: 10px; /* Cách avatar */
-    margin-bottom: 10px; /* Khoảng cách giữa các bình luận */
-    position: relative;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Hiệu ứng nổi */
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.repliesContainer {
+    width: 100%; /* Chiếm toàn bộ chiều rộng */
+    margin-top: 10px; /* Khoảng cách với comment cha */
+}
 
 .commentHeader {
     font-size: 14px;
@@ -293,13 +300,18 @@
 
 /* Ảnh bình luận */
 .commentImage {
-    max-width: 100%; /* Đảm bảo ảnh không vượt quá chiều rộng vùng chứa */
-    max-height: 200px; /* Chiều cao tối đa để ảnh không quá lớn */
-    border-radius: 8px; /* Bo góc ảnh */
-    margin-top: 10px; /* Khoảng cách giữa ảnh và nội dung bình luận */
-    object-fit: cover; /* Giữ tỉ lệ ảnh */
+    max-width: 200px; /* Kích thước tối đa cho ảnh bình luận */
+    max-height: 200px;
+    border-radius: 8px;
+    margin-top: 10px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease;
 }
 
+.commentImage:hover {
+    transform: scale(1.05); /* Hiệu ứng phóng to nhẹ khi hover */
+}
 
 /* Nút upload ảnh */
 .imageUploadLabel {

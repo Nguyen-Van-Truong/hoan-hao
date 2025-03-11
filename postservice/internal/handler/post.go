@@ -252,6 +252,7 @@ func DeletePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
+// CreateComment (cập nhật để hỗ trợ 1 ảnh)
 func CreateComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -266,13 +267,46 @@ func CreateComment(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		content := c.PostForm("content")
-		if content == "" {
+		// Lấy dữ liệu từ multipart/form-data
+		form, err := c.MultipartForm()
+		if err != nil {
+			log.Printf("Failed to parse multipart form: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form: " + err.Error()})
+			return
+		}
+
+		content := form.Value["content"]
+		if len(content) == 0 || content[0] == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Content is required"})
 			return
 		}
 
-		comment, err := svc.CreateComment(postID, userID, content, nil)
+		var files []interface{}
+		fileHeaders, exists := form.File["image"]
+		if exists {
+			log.Printf("Received %d files for comment", len(fileHeaders))
+			if len(fileHeaders) > 1 { // Giới hạn 1 ảnh
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Maximum of 1 image allowed for comment"})
+				return
+			}
+			fh := fileHeaders[0]
+			file, err := fh.Open()
+			if err != nil {
+				log.Printf("Failed to open file %s: %v", fh.Filename, err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file " + fh.Filename + ": " + err.Error()})
+				return
+			}
+			defer func(file multipart.File) {
+				err := file.Close()
+				if err != nil {
+					log.Printf("Failed to close file %s: %v", fh.Filename, err)
+				}
+			}(file)
+			log.Printf("Comment file: %s, size: %d bytes", fh.Filename, fh.Size)
+			files = append(files, file)
+		}
+
+		comment, err := svc.CreateComment(postID, userID, content[0], nil, files)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment: " + err.Error()})
 			return
@@ -282,6 +316,7 @@ func CreateComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
+// ReplyComment (cập nhật để hỗ trợ 1 ảnh)
 func ReplyComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -296,10 +331,43 @@ func ReplyComment(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		content := c.PostForm("content")
-		if content == "" {
+		// Lấy dữ liệu từ multipart/form-data
+		form, err := c.MultipartForm()
+		if err != nil {
+			log.Printf("Failed to parse multipart form: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form: " + err.Error()})
+			return
+		}
+
+		content := form.Value["content"]
+		if len(content) == 0 || content[0] == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Content is required"})
 			return
+		}
+
+		var files []interface{}
+		fileHeaders, exists := form.File["image"]
+		if exists {
+			log.Printf("Received %d files for reply", len(fileHeaders))
+			if len(fileHeaders) > 1 { // Giới hạn 1 ảnh
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Maximum of 1 image allowed for reply"})
+				return
+			}
+			fh := fileHeaders[0]
+			file, err := fh.Open()
+			if err != nil {
+				log.Printf("Failed to open file %s: %v", fh.Filename, err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file " + fh.Filename + ": " + err.Error()})
+				return
+			}
+			defer func(file multipart.File) {
+				err := file.Close()
+				if err != nil {
+					log.Printf("Failed to close file %s: %v", fh.Filename, err)
+				}
+			}(file)
+			log.Printf("Reply file: %s, size: %d bytes", fh.Filename, fh.Size)
+			files = append(files, file)
 		}
 
 		parent, err := svc.GetCommentByID(parentID)
@@ -308,7 +376,7 @@ func ReplyComment(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		comment, err := svc.CreateComment(parent.PostID, userID, content, &parentID)
+		comment, err := svc.CreateComment(parent.PostID, userID, content[0], &parentID, files)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reply: " + err.Error()})
 			return

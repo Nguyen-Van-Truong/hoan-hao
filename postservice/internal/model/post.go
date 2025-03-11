@@ -62,6 +62,7 @@ type Comment struct {
 	Author          *UserInfo     `json:"author"` // Thêm thông tin user
 	ParentCommentID *uint64       `json:"parent_comment_id"`
 	Content         string        `json:"content" gorm:"type:text;not null"`
+	MediaURL        *string       `json:"media_url,omitempty"` // Thêm trường cho ảnh
 	CreatedAt       time.Time     `json:"created_at"`
 	UpdatedAt       time.Time     `json:"updated_at"`
 	IsDeleted       bool          `json:"is_deleted" gorm:"default:0"`

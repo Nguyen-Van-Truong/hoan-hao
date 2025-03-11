@@ -15,7 +15,7 @@ type PostService interface {
 	CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	DeletePost(id uint64, userID uint64) error
-	CreateComment(postID, userID uint64, content string, parentID *uint64) (*model.Comment, error)
+	CreateComment(postID, userID uint64, content string, parentID *uint64, files []interface{}) (*model.Comment, error)
 	UpdateComment(id uint64, userID uint64, content string) (*model.Comment, error)
 	GetCommentsByPostID(postID uint64, limit, offset int) ([]model.Comment, int64, error)
 	DeleteComment(id uint64, userID uint64) error
@@ -227,7 +227,8 @@ func (s *postService) DeletePost(id uint64, userID uint64) error {
 	return s.repo.DeletePost(id)
 }
 
-func (s *postService) CreateComment(postID, userID uint64, content string, parentID *uint64) (*model.Comment, error) {
+// CreateComment (cập nhật để hỗ trợ 1 ảnh)
+func (s *postService) CreateComment(postID, userID uint64, content string, parentID *uint64, files []interface{}) (*model.Comment, error) {
 	comment := &model.Comment{
 		PostID:          postID,
 		UserID:          userID,
@@ -236,9 +237,23 @@ func (s *postService) CreateComment(postID, userID uint64, content string, paren
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
 	}
+
+	// Xử lý ảnh cho bình luận
+	if len(files) > 0 {
+		if len(files) > 1 {
+			return nil, errors.New("maximum of 1 image allowed for comment")
+		}
+		urls, err := s.cloudinaryUploader.UploadImages(files)
+		if err != nil {
+			return nil, errors.New("failed to upload comment image: " + err.Error())
+		}
+		comment.MediaURL = &urls[0] // Chỉ lấy URL đầu tiên
+	}
+
 	if err := s.repo.CreateComment(comment); err != nil {
 		return nil, err
 	}
+
 	result, err := util.PopulateSingleUserInfo(*comment, userID)
 	if err != nil {
 		return comment, nil
