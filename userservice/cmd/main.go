@@ -14,48 +14,54 @@ import (
 	"google.golang.org/grpc"
 )
 
+// grpcServer định nghĩa server gRPC cho UserService
 type grpcServer struct {
 	pb.UnimplementedUserServiceServer
 	svc service.UserService
 }
 
+// GetUsersByIDs xử lý yêu cầu gRPC để lấy thông tin nhiều user
 func (s *grpcServer) GetUsersByIDs(ctx context.Context, req *pb.GetUsersByIDsRequest) (*pb.GetUsersByIDsResponse, error) {
 	var users []*pb.UserProfile
 	for _, id := range req.UserIds {
-		profile, err := s.svc.GetMyProfile(uint(id)) // Ép kiểu uint64 sang uint
-		if err == nil {
-			users = append(users, &pb.UserProfile{
-				Id:                uint64(profile.ID),
-				Username:          profile.Username,
-				FullName:          profile.FullName,
-				ProfilePictureUrl: profile.ProfilePictureURL,
-			})
-		} else {
+		// Gọi service để lấy profile, không ép kiểu uint để tránh tràn số
+		profile, err := s.svc.GetMyProfile(uint(id))
+		if err != nil {
 			log.Printf("User not found for ID %d: %v", id, err)
+			continue // Bỏ qua user không tìm thấy thay vì dừng hoàn toàn
 		}
+		users = append(users, &pb.UserProfile{
+			Id:                uint64(profile.ID), // Giữ uint64 để đồng bộ với proto
+			Username:          profile.Username,
+			FullName:          profile.FullName,
+			ProfilePictureUrl: profile.ProfilePictureURL,
+		})
 	}
 	return &pb.GetUsersByIDsResponse{Users: users}, nil
 }
 
 func main() {
-	// Load cấu hình
+	// Load cấu hình từ .env
 	cfg := config.Load()
 
-	// Khởi tạo DB
+	// Khởi tạo kết nối database
 	db, err := config.InitDB(cfg)
 	if err != nil {
-		log.Fatal("Cannot connect to database:", err)
+		log.Fatalf("Cannot connect to database: %v", err)
 	}
-	defer db.Close()
+	// Đóng DB khi chương trình kết thúc, kiểm tra lỗi
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Failed to close database: %v", err)
+		}
+	}()
 
 	// Khởi tạo repository và service
 	repo := repository.NewUserRepository(db)
 	svc := service.NewUserService(repo)
 
-	// Khởi tạo router Gin
+	// Khởi tạo Gin router cho HTTP server
 	r := gin.Default()
-
-	// Đăng ký route HTTP
 	handler.SetupRoutes(r, repo)
 
 	// Chạy HTTP server trong goroutine
@@ -66,7 +72,7 @@ func main() {
 		}
 	}()
 
-	// Khởi động gRPC server
+	// Khởi tạo gRPC server trên port 50051
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen on port 50051: %v", err)
@@ -74,6 +80,7 @@ func main() {
 	grpcSvr := grpc.NewServer()
 	pb.RegisterUserServiceServer(grpcSvr, &grpcServer{svc: svc})
 
+	// Bắt đầu chạy gRPC server
 	log.Println("Starting gRPC server on :50051")
 	if err := grpcSvr.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve gRPC: %v", err)

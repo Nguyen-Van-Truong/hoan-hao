@@ -1,8 +1,9 @@
+//postservice/proto/user.proto
 syntax = "proto3";
 
 package user;
 
-option go_package = "/proto"; // Đổi thành đường dẫn trong PostService
+option go_package = "/proto"; // Đường dẫn cho generated code trong PostService
 
 service UserService {
   rpc GetUsersByIDs (GetUsersByIDsRequest) returns (GetUsersByIDsResponse);

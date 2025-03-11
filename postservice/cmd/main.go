@@ -18,36 +18,47 @@ import (
 )
 
 func main() {
-	// Load cấu hình
+	// Load cấu hình từ .env
 	cfg := config.Load()
 
-	// Khởi tạo DB
+	// Khởi tạo kết nối database
 	db, err := config.InitDB(cfg)
 	if err != nil {
-		log.Fatal("Cannot connect to database:", err)
+		log.Fatalf("Cannot connect to database: %v", err)
 	}
-	defer db.Close()
+	// Đóng DB khi chương trình kết thúc, kiểm tra lỗi
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Failed to close database: %v", err)
+		}
+	}()
 
 	// Khởi tạo repository
 	repo := repository.NewPostRepository(db)
 
-	// Khởi tạo gRPC client tới UserService
-	grpcclient.InitUserServiceClient("localhost:50051") // Sửa từ "userservice:50051" sang "localhost:50051"
+	// Khởi tạo gRPC client tới UserService, lấy địa chỉ từ config
+	userServiceAddr := os.Getenv("USER_SERVICE_ADDR")
+	if userServiceAddr == "" {
+		userServiceAddr = "localhost:50051" // Default nếu không có trong .env
+	}
+	if err := grpcclient.InitUserServiceClient(userServiceAddr); err != nil {
+		log.Fatalf("Failed to initialize gRPC client: %v", err)
+	}
 
-	// Khởi tạo router Gin
+	// Khởi tạo Gin router
 	r := gin.Default()
 
-	// Thêm middleware CORS
+	// Thêm middleware CORS cho frontend
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		MaxAge:           12 * 60 * 60,
+		MaxAge:           12 * 60 * 60, // Cache CORS preflight 12 giờ
 	}))
 
-	// Đăng ký route
+	// Đăng ký các route HTTP
 	handler.SetupRoutes(r, repo)
 
 	// Khởi tạo HTTP server
@@ -64,12 +75,12 @@ func main() {
 		}
 	}()
 
-	// Chờ tín hiệu dừng server
+	// Chờ tín hiệu dừng server (Ctrl+C hoặc SIGTERM)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
-	// Shutdown gracefully
+	// Bắt đầu graceful shutdown
 	log.Println("Shutting down server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
