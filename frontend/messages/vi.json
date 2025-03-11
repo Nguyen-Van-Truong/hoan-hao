@@ -49,7 +49,11 @@
     "max_images_error": "Bạn chỉ có thể chọn tối đa {{max}} ảnh",
     "mode_latest": "Mới nhất",
     "mode_popular": "Phổ biến",
-    "no_more_posts": "Không còn bài viết"
+    "no_more_posts": "Không còn bài viết",
+
+    "create_post_error": "Lỗi tạo bài viết",
+    "empty_post_error": "Nội dung bài viết không được để trống",
+    "post_created_success": "Bài viết đã được tạo thành công"
 
   },
   "Post": {

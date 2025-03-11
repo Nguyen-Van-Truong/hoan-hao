@@ -1,7 +1,8 @@
+// frontend/src/app/components/MainContent.tsx
 import {useEffect, useRef, useState, useCallback} from "react";
 import {v4 as uuidv4} from "uuid";
 import {toast} from "react-toastify";
-import {fetchFeed, fetchPostById, type RawPost, type Media, Author} from "../api/postApi";
+import {fetchFeed, fetchPostById, createPost, type RawPost, type Media, Author} from "../api/postApi";
 import Post from "./Post";
 import DetailPostDialog from "./DetailPostDialog";
 import styles from "./MainContent.module.css";
@@ -26,7 +27,7 @@ interface PostType {
 }
 
 interface MainContentProps {
-    username?: string; // Thêm username vào props
+    username?: string;
     hashcodeIDPost?: string;
 }
 
@@ -66,7 +67,6 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         return transformed;
     };
 
-    // Fetch danh sách bài đăng (feed)
     const fetchPosts = useCallback(
         async (newOffset: number, reset = false) => {
             if (loading || (!reset && !hasMore)) return;
@@ -90,10 +90,8 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         [mode, t]
     );
 
-    // Fetch bài đăng chi tiết khi có hashcodeIDPost
     useEffect(() => {
         if (!hashcodeIDPost) {
-            // Nếu không có hashcodeIDPost, fetch feed bình thường
             setOffset(0);
             setHasMore(true);
             setPosts([]);
@@ -112,9 +110,9 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
             try {
                 const post = await fetchPostById(postId);
                 const transformedPost = transformPost(post);
-                setPosts([transformedPost]); // Chỉ hiển thị bài đăng chi tiết
-                setSelectedPost(transformedPost); // Mở dialog chi tiết ngay lập tức
-                setHasMore(false); // Không fetch thêm feed
+                setPosts([transformedPost]);
+                setSelectedPost(transformedPost);
+                setHasMore(false);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Unknown error";
                 toast.error(`${t("fetch_error")}: ${errorMessage}`);
@@ -126,10 +124,9 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
         fetchPostDetail();
     }, [hashcodeIDPost, t]);
 
-    // Infinite scroll cho feed (chỉ khi không có hashcodeIDPost)
     const scrollRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
-        if (hashcodeIDPost) return; // Không scroll nếu đang xem chi tiết bài đăng
+        if (hashcodeIDPost) return;
 
         const handleScroll = () => {
             if (scrollRef.current) clearTimeout(scrollRef.current);
@@ -188,25 +185,37 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
 
     const removeImage = (index: number) => setNewPostImages((prev) => prev.filter((_, i) => i !== index));
 
-    const handleSubmitPost = () => {
-        if (!newPostContent.trim() && newPostImages.length === 0) return;
+    const handleSubmitPost = async () => {
+        if (!newPostContent.trim()) {
+            toast.error(t("empty_post_error"));
+            return;
+        }
 
-        const newPost: PostType = {
-            author: {id: 0, username: "currentUser", full_name: "Current User", profile_picture_url: ""},
-            content: newPostContent,
-            time: "Just now",
-            images: newPostImages.map((file) => URL.createObjectURL(file)),
-            hashcodeIDPost: uuidv4(),
-        };
+        setLoading(true);
+        try {
+            // Tạm thời dùng URL tĩnh vì chưa có upload ảnh
+            const mediaUrls = newPostImages.length > 0
+                ? ["http://example.com/image1.jpg", "http://example.com/image2.jpg"]
+                : [];
 
-        setPosts((prev) => [newPost, ...prev]);
-        setNewPostContent("");
-        setNewPostImages([]);
+            const newPost = await createPost(newPostContent, mediaUrls, "PUBLIC");
+            const transformedPost = transformPost(newPost);
+
+            setPosts((prev) => [transformedPost, ...prev]);
+            setNewPostContent("");
+            setNewPostImages([]);
+            toast.success(t("post_created_success"));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            toast.error(`${t("create_post_error")}: ${errorMessage}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className={styles.mainContent} ref={mainContentRef}>
-            {!hashcodeIDPost && ( // Chỉ hiển thị phần tạo bài đăng khi không xem chi tiết
+            {!hashcodeIDPost && (
                 <div className={styles.createPost}>
                     <textarea
                         className={styles.postInput}
@@ -256,7 +265,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                         <button
                             className={styles.postButton}
                             onClick={handleSubmitPost}
-                            disabled={!newPostContent.trim() && newPostImages.length === 0}
+                            disabled={loading || !newPostContent.trim()}
                         >
                             {t("post_button")}
                         </button>
@@ -264,7 +273,7 @@ export default function MainContent({hashcodeIDPost}: MainContentProps) {
                 </div>
             )}
 
-            {!hashcodeIDPost && ( // Chỉ hiển thị mode selector khi không xem chi tiết
+            {!hashcodeIDPost && (
                 <div className={styles.modeSelector}>
                     <button
                         className={`${styles.modeButton} ${mode === "latest" ? styles.active : ""}`}

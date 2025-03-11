@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 	"postservice/internal/model"
 	"postservice/internal/repository"
 	"postservice/internal/util"
@@ -10,7 +11,7 @@ import (
 
 type PostService interface {
 	GetPostByID(id uint64) (*model.PostResponse, error)
-	CreatePost(userID uint64, req model.CreatePostRequest) (*model.PostResponse, error)
+	CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.PostResponse, error)
 	DeletePost(id uint64, userID uint64) error
 	CreateComment(postID, userID uint64, content string, parentID *uint64) (*model.Comment, error)
@@ -29,27 +30,23 @@ type PostService interface {
 }
 
 type postService struct {
-	repo repository.PostRepository
+	repo               repository.PostRepository
+	cloudinaryUploader *util.CloudinaryUploader
 }
 
 func NewPostService(repo repository.PostRepository) PostService {
-	return &postService{repo: repo}
+	uploader, err := util.NewCloudinaryUploader()
+	if err != nil {
+		log.Fatalf("Failed to initialize Cloudinary uploader: %v", err)
+	}
+
+	return &postService{
+		repo:               repo,
+		cloudinaryUploader: uploader,
+	}
 }
 
-func (s *postService) GetPostByID(id uint64) (*model.PostResponse, error) {
-	post, err := s.repo.FindByID(id)
-	if err != nil {
-		return nil, err
-	}
-	result, err := util.PopulateSingleUserInfo(*post, post.UserID)
-	if err != nil {
-		// Nếu gRPC lỗi, vẫn trả về post mà không có author
-		return post, nil
-	}
-	return &result, nil
-}
-
-func (s *postService) CreatePost(userID uint64, req model.CreatePostRequest) (*model.PostResponse, error) {
+func (s *postService) CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error) {
 	post := &model.Post{
 		UserID:     userID,
 		Content:    req.Content,
@@ -57,23 +54,60 @@ func (s *postService) CreatePost(userID uint64, req model.CreatePostRequest) (*m
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	for _, url := range req.MediaURLs {
-		post.Media = append(post.Media, model.PostMedia{
-			MediaURL:  url,
-			MediaType: "IMAGE",
-			CreatedAt: time.Now(),
-		})
+
+	// Upload files lên Cloudinary nếu có
+	if len(files) > 0 {
+		urls, err := s.cloudinaryUploader.UploadImages(files)
+		if err != nil {
+			return nil, errors.New("failed to upload images: " + err.Error())
+		}
+		for _, url := range urls {
+			post.Media = append(post.Media, model.PostMedia{
+				MediaURL:  url,
+				MediaType: "IMAGE",
+				CreatedAt: time.Now(),
+			})
+		}
 	}
+
+	// Nếu không có file nhưng có MediaURLs từ request, dùng nó
+	if len(files) == 0 && len(req.MediaURLs) > 0 {
+		for _, url := range req.MediaURLs {
+			post.Media = append(post.Media, model.PostMedia{
+				MediaURL:  url,
+				MediaType: "IMAGE",
+				CreatedAt: time.Now(),
+			})
+		}
+	}
+
 	if err := s.repo.CreatePost(post); err != nil {
 		return nil, err
 	}
+
 	resp, err := s.repo.FindByID(post.ID)
 	if err != nil {
 		return nil, err
 	}
+
 	result, err := util.PopulateSingleUserInfo(*resp, userID)
 	if err != nil {
-		return resp, nil // Nếu gRPC lỗi, trả về dữ liệu không có author
+		log.Printf("Failed to populate user info: %v", err)
+		return resp, nil
+	}
+
+	return &result, nil
+}
+
+// Các method khác giữ nguyên
+func (s *postService) GetPostByID(id uint64) (*model.PostResponse, error) {
+	post, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	result, err := util.PopulateSingleUserInfo(*post, post.UserID)
+	if err != nil {
+		return post, nil
 	}
 	return &result, nil
 }

@@ -50,7 +50,11 @@
     "max_images_error": "You can only upload a maximum of {{max}} images",
     "mode_latest": "Latest",
     "mode_popular": "Popular",
-    "no_more_posts": "No more posts"
+    "no_more_posts": "No more posts",
+
+    "create_post_error": "Error creating post",
+    "empty_post_error": "Post content cannot be empty",
+    "post_created_success": "Post created successfully"
   },
   "Post": {
     "like": "Like",

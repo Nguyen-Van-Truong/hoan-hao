@@ -2,6 +2,8 @@ package handler
 
 import (
 	"errors"
+	"log"
+	"mime/multipart"
 	"net/http"
 	"postservice/internal/model"
 	"postservice/internal/repository"
@@ -46,7 +48,79 @@ func SetupRoutes(r *gin.Engine, repo repository.PostRepository) {
 	}
 }
 
-// GetPostByID lấy thông tin chi tiết của một bài đăng
+// CreatePost tạo bài đăng mới
+func CreatePost(svc service.PostService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, err := getUserID(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+
+		// Lấy dữ liệu từ multipart/form-data
+		form, err := c.MultipartForm()
+		if err != nil {
+			log.Printf("Failed to parse multipart form: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form: " + err.Error()})
+			return
+		}
+
+		// Lấy content và visibility từ form
+		content := form.Value["content"]
+		if len(content) == 0 || content[0] == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Content is required"})
+			return
+		}
+
+		visibility := form.Value["visibility"]
+		if len(visibility) == 0 || visibility[0] == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Visibility is required"})
+			return
+		}
+
+		req := model.CreatePostRequest{
+			Content:    content[0],
+			Visibility: visibility[0],
+		}
+
+		// Lấy files từ form
+		var files []interface{}
+		fileHeaders, exists := form.File["images"]
+		if exists {
+			log.Printf("Received %d files", len(fileHeaders))
+			for i, fh := range fileHeaders {
+				file, err := fh.Open()
+				if err != nil {
+					log.Printf("Failed to open file %s: %v", fh.Filename, err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file " + fh.Filename + ": " + err.Error()})
+					return
+				}
+				defer func(file multipart.File) {
+					err := file.Close()
+					if err != nil {
+						log.Printf("Failed to close file %s: %v", fh.Filename, err)
+					}
+				}(file)
+				log.Printf("File %d: %s, size: %d bytes", i, fh.Filename, fh.Size)
+				files = append(files, file)
+			}
+		} else {
+			log.Println("No files received in request")
+		}
+
+		// Gọi service để tạo post
+		post, err := svc.CreatePost(userID, req, files)
+		if err != nil {
+			log.Printf("Failed to create post: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, post)
+	}
+}
+
+// Các handler khác giữ nguyên
 func GetPostByID(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		postID, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -65,32 +139,6 @@ func GetPostByID(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// CreatePost tạo bài đăng mới
-func CreatePost(svc service.PostService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userID, err := getUserID(c)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-
-		var req model.CreatePostRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
-			return
-		}
-
-		post, err := svc.CreatePost(userID, req) // Đã đồng bộ uint64
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post: " + err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusCreated, post)
-	}
-}
-
-// UpdatePost cập nhật bài đăng
 func UpdatePost(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -125,7 +173,6 @@ func UpdatePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// DeletePost xóa bài đăng (soft delete)
 func DeletePost(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -154,7 +201,6 @@ func DeletePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// CreateComment thêm bình luận vào bài đăng
 func CreateComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -185,7 +231,6 @@ func CreateComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// ReplyComment thêm bình luận trả lời
 func ReplyComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -222,7 +267,6 @@ func ReplyComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// GetComments lấy danh sách bình luận của bài đăng
 func GetComments(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		postID, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -255,7 +299,6 @@ func GetComments(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// UpdateComment cập nhật bình luận
 func UpdateComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -290,7 +333,6 @@ func UpdateComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// DeleteComment xóa bình luận (soft delete)
 func DeleteComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -319,7 +361,6 @@ func DeleteComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// LikePost thích bài đăng
 func LikePost(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -344,7 +385,6 @@ func LikePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// UnlikePost bỏ thích bài đăng
 func UnlikePost(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -369,7 +409,6 @@ func UnlikePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// LikeComment thích bình luận
 func LikeComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -394,7 +433,6 @@ func LikeComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// UnlikeComment bỏ thích bình luận
 func UnlikeComment(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -419,7 +457,6 @@ func UnlikeComment(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// SharePost chia sẻ bài đăng
 func SharePost(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -445,7 +482,6 @@ func SharePost(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// GetShares lấy danh sách chia sẻ của bài đăng
 func GetShares(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		postID, err := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -478,7 +514,6 @@ func GetShares(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// GetUserPosts lấy danh sách bài đăng của người dùng
 func GetUserPosts(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := strconv.ParseUint(c.Param("user_id"), 10, 64)
@@ -511,7 +546,6 @@ func GetUserPosts(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// GetFeed lấy danh sách bài đăng cho trang chủ
 func GetFeed(svc service.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := getUserID(c)
@@ -545,7 +579,6 @@ func GetFeed(svc service.PostService) gin.HandlerFunc {
 	}
 }
 
-// getUserID trích xuất userID từ context
 func getUserID(c *gin.Context) (uint64, error) {
 	userIDInterface, exists := c.Get("userId")
 	if !exists {
