@@ -147,6 +147,25 @@ export default function DetailPostDialog({
 
     const toggleContent = () => setIsExpanded(!isExpanded);
 
+// Hàm đệ quy để thêm reply vào comment đúng
+    const addReplyToComment = (comments: Comment[], replyToId: number, newReply: Comment): Comment[] => {
+        return comments.map((comment) => {
+            if (comment.id === replyToId) {
+                return {
+                    ...comment,
+                    replies: [newReply, ...(comment.replies || [])],
+                };
+            } else if (comment.replies && comment.replies.length > 0) {
+                return {
+                    ...comment,
+                    replies: addReplyToComment(comment.replies, replyToId, newReply),
+                };
+            }
+            return comment;
+        });
+    };
+
+// Hàm addComment sửa đổi
     const addComment = async () => {
         if (!newComment.trim() && !newCommentFile) return;
 
@@ -168,13 +187,8 @@ export default function DetailPostDialog({
                     liked: false,
                     likeCount: 0,
                 };
-                setComments((prev) =>
-                    prev.map((c) =>
-                        c.id === replyToCommentId
-                            ? {...c, replies: [transformedReply, ...(c.replies || [])]}
-                            : c
-                    )
-                );
+                // Sử dụng hàm đệ quy để cập nhật comments
+                setComments((prev) => addReplyToComment(prev, replyToCommentId, transformedReply));
             } else {
                 const newCommentData = await createComment(postId, newComment.trim(), newCommentFile || undefined);
                 const transformedComment: Comment = {
@@ -202,7 +216,6 @@ export default function DetailPostDialog({
             toast.error(`${t("create_comment_error")}: ${errorMessage}`);
         }
     };
-
 
     const loadMoreComments = async () => {
         if (isLoadingMore || !hasMoreComments) return;
