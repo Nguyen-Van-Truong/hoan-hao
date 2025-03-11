@@ -12,6 +12,7 @@ type PostRepository interface {
 	CreatePost(post *model.Post) error
 	UpdatePost(post *model.Post) error
 	DeletePost(id uint64) error
+	DeletePostMedia(postID uint64) error
 	CreateComment(comment *model.Comment) error
 	FindCommentsByPostID(postID uint64, limit, offset int) ([]model.Comment, int64, error)
 	FindCommentByID(id uint64, comment *model.Comment) error
@@ -133,6 +134,14 @@ func (r *postRepository) UpdatePost(post *model.Post) error {
 
 func (r *postRepository) DeletePost(id uint64) error {
 	return r.db.Model(&model.Post{}).Where("id = ?", id).Update("is_deleted", true).Error
+}
+
+func (r *postRepository) DeletePostMedia(postID uint64) error {
+	result := r.db.Where("post_id = ?", postID).Delete(&model.PostMedia{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (r *postRepository) CreateComment(comment *model.Comment) error {

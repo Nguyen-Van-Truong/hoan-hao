@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"postservice/internal/model"
 	"postservice/internal/repository"
@@ -12,7 +13,7 @@ import (
 type PostService interface {
 	GetPostByID(id uint64) (*model.PostResponse, error)
 	CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
-	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.PostResponse, error)
+	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	DeletePost(id uint64, userID uint64) error
 	CreateComment(postID, userID uint64, content string, parentID *uint64) (*model.Comment, error)
 	UpdateComment(id uint64, userID uint64, content string) (*model.Comment, error)
@@ -112,7 +113,8 @@ func (s *postService) GetPostByID(id uint64) (*model.PostResponse, error) {
 	return &result, nil
 }
 
-func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostRequest) (*model.PostResponse, error) {
+func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error) {
+	// Tìm bài đăng hiện tại
 	postResp, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -120,6 +122,8 @@ func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostR
 	if postResp.UserID != userID {
 		return nil, errors.New("forbidden")
 	}
+
+	// Tạo đối tượng post mới để cập nhật
 	post := &model.Post{
 		ID:         id,
 		UserID:     postResp.UserID,
@@ -129,25 +133,86 @@ func (s *postService) UpdatePost(id uint64, userID uint64, req model.CreatePostR
 		UpdatedAt:  time.Now(),
 		IsDeleted:  false,
 	}
-	post.Media = nil
-	for _, url := range req.MediaURLs {
-		post.Media = append(post.Media, model.PostMedia{
-			MediaURL:  url,
-			MediaType: "IMAGE",
-			CreatedAt: time.Now(),
-		})
+
+	// Lấy danh sách media hiện tại
+	currentMedia := postResp.Media
+
+	// Nếu có file ảnh mới
+	if len(files) > 0 {
+		// Xóa toàn bộ media cũ trên Cloudinary
+		for _, oldMedia := range currentMedia {
+			if err := s.cloudinaryUploader.DeleteImage(oldMedia.MediaURL); err != nil {
+				log.Printf("Failed to delete old image %s from Cloudinary: %v", oldMedia.MediaURL, err)
+				// Tiếp tục xử lý dù có lỗi xóa Cloudinary, không return lỗi
+			}
+		}
+
+		// Xóa toàn bộ media cũ trong database
+		if err := s.repo.DeletePostMedia(id); err != nil {
+			log.Printf("Failed to delete old media from database for post %d: %v", id, err)
+			return nil, fmt.Errorf("failed to delete old media from database: %v", err)
+		}
+
+		// Upload ảnh mới lên Cloudinary
+		urls, err := s.cloudinaryUploader.UploadImages(files)
+		if err != nil {
+			return nil, errors.New("failed to upload new images: " + err.Error())
+		}
+		for _, url := range urls {
+			post.Media = append(post.Media, model.PostMedia{
+				MediaURL:  url,
+				MediaType: "IMAGE",
+				CreatedAt: time.Now(),
+			})
+		}
+	} else {
+		// Nếu không có file mới, giữ nguyên media cũ hoặc dùng MediaURLs từ request
+		if len(req.MediaURLs) > 0 {
+			// Xóa media cũ trên Cloudinary nếu có MediaURLs mới
+			for _, oldMedia := range currentMedia {
+				if err := s.cloudinaryUploader.DeleteImage(oldMedia.MediaURL); err != nil {
+					log.Printf("Failed to delete old image %s from Cloudinary: %v", oldMedia.MediaURL, err)
+				}
+			}
+
+			// Xóa media cũ trong database
+			if err := s.repo.DeletePostMedia(id); err != nil {
+				log.Printf("Failed to delete old media from database for post %d: %v", id, err)
+				return nil, fmt.Errorf("failed to delete old media from database: %v", err)
+			}
+
+			// Thêm MediaURLs mới
+			for _, url := range req.MediaURLs {
+				post.Media = append(post.Media, model.PostMedia{
+					MediaURL:  url,
+					MediaType: "IMAGE",
+					CreatedAt: time.Now(),
+				})
+			}
+		} else {
+			// Không có file mới và không có MediaURLs, giữ nguyên media cũ
+			post.Media = currentMedia
+		}
 	}
+
+	// Cập nhật bài đăng trong database
 	if err := s.repo.UpdatePost(post); err != nil {
 		return nil, err
 	}
+
+	// Lấy lại bài đăng đã cập nhật
 	resp, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
+
+	// Populate thông tin user
 	result, err := util.PopulateSingleUserInfo(*resp, userID)
 	if err != nil {
+		log.Printf("Failed to populate user info: %v", err)
 		return resp, nil
 	}
+
 	return &result, nil
 }
 

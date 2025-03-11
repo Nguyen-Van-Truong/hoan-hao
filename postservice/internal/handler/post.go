@@ -153,13 +153,64 @@ func UpdatePost(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		var req model.CreatePostRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		// Lấy dữ liệu từ multipart/form-data
+		form, err := c.MultipartForm()
+		if err != nil {
+			log.Printf("Failed to parse multipart form: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse multipart form: " + err.Error()})
 			return
 		}
 
-		post, err := svc.UpdatePost(postID, userID, req)
+		// Lấy content và visibility từ form
+		content := form.Value["content"]
+		if len(content) == 0 || content[0] == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Content is required"})
+			return
+		}
+
+		visibility := form.Value["visibility"]
+		if len(visibility) == 0 || visibility[0] == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Visibility is required"})
+			return
+		}
+
+		req := model.CreatePostRequest{
+			Content:    content[0],
+			Visibility: visibility[0],
+		}
+
+		// Lấy media_urls nếu có
+		if mediaURLs, exists := form.Value["media_urls"]; exists {
+			req.MediaURLs = mediaURLs
+		}
+
+		// Lấy files từ form
+		var files []interface{}
+		fileHeaders, exists := form.File["images"]
+		if exists {
+			log.Printf("Received %d files", len(fileHeaders))
+			for i, fh := range fileHeaders {
+				file, err := fh.Open()
+				if err != nil {
+					log.Printf("Failed to open file %s: %v", fh.Filename, err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file " + fh.Filename + ": " + err.Error()})
+					return
+				}
+				defer func(file multipart.File) {
+					err := file.Close()
+					if err != nil {
+						log.Printf("Failed to close file %s: %v", fh.Filename, err)
+					}
+				}(file)
+				log.Printf("File %d: %s, size: %d bytes", i, fh.Filename, fh.Size)
+				files = append(files, file)
+			}
+		} else {
+			log.Println("No files received in request")
+		}
+
+		// Gọi service để cập nhật post
+		post, err := svc.UpdatePost(postID, userID, req, files)
 		if err != nil {
 			if err.Error() == "forbidden" {
 				c.JSON(http.StatusForbidden, gin.H{"error": "You are not allowed to update this post"})
