@@ -5,6 +5,7 @@ import (
 	"time"
 	"userservice/internal/model"
 	"userservice/internal/repository"
+	"userservice/internal/util"
 
 	"github.com/jinzhu/gorm"
 )
@@ -23,6 +24,7 @@ type UserService interface {
 	GetFriendSuggestions(userID uint, limit int) ([]model.UserProfile, error)
 	GetIncomingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
 	GetOutgoingFriendRequests(userID uint, limit, offset int) ([]model.Friend, int64, error)
+	UpdateProfile(userID uint, req model.UpdateProfileRequestDto, avatarData, coverData interface{}) (*model.UserProfile, error)
 }
 
 type userService struct {
@@ -334,6 +336,101 @@ func (s *userService) GetOutgoingFriendRequests(userID uint, limit, offset int) 
 	}
 
 	return requests, total, nil
+}
+
+func (s *userService) UpdateProfile(userID uint, req model.UpdateProfileRequestDto, avatarData, coverData interface{}) (*model.UserProfile, error) {
+	profile, err := s.repo.FindProfileByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("user profile not found: %v", err)
+	}
+
+	// Cập nhật các thông tin cơ bản
+	if req.FullName != "" {
+		profile.FullName = req.FullName
+	}
+
+	if req.Bio != "" {
+		profile.Bio = req.Bio
+	}
+
+	if req.Location != "" {
+		profile.Location = req.Location
+	}
+
+	if req.CountryID != nil {
+		profile.CountryID = req.CountryID
+	}
+
+	if req.ProvinceID != nil {
+		profile.ProvinceID = req.ProvinceID
+	}
+
+	if req.DistrictID != nil {
+		profile.DistrictID = req.DistrictID
+	}
+
+	if req.Website != "" {
+		profile.Website = req.Website
+	}
+
+	if req.DateOfBirth != "" {
+		dob, err := time.Parse("2006-01-02", req.DateOfBirth)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format for date_of_birth, expected format: 2006-01-02")
+		}
+		profile.DateOfBirth = &dob
+	}
+
+	// Xử lý tải lên ảnh avatar
+	if avatarData != nil {
+		cloudinary, err := util.NewCloudinaryUploader()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize cloudinary: %v", err)
+		}
+
+		// Xóa ảnh avatar cũ (nếu có)
+		if profile.ProfilePictureURL != "" {
+			_ = cloudinary.DeleteImage(profile.ProfilePictureURL)
+		}
+
+		// Tải lên ảnh avatar mới
+		publicID := fmt.Sprintf("user_%d_avatar_%d", userID, time.Now().UnixNano())
+		url, err := cloudinary.UploadImage(avatarData, publicID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload avatar: %v", err)
+		}
+		profile.ProfilePictureURL = url
+	}
+
+	// Xử lý tải lên ảnh bìa
+	if coverData != nil {
+		cloudinary, err := util.NewCloudinaryUploader()
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize cloudinary: %v", err)
+		}
+
+		// Xóa ảnh bìa cũ (nếu có)
+		if profile.CoverPictureURL != "" {
+			_ = cloudinary.DeleteImage(profile.CoverPictureURL)
+		}
+
+		// Tải lên ảnh bìa mới
+		publicID := fmt.Sprintf("user_%d_cover_%d", userID, time.Now().UnixNano())
+		url, err := cloudinary.UploadImage(coverData, publicID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload cover image: %v", err)
+		}
+		profile.CoverPictureURL = url
+	}
+
+	profile.UpdatedAt = time.Now()
+
+	// Lưu thông tin profile vào database
+	if err := s.repo.UpdateProfile(profile); err != nil {
+		return nil, fmt.Errorf("failed to update profile: %v", err)
+	}
+
+	return profile, nil
 }
 
 func (s *userService) DB() *gorm.DB {

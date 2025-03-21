@@ -8,6 +8,7 @@ import (
 type UserRepository interface {
 	FindByUsername(username string) (*model.UserProfile, error)
 	SaveProfile(profile *model.UserProfile) error
+	UpdateProfile(profile *model.UserProfile) error
 	SaveEmail(email *model.UserEmail) error
 	SavePhoneNumber(phone *model.UserPhoneNumber) error
 	ExistsByCountryCodeAndPhoneNumber(countryCode, phoneNumber string) (bool, error)
@@ -114,6 +115,10 @@ func (r *userRepository) FindByUsername(username string) (*model.UserProfile, er
 
 func (r *userRepository) SaveProfile(profile *model.UserProfile) error {
 	return r.db.Create(profile).Error
+}
+
+func (r *userRepository) UpdateProfile(profile *model.UserProfile) error {
+	return r.db.Save(profile).Error
 }
 
 func (r *userRepository) SaveEmail(email *model.UserEmail) error {

@@ -40,6 +40,7 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 		authGroup.POST("/friend/unblock", unblockUser(svc))
 		authGroup.PUT("/friend/update", updateFriendRequest(svc))
 		authGroup.GET("/profile/me", getMyProfile(svc))
+		authGroup.POST("/profile/update", updateProfile(svc))
 		authGroup.GET("/friends", getFriends(svc))
 		authGroup.GET("/friends/suggestions", getFriendSuggestions(svc))
 		authGroup.GET("/friend/requests/incoming", getIncomingFriendRequests(svc))
@@ -463,6 +464,100 @@ func getOutgoingFriendRequests(svc service.UserService) gin.HandlerFunc {
 			"page":     page,
 			"limit":    limit,
 			"pages":    (total + int64(limit) - 1) / int64(limit),
+		})
+	}
+}
+
+// updateProfile cập nhật thông tin profile của người dùng
+func updateProfile(svc service.UserService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userId")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		// Parse multipart form
+		if err := c.Request.ParseMultipartForm(10 << 20); err != nil { // 10MB max
+			log.Printf("Error parsing multipart form: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
+			return
+		}
+
+		// Đọc dữ liệu profile từ form
+		var req model.UpdateProfileRequestDto
+		if c.PostForm("fullName") != "" {
+			req.FullName = c.PostForm("fullName")
+		}
+		if c.PostForm("bio") != "" {
+			req.Bio = c.PostForm("bio")
+		}
+		if c.PostForm("location") != "" {
+			req.Location = c.PostForm("location")
+		}
+		if c.PostForm("website") != "" {
+			req.Website = c.PostForm("website")
+		}
+		if c.PostForm("dateOfBirth") != "" {
+			req.DateOfBirth = c.PostForm("dateOfBirth")
+		}
+		if c.PostForm("countryId") != "" {
+			countryID, err := strconv.ParseUint(c.PostForm("countryId"), 10, 32)
+			if err == nil {
+				countryIDUint := uint(countryID)
+				req.CountryID = &countryIDUint
+			}
+		}
+		if c.PostForm("provinceId") != "" {
+			provinceID, err := strconv.ParseUint(c.PostForm("provinceId"), 10, 32)
+			if err == nil {
+				provinceIDUint := uint(provinceID)
+				req.ProvinceID = &provinceIDUint
+			}
+		}
+		if c.PostForm("districtId") != "" {
+			districtID, err := strconv.ParseUint(c.PostForm("districtId"), 10, 32)
+			if err == nil {
+				districtIDUint := uint(districtID)
+				req.DistrictID = &districtIDUint
+			}
+		}
+
+		// Xử lý file ảnh avatar
+		var avatarFile interface{}
+		avatar, avatarHeader, err := c.Request.FormFile("avatar")
+		if err == nil && avatarHeader != nil {
+			defer avatar.Close()
+			log.Printf("Avatar file received: %s, size: %d", avatarHeader.Filename, avatarHeader.Size)
+			avatarFile = avatar
+		}
+
+		// Xử lý file ảnh bìa
+		var coverFile interface{}
+		cover, coverHeader, err := c.Request.FormFile("cover")
+		if err == nil && coverHeader != nil {
+			defer cover.Close()
+			log.Printf("Cover file received: %s, size: %d", coverHeader.Filename, coverHeader.Size)
+			coverFile = cover
+		}
+
+		// Cập nhật profile
+		updatedProfile, err := svc.UpdateProfile(userID, req, avatarFile, coverFile)
+		if err != nil {
+			log.Printf("Failed to update profile: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update profile: %v", err)})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Profile updated successfully",
+			"profile": updatedProfile,
 		})
 	}
 }

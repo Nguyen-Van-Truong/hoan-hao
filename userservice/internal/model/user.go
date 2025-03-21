@@ -22,6 +22,18 @@ type UserProfileRequestDto struct {
 	CoverPictureURL   string `json:"cover_picture_url,omitempty"`   // Optional
 }
 
+// UpdateProfileRequestDto chứa dữ liệu cập nhật profile người dùng
+type UpdateProfileRequestDto struct {
+	FullName    string `json:"fullName,omitempty"`    // Tên đầy đủ
+	Bio         string `json:"bio,omitempty"`         // Tiểu sử
+	Location    string `json:"location,omitempty"`    // Vị trí
+	CountryID   *uint  `json:"countryId,omitempty"`   // ID quốc gia
+	ProvinceID  *uint  `json:"provinceId,omitempty"`  // ID tỉnh/thành phố
+	DistrictID  *uint  `json:"districtId,omitempty"`  // ID quận/huyện
+	Website     string `json:"website,omitempty"`     // Trang web cá nhân
+	DateOfBirth string `json:"dateOfBirth,omitempty"` // Ngày sinh (định dạng "2006-01-02")
+}
+
 // UserProfile ánh xạ bảng user_profiles trong hoanhao_user
 type UserProfile struct {
 	ID                uint       `json:"id"`
