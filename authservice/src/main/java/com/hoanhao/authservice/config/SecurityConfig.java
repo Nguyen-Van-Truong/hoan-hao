@@ -23,10 +23,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors().and() // Kích hoạt CORS với cấu hình từ corsConfigurationSource
+                .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Cấu hình CORS với CorsConfigurationSource
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()); // Cho phép tất cả API mà không yêu cầu xác thực
+                        .anyRequest().permitAll()); // Cho phép tất cả API không cần xác thực
         return httpSecurity.build();
     }
 
@@ -46,7 +46,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // Chỉ định origin cụ thể
+        configuration.setAllowedOriginPatterns(List.of("*")); // Chấp nhận mọi IP/origin
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Content-Type", "Authorization"));
         configuration.setAllowCredentials(true); // Cho phép gửi credentials (token)
