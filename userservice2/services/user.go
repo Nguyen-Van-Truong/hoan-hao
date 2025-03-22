@@ -26,6 +26,7 @@ type UserService interface {
 	UploadProfilePicture(ctx context.Context, id int64, fileURL string) error
 	UploadCoverPicture(ctx context.Context, id int64, fileURL string) error
 	ListUsers(ctx context.Context, page, pageSize int) (*models.UserListResponse, error)
+	CreateUserProfileFromAuth(ctx context.Context, user *models.User) error
 }
 
 // userService triển khai UserService
@@ -71,6 +72,23 @@ func convertToUserResponse(user *models.User) *models.UserResponse {
 		IsVerified:        user.IsVerified,
 		CreatedAt:         user.CreatedAt,
 	}
+}
+
+// CreateUserProfileFromAuth tạo profile người dùng từ authservice
+func (s *userService) CreateUserProfileFromAuth(ctx context.Context, user *models.User) error {
+	if user == nil {
+		return ErrInvalidRequest
+	}
+
+	// Kiểm tra xem user đã tồn tại chưa
+	existingUser, err := s.userRepo.FindByID(ctx, user.ID)
+	if err == nil && existingUser != nil {
+		// Nếu đã tồn tại, không tạo mới mà trả về nil
+		return nil
+	}
+
+	// Tạo user mới
+	return s.userRepo.Create(ctx, user)
 }
 
 // GetUserByID lấy thông tin người dùng theo ID

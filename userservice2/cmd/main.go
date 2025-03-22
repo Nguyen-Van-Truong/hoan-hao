@@ -10,7 +10,11 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/joho/godotenv"
 
+	"userservice2/controllers"
 	"userservice2/middlewares"
+	"userservice2/repositories"
+	"userservice2/routes"
+	"userservice2/services"
 	"userservice2/utils"
 )
 
@@ -49,7 +53,20 @@ func main() {
 	// Thêm JWT middleware để trích xuất userId
 	router.Use(middlewares.JWTMiddleware())
 
+	// Initialize repositories
+	userRepo := repositories.NewUserRepository(db)
+	friendshipRepo := repositories.NewFriendshipRepository(db)
+
+	// Initialize services
+	userService := services.NewUserService(userRepo)
+	friendshipService := services.NewFriendshipService(friendshipRepo, userRepo)
+
+	// Initialize controllers
+	userController := controllers.NewUserController(userService)
+	friendshipController := controllers.NewFriendshipController(friendshipService)
+
 	// Setup routes
+	routes.SetupRoutes(router, userController, friendshipController)
 
 	// Start server
 	port := os.Getenv("PORT")

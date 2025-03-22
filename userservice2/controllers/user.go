@@ -21,6 +21,34 @@ func NewUserController(userService services.UserService) *UserController {
 	}
 }
 
+// CreateProfile xử lý tạo profile người dùng từ authservice
+func (c *UserController) CreateProfile(ctx *gin.Context) {
+	var req models.UserProfileRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Chuyển đổi từ request sang model User
+	user, err := req.ToUser()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Không thể xử lý thông tin ngày tháng: " + err.Error()})
+		return
+	}
+
+	// Lưu user vào database
+	err = c.userService.CreateUserProfileFromAuth(ctx, user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể tạo profile người dùng: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"message": "Tạo profile người dùng thành công",
+		"user_id": user.ID,
+	})
+}
+
 // GetMe lấy thông tin người dùng hiện tại
 func (c *UserController) GetMe(ctx *gin.Context) {
 	userID, exists := ctx.Get("userID")
@@ -101,11 +129,6 @@ func (c *UserController) UpdateProfile(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Cập nhật thông tin thành công"})
-}
-
-// ChangePassword thay đổi mật khẩu
-func (c *UserController) ChangePassword(ctx *gin.Context) {
-	// Triển khai sau
 }
 
 // UploadProfilePicture tải lên ảnh đại diện

@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"userservice2/controllers"
-	"userservice2/middlewares"
 )
 
 // SetupRoutes cài đặt tất cả routes cho API
@@ -16,46 +15,27 @@ func SetupRoutes(
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
-	// API v1
-	v1 := router.Group("/api/v1")
+	// API cho authservice - không yêu cầu JWT
+	router.POST("/user/createProfile", userController.CreateProfile)
 
 	// Protected routes - User
-	userRoutes := v1.Group("/users")
-	userRoutes.Use(middlewares.JWTMiddleware())
+	userRoutes := router.Group("/users")
 	{
 		userRoutes.GET("", userController.GetUsers)
 		userRoutes.GET("/me", userController.GetMe)
 		userRoutes.GET("/:id", userController.GetUser)
 		userRoutes.PUT("/me", userController.UpdateProfile)
-		userRoutes.PUT("/me/password", userController.ChangePassword)
 		userRoutes.PUT("/me/profile-picture", userController.UploadProfilePicture)
 		userRoutes.PUT("/me/cover-picture", userController.UploadCoverPicture)
 	}
 
 	// Protected routes - Friendship
-	friendRoutes := v1.Group("/friends")
-	friendRoutes.Use(middlewares.JWTMiddleware())
+	friendRoutes := router.Group("/friends")
 	{
 		friendRoutes.POST("/actions", friendshipController.PerformFriendshipAction)
 		friendRoutes.GET("", friendshipController.GetFriends)
 		friendRoutes.GET("/requests", friendshipController.GetFriendRequests)
 		friendRoutes.GET("/suggestions", friendshipController.GetFriendSuggestions)
-	}
-
-	// Protected routes - Group
-	groupRoutes := v1.Group("/groups")
-	groupRoutes.Use(middlewares.JWTMiddleware())
-	{
-		// Group management
-		//groupRoutes.GET("", groupController.ListGroups)
-
-		// Group members
-
-		// Group join requests
-
-		// Group roles
-
-		// Group member roles
 	}
 
 	// Healthcheck
