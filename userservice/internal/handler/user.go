@@ -34,11 +34,10 @@ func SetupRoutes(r *gin.Engine, repo repository.UserRepository) {
 		c.Next()
 	})
 	{
-		authGroup.POST("/friend/request", sendFriendRequest(svc))
-		authGroup.POST("/friend/cancel", cancelFriendRequest(svc))
-		authGroup.POST("/friend/block", blockUser(svc))
-		authGroup.POST("/friend/unblock", unblockUser(svc))
-		authGroup.PUT("/friend/update", updateFriendRequest(svc))
+		// Thay thế các route bạn bè riêng lẻ bằng một API duy nhất
+		authGroup.POST("/friendship", manageFriendship(svc))
+		
+		// Giữ nguyên các route khác
 		authGroup.GET("/profile/me", getMyProfile(svc))
 		authGroup.POST("/profile/update", updateProfile(svc))
 		authGroup.GET("/friends", getFriends(svc))
@@ -70,8 +69,8 @@ func createProfile(svc service.UserService) gin.HandlerFunc {
 	}
 }
 
-// sendFriendRequest gửi yêu cầu kết bạn
-func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
+// manageFriendship xử lý tất cả các tác vụ liên quan đến quản lý bạn bè với một API duy nhất
+func manageFriendship(svc service.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDInterface, exists := c.Get("userId")
 		if !exists {
@@ -86,155 +85,8 @@ func sendFriendRequest(svc service.UserService) gin.HandlerFunc {
 		}
 
 		var req struct {
-			FriendID uint `json:"friendId"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("Failed to bind JSON: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
-			return
-		}
-
-		if req.FriendID == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
-			return
-		}
-
-		if err := svc.SendFriendRequest(userID, req.FriendID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "Friend request sent successfully"})
-	}
-}
-
-// cancelFriendRequest hủy yêu cầu kết bạn
-func cancelFriendRequest(svc service.UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userId")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		var req struct {
-			FriendID uint `json:"friendId"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("Failed to bind JSON: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
-			return
-		}
-
-		if req.FriendID == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
-			return
-		}
-
-		if err := svc.CancelFriendRequest(userID, req.FriendID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "Friend request cancelled successfully"})
-	}
-}
-
-// blockUser chặn người dùng
-func blockUser(svc service.UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userId")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		var req struct {
-			FriendID uint `json:"friendId"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("Failed to bind JSON: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
-			return
-		}
-
-		if req.FriendID == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
-			return
-		}
-
-		if err := svc.BlockUser(userID, req.FriendID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "User blocked successfully"})
-	}
-}
-
-// unblockUser hủy chặn người dùng
-func unblockUser(svc service.UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userId")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		var req struct {
-			FriendID uint `json:"friendId"`
-		}
-		if err := c.ShouldBindJSON(&req); err != nil {
-			log.Printf("Failed to bind JSON: %v", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid friend ID"})
-			return
-		}
-
-		if req.FriendID == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
-			return
-		}
-
-		if err := svc.UnblockUser(userID, req.FriendID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"message": "User unblocked successfully"})
-	}
-}
-
-// updateFriendRequest cập nhật trạng thái yêu cầu kết bạn
-func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userId")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		var req struct {
-			FriendID uint   `json:"friendId"`
-			Status   string `json:"status"`
+			Action   string `json:"action" binding:"required"`   // request, cancel, accept, reject, block, unblock
+			FriendID uint   `json:"friendId" binding:"required"`
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Printf("Failed to bind JSON: %v", err)
@@ -246,16 +98,40 @@ func updateFriendRequest(svc service.UserService) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Friend ID is required"})
 			return
 		}
-		if req.Status != "ACCEPTED" && req.Status != "BLOCKED" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid status"})
+
+		var err error
+		var message string
+
+		switch req.Action {
+		case "request":
+			err = svc.SendFriendRequest(userID, req.FriendID)
+			message = "Friend request sent successfully"
+		case "cancel":
+			err = svc.CancelFriendRequest(userID, req.FriendID)
+			message = "Friend request cancelled successfully"
+		case "accept":
+			err = svc.UpdateFriendRequest(userID, req.FriendID, "ACCEPTED")
+			message = "Friend request accepted successfully"
+		case "reject":
+			err = svc.CancelFriendRequest(userID, req.FriendID)
+			message = "Friend request rejected successfully" 
+		case "block":
+			err = svc.BlockUser(userID, req.FriendID)
+			message = "User blocked successfully"
+		case "unblock":
+			err = svc.UnblockUser(userID, req.FriendID)
+			message = "User unblocked successfully"
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid action"})
 			return
 		}
 
-		if err := svc.UpdateFriendRequest(userID, req.FriendID, req.Status); err != nil {
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Friend request updated successfully"})
+
+		c.JSON(http.StatusOK, gin.H{"message": message})
 	}
 }
 
