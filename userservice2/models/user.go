@@ -13,9 +13,12 @@ type User struct {
 	FullName          string    `json:"full_name" gorm:"size:100;not null"`
 	Bio               string    `json:"bio" gorm:"type:text"`
 	Location          string    `json:"location" gorm:"size:100"`
-	CountryID         int       `json:"country_id" gorm:"default:null"`
-	ProvinceID        int       `json:"province_id" gorm:"default:null"`
-	DistrictID        int       `json:"district_id" gorm:"default:null"`
+	CountryID         int       `json:"country_id" gorm:"default:null;index:idx_country"`
+	ProvinceID        int       `json:"province_id" gorm:"default:null;index:idx_province"`
+	DistrictID        int       `json:"district_id" gorm:"default:null;index:idx_district"`
+	Country           *Country  `json:"country,omitempty" gorm:"foreignKey:CountryID"`
+	Province          *Province `json:"province,omitempty" gorm:"foreignKey:ProvinceID"`
+	District          *District `json:"district,omitempty" gorm:"foreignKey:DistrictID"`
 	Website           string    `json:"website" gorm:"size:255"`
 	ProfilePictureURL string    `json:"profile_picture_url" gorm:"size:255"`
 	CoverPictureURL   string    `json:"cover_picture_url" gorm:"size:255"`

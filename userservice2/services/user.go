@@ -43,6 +43,40 @@ func NewUserService(userRepo repositories.UserRepository) UserService {
 	}
 }
 
+// convertToLocationResponse chuyển đổi thông tin địa lý
+func convertToLocationResponse(country *models.Country, province *models.Province, district *models.District) *response.LocationResponse {
+	locationResp := &response.LocationResponse{}
+
+	if country != nil {
+		locationResp.Country = &response.CountryResponse{
+			ID:        country.ID,
+			Name:      country.Name,
+			Code:      country.Code,
+			PhoneCode: country.PhoneCode,
+		}
+	}
+
+	if province != nil {
+		locationResp.Province = &response.ProvinceResponse{
+			ID:        province.ID,
+			Name:      province.Name,
+			Code:      province.Code,
+			CountryID: province.CountryID,
+		}
+	}
+
+	if district != nil {
+		locationResp.District = &response.DistrictResponse{
+			ID:         district.ID,
+			Name:       district.Name,
+			Code:       district.Code,
+			ProvinceID: district.ProvinceID,
+		}
+	}
+
+	return locationResp
+}
+
 // convertToUserResponse chuyển đổi từ User sang UserResponse
 func convertToUserResponse(user *models.User) *response.UserResponse {
 	if user == nil {
@@ -56,7 +90,7 @@ func convertToUserResponse(user *models.User) *response.UserResponse {
 		dateOfBirth = user.DateOfBirth.Format("2006-01-02")
 	}
 
-	return &response.UserResponse{
+	userResp := &response.UserResponse{
 		ID:                user.ID,
 		Username:          user.Username,
 		Email:             user.Email,
@@ -74,6 +108,13 @@ func convertToUserResponse(user *models.User) *response.UserResponse {
 		IsVerified:        user.IsVerified,
 		CreatedAt:         user.CreatedAt,
 	}
+
+	// Thêm thông tin chi tiết về vị trí nếu có
+	if user.Country != nil || user.Province != nil || user.District != nil {
+		userResp.LocationDetail = convertToLocationResponse(user.Country, user.Province, user.District)
+	}
+
+	return userResp
 }
 
 // CreateUserProfileFromAuth tạo profile người dùng từ authservice
