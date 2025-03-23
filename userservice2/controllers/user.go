@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"strconv"
+	"userservice2/dto/request"
 
 	"github.com/gin-gonic/gin"
 	"userservice2/models"
@@ -23,7 +24,7 @@ func NewUserController(userService services.UserService) *UserController {
 
 // CreateProfile xử lý tạo profile người dùng từ authservice
 func (c *UserController) CreateProfile(ctx *gin.Context) {
-	var req models.UserProfileRequest
+	var req request.UserProfileRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

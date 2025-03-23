@@ -40,31 +40,3 @@ type GroupRole struct {
 func (GroupRole) TableName() string {
 	return "group_roles"
 }
-
-// GroupRoleCreateRequest đại diện cho yêu cầu tạo vai trò mới
-type GroupRoleCreateRequest struct {
-	GroupID     int64           `json:"group_id" binding:"required"`
-	Name        string          `json:"name" binding:"required,min=2,max=50"`
-	Permissions map[string]bool `json:"permissions" binding:"required"`
-}
-
-// GroupRoleUpdateRequest đại diện cho yêu cầu cập nhật vai trò
-type GroupRoleUpdateRequest struct {
-	Name        string          `json:"name" binding:"required,min=2,max=50"`
-	Permissions map[string]bool `json:"permissions" binding:"required"`
-}
-
-// GroupRoleResponse đại diện cho thông tin phản hồi của một vai trò
-type GroupRoleResponse struct {
-	ID          int64           `json:"id"`
-	GroupID     int64           `json:"group_id"`
-	Name        string          `json:"name"`
-	Permissions map[string]bool `json:"permissions"`
-	CreatedAt   time.Time       `json:"created_at"`
-}
-
-// GroupRoleListResponse đại diện cho danh sách vai trò
-type GroupRoleListResponse struct {
-	Roles []GroupRoleResponse `json:"roles"`
-	Total int64               `json:"total"`
-}

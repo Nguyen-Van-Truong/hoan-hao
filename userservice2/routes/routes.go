@@ -9,7 +9,6 @@ import (
 func SetupRoutes(
 	router *gin.Engine,
 	userController *controllers.UserController,
-	friendshipController *controllers.FriendshipController,
 ) {
 	// Middleware global
 	router.Use(gin.Logger())
@@ -27,15 +26,6 @@ func SetupRoutes(
 		userRoutes.PUT("/me", userController.UpdateProfile)
 		userRoutes.PUT("/me/profile-picture", userController.UploadProfilePicture)
 		userRoutes.PUT("/me/cover-picture", userController.UploadCoverPicture)
-	}
-
-	// Protected routes - Friendship
-	friendRoutes := router.Group("/friends")
-	{
-		friendRoutes.POST("/actions", friendshipController.PerformFriendshipAction)
-		friendRoutes.GET("", friendshipController.GetFriends)
-		friendRoutes.GET("/requests", friendshipController.GetFriendRequests)
-		friendRoutes.GET("/suggestions", friendshipController.GetFriendSuggestions)
 	}
 
 	// Healthcheck

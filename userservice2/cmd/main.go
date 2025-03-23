@@ -55,18 +55,15 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
-	friendshipRepo := repositories.NewFriendshipRepository(db)
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
-	friendshipService := services.NewFriendshipService(friendshipRepo, userRepo)
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService)
-	friendshipController := controllers.NewFriendshipController(friendshipService)
 
 	// Setup routes
-	routes.SetupRoutes(router, userController, friendshipController)
+	routes.SetupRoutes(router, userController)
 
 	// Start server
 	port := os.Getenv("PORT")

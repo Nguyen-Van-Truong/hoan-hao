@@ -1,6 +1,9 @@
-package models
+package request
 
-import "time"
+import (
+	"time"
+	"userservice2/models"
+)
 
 // UserProfileRequest đại diện cho yêu cầu tạo profile từ authservice
 type UserProfileRequest struct {
@@ -14,8 +17,8 @@ type UserProfileRequest struct {
 }
 
 // ToUser chuyển đổi UserProfileRequest sang User
-func (r *UserProfileRequest) ToUser() (*User, error) {
-	user := &User{
+func (r *UserProfileRequest) ToUser() (*models.User, error) {
+	user := &models.User{
 		ID:         r.ID,
 		Username:   r.Username,
 		Email:      r.Email,
