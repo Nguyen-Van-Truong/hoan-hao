@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"userservice2/controllers"
+	"userservice2/middlewares"
 )
 
 // SetupRoutes cài đặt tất cả routes cho API
@@ -20,12 +21,19 @@ func SetupRoutes(
 	// Protected routes - User
 	userRoutes := router.Group("/users")
 	{
+		// Các route không yêu cầu xác thực
 		userRoutes.GET("", userController.GetUsers)
-		userRoutes.GET("/me", userController.GetMe)
 		userRoutes.GET("/:id", userController.GetUser)
-		userRoutes.PUT("/me", userController.UpdateProfile)
-		userRoutes.PUT("/me/profile-picture", userController.UploadProfilePicture)
-		userRoutes.PUT("/me/cover-picture", userController.UploadCoverPicture)
+
+		// Các route yêu cầu xác thực
+		protectedRoutes := userRoutes.Group("")
+		protectedRoutes.Use(middlewares.JWTMiddleware())
+		{
+			protectedRoutes.GET("/me", userController.GetMe)
+			protectedRoutes.PUT("/me", userController.UpdateProfile)
+			protectedRoutes.PUT("/me/profile-picture", userController.UploadProfilePicture)
+			protectedRoutes.PUT("/me/cover-picture", userController.UploadCoverPicture)
+		}
 	}
 
 	// Healthcheck

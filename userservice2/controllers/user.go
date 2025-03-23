@@ -54,6 +54,7 @@ func (c *UserController) CreateProfile(ctx *gin.Context) {
 // GetMe lấy thông tin người dùng hiện tại
 func (c *UserController) GetMe(ctx *gin.Context) {
 	userID, exists := ctx.Get("userID")
+
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Chưa xác thực"})
 		return

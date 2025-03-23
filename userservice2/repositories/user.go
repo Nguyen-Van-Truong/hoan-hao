@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 	"errors"
+	_ "fmt"
+	"log"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -75,7 +77,44 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models
 // Update cập nhật thông tin người dùng
 func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 	user.UpdatedAt = time.Now()
-	return r.db.Save(user).Error
+
+	log.Printf("UserRepository.Update: Cập nhật user ID=%d", user.ID)
+
+	// Tạo map các trường cần cập nhật
+	updates := map[string]interface{}{
+		"username":            user.Username,
+		"email":               user.Email,
+		"phone":               user.Phone,
+		"full_name":           user.FullName,
+		"bio":                 user.Bio,
+		"location":            user.Location,
+		"country_id":          user.CountryID,
+		"province_id":         user.ProvinceID,
+		"district_id":         user.DistrictID,
+		"website":             user.Website,
+		"profile_picture_url": user.ProfilePictureURL,
+		"cover_picture_url":   user.CoverPictureURL,
+		"date_of_birth":       user.DateOfBirth,
+		"work":                user.Work,
+		"education":           user.Education,
+		"relationship":        user.Relationship,
+		"is_active":           user.IsActive,
+		"is_verified":         user.IsVerified,
+		"updated_at":          user.UpdatedAt,
+	}
+
+	// Chỉ cập nhật last_login_at nếu có giá trị
+	if user.LastLoginAt != nil {
+		updates["last_login_at"] = user.LastLoginAt
+	}
+
+	log.Printf("UserRepository.Update: Các trường cập nhật: %v", updates)
+
+	err := r.db.Model(&models.User{}).Where("id = ?", user.ID).Updates(updates).Error
+	if err != nil {
+		log.Printf("UserRepository.Update: Lỗi: %v", err)
+	}
+	return err
 }
 
 // Delete xóa người dùng
@@ -102,9 +141,10 @@ func (r *userRepository) List(ctx context.Context, page, pageSize int) ([]models
 
 // UpdateLastLogin cập nhật thời gian đăng nhập cuối cùng
 func (r *userRepository) UpdateLastLogin(ctx context.Context, id int64) error {
+	now := time.Now()
 	return r.db.Model(&models.User{}).Where("id = ?", id).
 		Updates(map[string]interface{}{
-			"last_login_at": time.Now(),
+			"last_login_at": &now,
 			"updated_at":    time.Now(),
 		}).Error
 }

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"log"
 	"math"
 	"time"
 
@@ -84,9 +85,8 @@ func convertToUserResponse(user *models.User) *response.UserResponse {
 	}
 
 	var dateOfBirth string
-	// Kiểm tra xem ngày sinh có giá trị không phải là zero value
-	zeroTime := time.Time{}
-	if user.DateOfBirth != zeroTime {
+	// Kiểm tra xem ngày sinh có giá trị
+	if user.DateOfBirth != nil {
 		dateOfBirth = user.DateOfBirth.Format("2006-01-02")
 	}
 
@@ -168,12 +168,15 @@ func (s *userService) UpdateProfile(ctx context.Context, id int64, req *request.
 		return ErrInvalidRequest
 	}
 
+	log.Printf("UpdateProfile: Bắt đầu cập nhật cho userID=%d", id)
 	user, err := s.userRepo.FindByID(ctx, id)
 	if err != nil {
+		log.Printf("UpdateProfile: Lỗi khi tìm user: %v", err)
 		return err
 	}
 
 	if user == nil {
+		log.Printf("UpdateProfile: Không tìm thấy user ID=%d", id)
 		return ErrUserNotFound
 	}
 
@@ -195,11 +198,21 @@ func (s *userService) UpdateProfile(ctx context.Context, id int64, req *request.
 	if req.DateOfBirth != "" {
 		dob, err := time.Parse("2006-01-02", req.DateOfBirth)
 		if err == nil {
-			user.DateOfBirth = dob
+			user.DateOfBirth = &dob
+		} else {
+			log.Printf("UpdateProfile: Lỗi parse ngày sinh: %v", err)
 		}
+	} else {
+		// Nếu không có ngày sinh trong request, giữ nguyên giá trị cũ
+		log.Printf("UpdateProfile: Không có dateOfBirth trong request")
 	}
 
-	return s.userRepo.Update(ctx, user)
+	log.Printf("UpdateProfile: Gọi update repo cho user ID=%d", id)
+	err = s.userRepo.Update(ctx, user)
+	if err != nil {
+		log.Printf("UpdateProfile: Lỗi khi update user: %v", err)
+	}
+	return err
 }
 
 // ChangePassword thay đổi mật khẩu

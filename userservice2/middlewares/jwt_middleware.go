@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// JWTMiddleware trích xuất userId từ token JWT nếu có
+// JWTMiddleware trích xuất userID từ token JWT nếu có
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -35,13 +35,9 @@ func JWTMiddleware() gin.HandlerFunc {
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			userID, ok := claims["userId"]
 			if !ok {
-				// Thử lại với "user_id" nếu "userId" không tồn tại
-				userID, ok = claims["user_id"]
-				if !ok {
-					log.Printf("User ID not found in token")
-					c.Next()
-					return
-				}
+				log.Printf("User ID not found in token")
+				c.Next()
+				return
 			}
 
 			var id int64
@@ -50,9 +46,9 @@ func JWTMiddleware() gin.HandlerFunc {
 				id = int64(v)
 			case int64:
 				id = v
-			case int:
-				id = int64(v)
 			case uint:
+				id = int64(v)
+			case int:
 				id = int64(v)
 			default:
 				log.Printf("Invalid user ID type in token: %v", userID)
@@ -66,7 +62,7 @@ func JWTMiddleware() gin.HandlerFunc {
 				return
 			}
 
-			c.Set("userId", id)
+			c.Set("userID", id)
 		} else {
 			log.Printf("Invalid token claims")
 		}

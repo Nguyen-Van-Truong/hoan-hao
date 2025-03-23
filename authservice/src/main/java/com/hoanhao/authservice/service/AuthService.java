@@ -211,15 +211,15 @@ public class AuthService implements IAuthService {
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
 
-        String userServiceUrl = "http://localhost:8081/user/createProfile";
+        String userServiceUrl = "http://localhost:8083/user/createProfile";
         UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
+                savedUser.getId(),
                 userDto.getUsername(),
                 userDto.getEmail(),
                 userDto.getFullName(),
                 userDto.getDateOfBirth(),
                 userDto.getCountryCode(),
-                userDto.getPhoneNumber(),
-                savedUser.getId()
+                userDto.getPhoneNumber()
         );
         try {
             restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);
