@@ -1,10 +1,15 @@
 package controllers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 	"userservice2/dto/request"
 	_ "userservice2/dto/response"
+	"userservice2/utils"
 
 	"github.com/gin-gonic/gin"
 	_ "userservice2/models"
@@ -14,12 +19,14 @@ import (
 // UserController xử lý các request liên quan đến người dùng
 type UserController struct {
 	userService services.UserService
+	cloudinary  *utils.CloudinaryUploader
 }
 
 // NewUserController tạo instance mới của UserController
-func NewUserController(userService services.UserService) *UserController {
+func NewUserController(userService services.UserService, cloudinaryUploader *utils.CloudinaryUploader) *UserController {
 	return &UserController{
 		userService: userService,
+		cloudinary:  cloudinaryUploader,
 	}
 }
 
@@ -54,6 +61,8 @@ func (c *UserController) CreateProfile(ctx *gin.Context) {
 // GetMe lấy thông tin người dùng hiện tại
 func (c *UserController) GetMe(ctx *gin.Context) {
 	userID, exists := ctx.Get("userID")
+
+	log.Printf("GetMe - userID: %v, exists: %v, type: %T", userID, exists, userID)
 
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Chưa xác thực"})
@@ -136,10 +145,158 @@ func (c *UserController) UpdateProfile(ctx *gin.Context) {
 
 // UploadProfilePicture tải lên ảnh đại diện
 func (c *UserController) UploadProfilePicture(ctx *gin.Context) {
-	// Triển khai sau
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Chưa xác thực"})
+		return
+	}
+
+	// Lấy thông tin người dùng để kiểm tra URL ảnh hiện tại
+	user, err := c.userService.GetUserByID(ctx, userID.(int64))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng"})
+		return
+	}
+
+	// Lấy file từ request
+	file, err := ctx.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Không thể đọc file ảnh: " + err.Error()})
+		return
+	}
+
+	// Kiểm tra kích thước file (tối đa 5MB)
+	const maxSize = 5 * 1024 * 1024 // 5MB
+	if file.Size > maxSize {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Kích thước file quá lớn, tối đa 5MB"})
+		return
+	}
+
+	// Kiểm tra định dạng file (chỉ cho phép jpg, jpeg, png)
+	if !isValidImageFormat(file.Filename) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Định dạng file không hợp lệ, chỉ chấp nhận JPG, JPEG, PNG"})
+		return
+	}
+
+	// Mở file để upload
+	openedFile, err := file.Open()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể mở file: " + err.Error()})
+		return
+	}
+	defer openedFile.Close()
+
+	// Tạo public ID cho file (sử dụng userID để đảm bảo unique)
+	publicID := fmt.Sprintf("user_%d_profile_%d", userID.(int64), time.Now().UnixNano())
+
+	// Upload ảnh lên Cloudinary
+	fileURL, err := c.cloudinary.UploadImage(openedFile, publicID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể tải ảnh lên: " + err.Error()})
+		return
+	}
+
+	// Xóa ảnh cũ nếu có
+	if user.ProfilePictureURL != "" {
+		// Xóa bất đồng bộ để không ảnh hưởng đến response
+		go func(oldURL string) {
+			if err := c.cloudinary.DeleteImage(oldURL); err != nil {
+				log.Printf("Không thể xóa ảnh cũ: %v", err)
+			}
+		}(user.ProfilePictureURL)
+	}
+
+	// Cập nhật URL ảnh trong database
+	if err := c.userService.UploadProfilePicture(ctx, userID.(int64), fileURL); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật ảnh đại diện: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Cập nhật ảnh đại diện thành công",
+		"url":     fileURL,
+	})
 }
 
 // UploadCoverPicture tải lên ảnh bìa
 func (c *UserController) UploadCoverPicture(ctx *gin.Context) {
-	// Triển khai sau
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Chưa xác thực"})
+		return
+	}
+
+	// Lấy thông tin người dùng để kiểm tra URL ảnh hiện tại
+	user, err := c.userService.GetUserByID(ctx, userID.(int64))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng"})
+		return
+	}
+
+	// Lấy file từ request
+	file, err := ctx.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Không thể đọc file ảnh: " + err.Error()})
+		return
+	}
+
+	// Kiểm tra kích thước file (tối đa 10MB cho ảnh bìa)
+	const maxSize = 10 * 1024 * 1024 // 10MB
+	if file.Size > maxSize {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Kích thước file quá lớn, tối đa 10MB"})
+		return
+	}
+
+	// Kiểm tra định dạng file (chỉ cho phép jpg, jpeg, png)
+	if !isValidImageFormat(file.Filename) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Định dạng file không hợp lệ, chỉ chấp nhận JPG, JPEG, PNG"})
+		return
+	}
+
+	// Mở file để upload
+	openedFile, err := file.Open()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể mở file: " + err.Error()})
+		return
+	}
+	defer openedFile.Close()
+
+	// Tạo public ID cho file (sử dụng userID để đảm bảo unique)
+	publicID := fmt.Sprintf("user_%d_cover_%d", userID.(int64), time.Now().UnixNano())
+
+	// Upload ảnh lên Cloudinary
+	fileURL, err := c.cloudinary.UploadImage(openedFile, publicID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể tải ảnh lên: " + err.Error()})
+		return
+	}
+
+	// Xóa ảnh cũ nếu có
+	if user.CoverPictureURL != "" {
+		// Xóa bất đồng bộ để không ảnh hưởng đến response
+		go func(oldURL string) {
+			if err := c.cloudinary.DeleteImage(oldURL); err != nil {
+				log.Printf("Không thể xóa ảnh cũ: %v", err)
+			}
+		}(user.CoverPictureURL)
+	}
+
+	// Cập nhật URL ảnh trong database
+	if err := c.userService.UploadCoverPicture(ctx, userID.(int64), fileURL); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể cập nhật ảnh bìa: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Cập nhật ảnh bìa thành công",
+		"url":     fileURL,
+	})
+}
+
+// isValidImageFormat kiểm tra định dạng file có hợp lệ không
+func isValidImageFormat(filename string) bool {
+	filename = strings.ToLower(filename)
+	return strings.HasSuffix(filename, ".jpg") ||
+		strings.HasSuffix(filename, ".jpeg") ||
+		strings.HasSuffix(filename, ".png")
 }

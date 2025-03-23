@@ -40,7 +40,7 @@ func (r *UserProfileRequest) ToUser() (*models.User, error) {
 		if err != nil {
 			return nil, err
 		}
-		user.DateOfBirth = &dob
+		user.DateOfBirth = dob
 	}
 
 	return user, nil

@@ -41,6 +41,14 @@ func main() {
 	}
 	log.Println("Database migration completed")
 
+	// Khởi tạo Cloudinary uploader
+	cloudinaryUploader, err := utils.NewCloudinaryUploader()
+	if err != nil {
+		log.Printf("Warning: Failed to initialize Cloudinary uploader: %v", err)
+		log.Println("Image upload features will not be available")
+		cloudinaryUploader = nil
+	}
+
 	// Enable Gin release mode in production
 	env := os.Getenv("ENV")
 	if env == "production" {
@@ -60,7 +68,7 @@ func main() {
 	userService := services.NewUserService(userRepo)
 
 	// Initialize controllers
-	userController := controllers.NewUserController(userService)
+	userController := controllers.NewUserController(userService, cloudinaryUploader)
 
 	// Setup routes
 	routes.SetupRoutes(router, userController)

@@ -79,8 +79,8 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 	user.UpdatedAt = time.Now()
 
 	log.Printf("UserRepository.Update: Cập nhật user ID=%d", user.ID)
+	log.Printf("UserRepository.Update: LastLoginAt=%v (kiểu: %T)", user.LastLoginAt, user.LastLoginAt)
 
-	// Tạo map các trường cần cập nhật
 	updates := map[string]interface{}{
 		"username":            user.Username,
 		"email":               user.Email,
@@ -101,14 +101,11 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 		"is_active":           user.IsActive,
 		"is_verified":         user.IsVerified,
 		"updated_at":          user.UpdatedAt,
+		"last_login_at":       user.LastLoginAt,
 	}
 
-	// Chỉ cập nhật last_login_at nếu có giá trị
-	if user.LastLoginAt != nil {
-		updates["last_login_at"] = user.LastLoginAt
-	}
-
-	log.Printf("UserRepository.Update: Các trường cập nhật: %v", updates)
+	// Debug SQL
+	log.Printf("UserRepository.Update: Cập nhật với dữ liệu: %+v", updates)
 
 	err := r.db.Model(&models.User{}).Where("id = ?", user.ID).Updates(updates).Error
 	if err != nil {

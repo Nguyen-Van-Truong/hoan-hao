@@ -22,7 +22,7 @@ type User struct {
 	Website           string     `json:"website" gorm:"size:255"`
 	ProfilePictureURL string     `json:"profile_picture_url" gorm:"size:255"`
 	CoverPictureURL   string     `json:"cover_picture_url" gorm:"size:255"`
-	DateOfBirth       *time.Time `json:"date_of_birth" gorm:"type:date"`
+	DateOfBirth       time.Time  `json:"date_of_birth" gorm:"type:date"`
 	Work              string     `json:"work" gorm:"size:100"`
 	Education         string     `json:"education" gorm:"size:100"`
 	Relationship      string     `json:"relationship" gorm:"size:50"`

@@ -85,8 +85,9 @@ func convertToUserResponse(user *models.User) *response.UserResponse {
 	}
 
 	var dateOfBirth string
-	// Kiểm tra xem ngày sinh có giá trị
-	if user.DateOfBirth != nil {
+	// Kiểm tra xem ngày sinh có giá trị không phải là zero value
+	zeroTime := time.Time{}
+	if user.DateOfBirth != zeroTime {
 		dateOfBirth = user.DateOfBirth.Format("2006-01-02")
 	}
 
@@ -198,13 +199,10 @@ func (s *userService) UpdateProfile(ctx context.Context, id int64, req *request.
 	if req.DateOfBirth != "" {
 		dob, err := time.Parse("2006-01-02", req.DateOfBirth)
 		if err == nil {
-			user.DateOfBirth = &dob
+			user.DateOfBirth = dob
 		} else {
 			log.Printf("UpdateProfile: Lỗi parse ngày sinh: %v", err)
 		}
-	} else {
-		// Nếu không có ngày sinh trong request, giữ nguyên giá trị cũ
-		log.Printf("UpdateProfile: Không có dateOfBirth trong request")
 	}
 
 	log.Printf("UpdateProfile: Gọi update repo cho user ID=%d", id)
