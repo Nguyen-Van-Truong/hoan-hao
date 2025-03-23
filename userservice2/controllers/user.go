@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strconv"
 	"userservice2/dto/request"
+	_ "userservice2/dto/response"
 
 	"github.com/gin-gonic/gin"
-	"userservice2/models"
+	_ "userservice2/models"
 	"userservice2/services"
 )
 
@@ -118,7 +119,7 @@ func (c *UserController) UpdateProfile(ctx *gin.Context) {
 		return
 	}
 
-	var req models.UserProfileUpdateRequest
+	var req request.UserProfileUpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

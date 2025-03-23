@@ -6,6 +6,8 @@ import (
 	"math"
 	"time"
 
+	"userservice2/dto/request"
+	"userservice2/dto/response"
 	"userservice2/models"
 	"userservice2/repositories"
 )
@@ -19,13 +21,13 @@ var (
 
 // UserService cung cấp các chức năng quản lý người dùng
 type UserService interface {
-	GetUserByID(ctx context.Context, id int64) (*models.UserResponse, error)
-	GetUserByUsername(ctx context.Context, username string) (*models.UserResponse, error)
-	UpdateProfile(ctx context.Context, id int64, req *models.UserProfileUpdateRequest) error
+	GetUserByID(ctx context.Context, id int64) (*response.UserResponse, error)
+	GetUserByUsername(ctx context.Context, username string) (*response.UserResponse, error)
+	UpdateProfile(ctx context.Context, id int64, req *request.UserProfileUpdateRequest) error
 	ChangePassword(ctx context.Context, id int64, currentPassword, newPassword string) error
 	UploadProfilePicture(ctx context.Context, id int64, fileURL string) error
 	UploadCoverPicture(ctx context.Context, id int64, fileURL string) error
-	ListUsers(ctx context.Context, page, pageSize int) (*models.UserListResponse, error)
+	ListUsers(ctx context.Context, page, pageSize int) (*response.UserListResponse, error)
 	CreateUserProfileFromAuth(ctx context.Context, user *models.User) error
 }
 
@@ -42,7 +44,7 @@ func NewUserService(userRepo repositories.UserRepository) UserService {
 }
 
 // convertToUserResponse chuyển đổi từ User sang UserResponse
-func convertToUserResponse(user *models.User) *models.UserResponse {
+func convertToUserResponse(user *models.User) *response.UserResponse {
 	if user == nil {
 		return nil
 	}
@@ -54,7 +56,7 @@ func convertToUserResponse(user *models.User) *models.UserResponse {
 		dateOfBirth = user.DateOfBirth.Format("2006-01-02")
 	}
 
-	return &models.UserResponse{
+	return &response.UserResponse{
 		ID:                user.ID,
 		Username:          user.Username,
 		Email:             user.Email,
@@ -92,7 +94,7 @@ func (s *userService) CreateUserProfileFromAuth(ctx context.Context, user *model
 }
 
 // GetUserByID lấy thông tin người dùng theo ID
-func (s *userService) GetUserByID(ctx context.Context, id int64) (*models.UserResponse, error) {
+func (s *userService) GetUserByID(ctx context.Context, id int64) (*response.UserResponse, error) {
 	user, err := s.userRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -106,7 +108,7 @@ func (s *userService) GetUserByID(ctx context.Context, id int64) (*models.UserRe
 }
 
 // GetUserByUsername lấy thông tin người dùng theo username
-func (s *userService) GetUserByUsername(ctx context.Context, username string) (*models.UserResponse, error) {
+func (s *userService) GetUserByUsername(ctx context.Context, username string) (*response.UserResponse, error) {
 	user, err := s.userRepo.FindByUsername(ctx, username)
 	if err != nil {
 		return nil, err
@@ -120,7 +122,7 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 }
 
 // UpdateProfile cập nhật thông tin cá nhân
-func (s *userService) UpdateProfile(ctx context.Context, id int64, req *models.UserProfileUpdateRequest) error {
+func (s *userService) UpdateProfile(ctx context.Context, id int64, req *request.UserProfileUpdateRequest) error {
 	if req == nil {
 		return ErrInvalidRequest
 	}
@@ -198,13 +200,13 @@ func (s *userService) UploadCoverPicture(ctx context.Context, id int64, fileURL 
 }
 
 // ListUsers lấy danh sách người dùng
-func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*models.UserListResponse, error) {
+func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*response.UserListResponse, error) {
 	users, total, err := s.userRepo.List(ctx, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
 
-	userResponses := make([]models.UserResponse, 0, len(users))
+	userResponses := make([]response.UserResponse, 0, len(users))
 	for _, user := range users {
 		userCopy := user // Tạo bản sao để tránh vấn đề với biến trong vòng lặp
 		userResponse := convertToUserResponse(&userCopy)
@@ -213,7 +215,7 @@ func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*model
 
 	totalPages := int64(math.Ceil(float64(total) / float64(pageSize)))
 
-	return &models.UserListResponse{
+	return &response.UserListResponse{
 		Users:      userResponses,
 		Total:      total,
 		Page:       page,
