@@ -20,6 +20,47 @@ curl -X PUT http://localhost:8083/users/me/cover-picture \
 
 Thay `YOUR_JWT_TOKEN` bằng token JWT hợp lệ và `/path/to/your/cover_image.jpg` bằng đường dẫn đến file ảnh cần upload.
 
+## API Bạn bè
+
+### 1. Gửi lời mời kết bạn
+
+```bash
+curl -X POST http://localhost:8083/friends/send-request \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 2}'
+```
+
+### 2. Chấp nhận lời mời kết bạn
+
+```bash
+curl -X POST http://localhost:8083/friends/accept \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 3}'
+```
+
+### 3. Lấy danh sách bạn bè
+
+```bash
+curl -X GET "http://localhost:8083/friends?page=1&page_size=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### 4. Lấy danh sách lời mời kết bạn
+
+```bash
+curl -X GET "http://localhost:8083/friends/requests?type=incoming&page=1&page_size=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### 5. Lấy gợi ý kết bạn
+
+```bash
+curl -X GET "http://localhost:8083/friends/suggestions?limit=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 ## Lưu ý
 
 - File ảnh phải có định dạng jpg, jpeg hoặc png
@@ -46,4 +87,4 @@ token="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsYWdhMjEzNyIsInVzZXJJZCI6MTYsImlzcyI6Imhv
 curl -X PUT http://localhost:8083/users/me/profile-picture \
   -H "Authorization: Bearer $token" \
   -F "image=@/path/to/your/profile.jpg"
-``` 
+```

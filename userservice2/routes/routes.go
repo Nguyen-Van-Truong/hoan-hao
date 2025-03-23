@@ -10,6 +10,7 @@ import (
 func SetupRoutes(
 	router *gin.Engine,
 	userController *controllers.UserController,
+	friendshipController *controllers.FriendshipController,
 ) {
 	// Middleware global
 	router.Use(gin.Logger())
@@ -33,6 +34,31 @@ func SetupRoutes(
 			protectedRoutes.PUT("/me", userController.UpdateProfile)
 			protectedRoutes.PUT("/me/profile-picture", userController.UploadProfilePicture)
 			protectedRoutes.PUT("/me/cover-picture", userController.UploadCoverPicture)
+		}
+	}
+
+	// Friendship routes
+	friendshipRoutes := router.Group("/friends")
+	{
+		// Route có xác thực
+		friendshipRoutes.Use(middlewares.JWTMiddleware())
+		{
+			// Lấy danh sách bạn bè và lời mời kết bạn
+			friendshipRoutes.GET("", friendshipController.GetFriends)
+			friendshipRoutes.GET("/requests", friendshipController.GetFriendRequests)
+			friendshipRoutes.GET("/suggestions", friendshipController.GetFriendSuggestions)
+			
+			// Lấy danh sách bạn bè của người dùng khác
+			friendshipRoutes.GET("/user/:id", friendshipController.GetUserFriends)
+			
+			// Lấy số lượng bạn chung
+			friendshipRoutes.GET("/mutual/:id", friendshipController.GetMutualFriends)
+			
+			// API đa năng xử lý các hành động bạn bè theo action
+			friendshipRoutes.POST("/:action", friendshipController.FriendshipActionHandler)
+			
+			// Lấy trạng thái bạn bè với một người dùng
+			friendshipRoutes.GET("/status/:id", friendshipController.GetFriendshipStatus)
 		}
 	}
 

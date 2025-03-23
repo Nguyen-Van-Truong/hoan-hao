@@ -33,7 +33,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	defer func(db *gorm.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Fatalf("Failed to close database connection: %v", err)
+		}
+	}(db)
 
 	// Auto migrate database
 	if err := utils.SetupDatabase(db); err != nil {
@@ -63,15 +68,18 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
+	friendshipRepo := repositories.NewFriendshipRepository(db)
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
+	friendshipService := services.NewFriendshipService(friendshipRepo, userRepo)
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService, cloudinaryUploader)
+	friendshipController := controllers.NewFriendshipController(friendshipService)
 
 	// Setup routes
-	routes.SetupRoutes(router, userController)
+	routes.SetupRoutes(router, userController, friendshipController)
 
 	// Start server
 	port := os.Getenv("PORT")
