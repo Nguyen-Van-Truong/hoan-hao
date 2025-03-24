@@ -12,6 +12,7 @@ type GroupResponse struct {
 	Description string    `json:"description"`
 	Privacy     string    `json:"privacy"`
 	CoverImage  string    `json:"cover_image"`
+	Avatar      string    `json:"avatar"`
 	MemberCount int       `json:"member_count"`
 	CreatedBy   int64     `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -80,6 +81,7 @@ func ConvertToGroupResponse(group *models.UserGroup) GroupResponse {
 		Description: group.Description,
 		Privacy:     string(group.Privacy),
 		CoverImage:  group.CoverImage,
+		Avatar:      group.Avatar,
 		MemberCount: group.MemberCount,
 		CreatedBy:   group.CreatedBy,
 		CreatedAt:   group.CreatedAt,

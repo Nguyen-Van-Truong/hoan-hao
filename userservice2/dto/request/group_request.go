@@ -6,6 +6,7 @@ type GroupCreateRequest struct {
 	Description string `json:"description" binding:"max=1000"`
 	Privacy     string `json:"privacy" binding:"omitempty,oneof=public private"`
 	CoverImage  string `json:"cover_image" binding:"omitempty,url"`
+	Avatar      string `json:"avatar" binding:"omitempty,url"`
 }
 
 // GroupUpdateRequest là DTO cho việc cập nhật thông tin nhóm
@@ -14,6 +15,12 @@ type GroupUpdateRequest struct {
 	Description string `json:"description" binding:"omitempty,max=1000"`
 	Privacy     string `json:"privacy" binding:"omitempty,oneof=public private"`
 	CoverImage  string `json:"cover_image" binding:"omitempty,url"`
+	Avatar      string `json:"avatar" binding:"omitempty,url"`
+}
+
+// GroupImageUploadRequest là DTO cho việc tải lên ảnh cho nhóm
+type GroupImageUploadRequest struct {
+	ImageURL string `json:"image_url" binding:"required,url"`
 }
 
 // GroupListRequest là DTO cho việc lấy danh sách nhóm

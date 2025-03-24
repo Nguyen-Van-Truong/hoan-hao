@@ -7,39 +7,43 @@ import (
 
 // FriendResponse là DTO cho thông tin bạn bè
 type FriendResponse struct {
-	ID                int64      `json:"id"`
-	UserID            int64      `json:"user_id"`
-	FriendID          int64      `json:"friend_id"`
-	Status            string     `json:"status"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	Friend            UserBasic  `json:"friend"`
+	ID                 int64     `json:"id"`
+	UserID             int64     `json:"user_id"`
+	FriendID           int64     `json:"friend_id"`
+	Status             string    `json:"status"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	Friend             UserBasic `json:"friend"`
 	MutualFriendsCount int       `json:"mutual_friends_count,omitempty"`
 }
 
 // UserBasic là DTO cho thông tin cơ bản của người dùng
 type UserBasic struct {
-	ID               int64      `json:"id"`
-	Username         string     `json:"username"`
-	FullName         string     `json:"full_name"`
-	ProfilePictureURL string    `json:"profile_picture_url,omitempty"`
+	ID                int64  `json:"id"`
+	Username          string `json:"username"`
+	Email             string `json:"email,omitempty"`
+	FullName          string `json:"full_name"`
+	ProfilePictureURL string `json:"profile_picture_url,omitempty"`
+	CoverPictureURL   string `json:"cover_picture_url,omitempty"`
 }
 
 // FriendListResponse là DTO cho danh sách bạn bè
 type FriendListResponse struct {
-	Friends []FriendResponse `json:"friends"`
-	Total   int64           `json:"total"`
-	Page    int             `json:"page"`
-	PageSize int            `json:"page_size"`
+	Friends  []FriendResponse `json:"friends"`
+	Total    int64            `json:"total"`
+	Page     int              `json:"page"`
+	PageSize int              `json:"page_size"`
 }
 
 // FriendSuggestionResponse là DTO cho gợi ý kết bạn
 type FriendSuggestionResponse struct {
-	ID               int64      `json:"id"`
-	Username         string     `json:"username"`
-	FullName         string     `json:"full_name"`
-	ProfilePictureURL string    `json:"profile_picture_url,omitempty"`
-	MutualFriendsCount int      `json:"mutual_friends_count,omitempty"`
+	ID                 int64  `json:"id"`
+	Username           string `json:"username"`
+	Email              string `json:"email,omitempty"`
+	FullName           string `json:"full_name"`
+	ProfilePictureURL  string `json:"profile_picture_url,omitempty"`
+	CoverPictureURL    string `json:"cover_picture_url,omitempty"`
+	MutualFriendsCount int    `json:"mutual_friends_count,omitempty"`
 }
 
 // FriendSuggestionListResponse là DTO cho danh sách gợi ý kết bạn
@@ -55,15 +59,15 @@ func ToFriendResponse(friendship *models.Friendship, userID int64, mutualCount i
 	} else {
 		friend = friendship.User
 	}
-	
+
 	return FriendResponse{
-		ID:                friendship.ID,
-		UserID:            friendship.UserID,
-		FriendID:          friendship.FriendID,
-		Status:            string(friendship.Status),
-		CreatedAt:         friendship.CreatedAt,
-		UpdatedAt:         friendship.UpdatedAt,
-		Friend:            ToUserBasic(&friend),
+		ID:                 friendship.ID,
+		UserID:             friendship.UserID,
+		FriendID:           friendship.FriendID,
+		Status:             string(friendship.Status),
+		CreatedAt:          friendship.CreatedAt,
+		UpdatedAt:          friendship.UpdatedAt,
+		Friend:             ToUserBasic(&friend),
 		MutualFriendsCount: mutualCount,
 	}
 }
@@ -71,10 +75,12 @@ func ToFriendResponse(friendship *models.Friendship, userID int64, mutualCount i
 // ToUserBasic chuyển đổi từ model User sang UserBasic
 func ToUserBasic(user *models.User) UserBasic {
 	return UserBasic{
-		ID:               user.ID,
-		Username:         user.Username,
-		FullName:         user.FullName,
+		ID:                user.ID,
+		Username:          user.Username,
+		Email:             user.Email,
+		FullName:          user.FullName,
 		ProfilePictureURL: user.ProfilePictureURL,
+		CoverPictureURL:   user.CoverPictureURL,
 	}
 }
 
@@ -83,8 +89,10 @@ func ToFriendSuggestionResponse(user *models.User, mutualCount int) FriendSugges
 	return FriendSuggestionResponse{
 		ID:                 user.ID,
 		Username:           user.Username,
+		Email:              user.Email,
 		FullName:           user.FullName,
 		ProfilePictureURL:  user.ProfilePictureURL,
+		CoverPictureURL:    user.CoverPictureURL,
 		MutualFriendsCount: mutualCount,
 	}
 }
