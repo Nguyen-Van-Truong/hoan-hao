@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -11,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"userservice2/controllers"
+	"userservice2/grpc"
 	"userservice2/middlewares"
 	"userservice2/repositories"
 	"userservice2/routes"
@@ -85,14 +87,24 @@ func main() {
 	// Setup routes
 	routes.SetupRoutes(router, userController, friendshipController, groupController)
 
-	// Start server
+	// Khởi động gRPC server trong một goroutine
+	grpcPort := 50051 // Port mặc định
+	if grpcPortStr := os.Getenv("GRPC_PORT"); grpcPortStr != "" {
+		if portNum, err := strconv.Atoi(grpcPortStr); err == nil {
+			grpcPort = portNum
+		}
+	}
+	log.Printf("Starting gRPC server on port %d", grpcPort)
+	go grpc.StartGRPCServer(userService, grpcPort)
+
+	// Start HTTP server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8083"
+		port = "8081"
 	}
 	serverAddr := fmt.Sprintf(":%s", port)
-	log.Printf("Server running on %s in %s mode\n", serverAddr, env)
+	log.Printf("HTTP server running on %s in %s mode\n", serverAddr, env)
 	if err := router.Run(serverAddr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		log.Fatalf("Failed to start HTTP server: %v", err)
 	}
 }
