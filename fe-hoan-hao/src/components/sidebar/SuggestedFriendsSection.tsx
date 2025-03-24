@@ -19,13 +19,19 @@ interface FriendSuggestion {
 
 interface Friend {
   id: number;
-  username: string;
-  email: string;
-  full_name: string;
-  profile_picture_url?: string;
-  cover_picture_url?: string;
-  status?: "online" | "offline";
-  last_active?: string;
+  user_id: number;
+  friend_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  friend: {
+    id: number;
+    username: string;
+    email: string;
+    full_name: string;
+    profile_picture_url?: string;
+    cover_picture_url?: string;
+  };
 }
 
 interface SuggestedFriendsSectionProps {
@@ -48,7 +54,10 @@ const SuggestedFriendsSection = ({
   const loadFriends = async () => {
     try {
       const response = await getFriends('accepted', 1, 3); // Lấy 3 bạn bè mới nhất
-      setFriends(response.friends);
+      if (response && response.friends) {
+        setFriends(response.friends);
+        console.log("Loaded friends:", response.friends);
+      }
     } catch (error) {
       console.error("Lỗi khi tải danh sách bạn bè:", error);
       toast.error("Không thể tải danh sách bạn bè");
@@ -59,7 +68,10 @@ const SuggestedFriendsSection = ({
   const loadSuggestions = async () => {
     try {
       const response = await getFriendSuggestions(5); // Lấy 5 gợi ý
-      setSuggestions(response.suggestions);
+      if (response && response.suggestions) {
+        setSuggestions(response.suggestions);
+        console.log("Loaded suggestions:", response.suggestions);
+      }
     } catch (error) {
       console.error("Lỗi khi tải gợi ý kết bạn:", error);
       toast.error("Không thể tải gợi ý kết bạn");
@@ -86,11 +98,10 @@ const SuggestedFriendsSection = ({
       state: {
         newConversation: {
           user: {
-            id: friend.id,
-            name: friend.full_name,
-            avatar: friend.profile_picture_url,
-            status: friend.status,
-            lastActive: friend.last_active,
+            id: friend.friend.id,
+            name: friend.friend.full_name,
+            avatar: friend.friend.profile_picture_url,
+            status: "online", // Giả định online
           },
         },
       },
@@ -144,19 +155,19 @@ const SuggestedFriendsSection = ({
           </div>
 
           <div className="space-y-3">
-            {friends.map((friend) => (
+            {friends.map((friendItem) => (
               <div
-                key={friend.id}
+                key={friendItem.id}
                 className="flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full overflow-hidden relative">
                     <a
-                      href={`/profile/${friend.username}`}
+                      href={`/profile/${friendItem.friend.username}`}
                     >
                       <img
-                        src={friend.profile_picture_url || "/avatardefaut.png"}
-                        alt={friend.full_name}
+                        src={friendItem.friend.profile_picture_url || "/avatardefaut.png"}
+                        alt={friendItem.friend.full_name}
                         className="h-full w-full object-cover"
                         loading="lazy"
                         onError={(e) => {
@@ -164,25 +175,21 @@ const SuggestedFriendsSection = ({
                         }}
                       />
                     </a>
-                    {friend.status && (
-                      <div
-                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${friend.status === "online" ? "bg-green-500" : "bg-gray-400"}`}
-                      />
-                    )}
+                    <div
+                      className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500`}
+                    />
                   </div>
                   <div>
                     <p className="font-medium text-sm text-gray-800">
                       <a
-                        href={`/profile/${friend.username}`}
+                        href={`/profile/${friendItem.friend.username}`}
                         className="hover:underline"
                       >
-                        {friend.full_name}
+                        {friendItem.friend.full_name}
                       </a>
                     </p>
                     <p className="text-xs text-gray-500">
-                      {friend.status === "online"
-                        ? t("friends.online") || "Online"
-                        : friend.last_active}
+                      @{friendItem.friend.username}
                     </p>
                   </div>
                 </div>
@@ -190,9 +197,9 @@ const SuggestedFriendsSection = ({
                   size="sm"
                   variant="outline"
                   className="text-pink-500 border-pink-200 hover:bg-pink-50"
-                  onClick={() => handleMessageClick(friend)}
+                  onClick={() => handleMessageClick(friendItem)}
                 >
-                  {t("friends.message") || "Message"}
+                  {t("friends.message") || "Nhắn tin"}
                 </Button>
               </div>
             ))}
@@ -245,7 +252,7 @@ const SuggestedFriendsSection = ({
                     </a>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {friend.mutual_friends} {t("friends.mutualFriends")}
+                    {friend.mutual_friends || 0} {t("friends.mutualFriends") || "bạn chung"}
                   </p>
                 </div>
               </div>
