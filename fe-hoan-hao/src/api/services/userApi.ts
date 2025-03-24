@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "../config";
 import { ApiResponse, User, UpdateUserProfileRequest, UserProfile } from "../types";
 import axios from "axios";
+import { getAccessToken } from "@/utils/cookieUtils";
 
 const USER_ENDPOINTS = {
   PROFILE: "/users/profile",
@@ -24,7 +25,7 @@ const makeApiRequest = async <T>(
   requiresAuth: boolean = true
 ): Promise<T> => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     
     if (requiresAuth && !token) {
       throw new Error("Bạn chưa đăng nhập");
@@ -104,7 +105,7 @@ export const updateUserProfile = async (profileData: Partial<UserProfile>): Prom
  */
 export const updateProfilePicture = async (imageFile: File): Promise<{message: string, url: string}> => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
@@ -141,7 +142,7 @@ export const updateProfilePicture = async (imageFile: File): Promise<{message: s
  */
 export const updateCoverPicture = async (imageFile: File): Promise<{message: string, url: string}> => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
@@ -176,7 +177,7 @@ export const updateCoverPicture = async (imageFile: File): Promise<{message: str
 // API liên quan đến bạn bè
 export const getFriends = async (status: string = 'accepted', page: number = 1, pageSize: number = 10) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -189,7 +190,8 @@ export const getFriends = async (status: string = 'accepted', page: number = 1, 
       },
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -199,7 +201,7 @@ export const getFriends = async (status: string = 'accepted', page: number = 1, 
 
 export const getFriendRequests = async (type: 'incoming' | 'outgoing', page: number = 1, pageSize: number = 10) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -212,7 +214,8 @@ export const getFriendRequests = async (type: 'incoming' | 'outgoing', page: num
       },
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -222,7 +225,7 @@ export const getFriendRequests = async (type: 'incoming' | 'outgoing', page: num
 
 export const getFriendSuggestions = async (limit: number = 10) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -231,7 +234,8 @@ export const getFriendSuggestions = async (limit: number = 10) => {
       params: { limit },
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -241,7 +245,7 @@ export const getFriendSuggestions = async (limit: number = 10) => {
 
 export const sendFriendRequest = async (userId: number) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -251,7 +255,8 @@ export const sendFriendRequest = async (userId: number) => {
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -261,7 +266,7 @@ export const sendFriendRequest = async (userId: number) => {
 
 export const acceptFriendRequest = async (requestId: number) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -269,7 +274,8 @@ export const acceptFriendRequest = async (requestId: number) => {
     const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/accept`, {}, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -279,7 +285,7 @@ export const acceptFriendRequest = async (requestId: number) => {
 
 export const rejectFriendRequest = async (requestId: number) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -287,7 +293,8 @@ export const rejectFriendRequest = async (requestId: number) => {
     const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/reject`, {}, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -297,7 +304,7 @@ export const rejectFriendRequest = async (requestId: number) => {
 
 export const cancelFriendRequest = async (requestId: number) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -305,7 +312,8 @@ export const cancelFriendRequest = async (requestId: number) => {
     const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/cancel`, {}, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {
@@ -315,7 +323,7 @@ export const cancelFriendRequest = async (requestId: number) => {
 
 export const unfriend = async (friendId: number) => {
   try {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -323,7 +331,8 @@ export const unfriend = async (friendId: number) => {
     const response = await axios.delete(`${API_BASE_URL}/friends/${friendId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
-      }
+      },
+      withCredentials: true
     });
     return response.data;
   } catch (error) {

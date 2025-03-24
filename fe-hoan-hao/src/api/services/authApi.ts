@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "../config";
 import { ApiResponse, LoginRequest, LoginResponse, RegisterRequest } from "../types";
+import { setAccessToken, setRefreshToken } from "@/utils/cookieUtils";
 
 const AUTH_ENDPOINTS = {
   REGISTER: "/auth/register",
@@ -57,6 +58,7 @@ export const loginUser = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify(credentials),
+        credentials: "include"
       }
     );
 
@@ -64,6 +66,15 @@ export const loginUser = async (
 
     if (!response.ok) {
       throw new Error(data.message || "Đăng nhập thất bại");
+    }
+    
+    // Lưu token vào cookie
+    if (data.accessToken) {
+      setAccessToken(data.accessToken);
+    }
+    
+    if (data.refreshToken) {
+      setRefreshToken(data.refreshToken);
     }
 
     return data;

@@ -19,6 +19,3 @@ export const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
 };
 
-// Token storage keys
-export const TOKEN_STORAGE_KEY = "accessToken";
-export const REFRESH_TOKEN_STORAGE_KEY = "refreshToken";

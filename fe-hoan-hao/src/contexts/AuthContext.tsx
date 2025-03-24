@@ -12,9 +12,7 @@ import {
   RegisterRequest, 
   LoginRequest, 
   LoginResponse,
-  UserProfile,
-  TOKEN_STORAGE_KEY, 
-  REFRESH_TOKEN_STORAGE_KEY
+  UserProfile
 } from "@/api";
 import {
   loginUser as apiLoginUser,
@@ -26,6 +24,7 @@ import {
   updateProfilePicture as apiUpdateProfilePicture,
   updateCoverPicture as apiUpdateCoverPicture
 } from "@/api";
+import { getAccessToken, clearAuthCookies } from "@/utils/cookieUtils";
 
 // Định nghĩa kiểu dữ liệu cho context
 interface AuthContextType {
@@ -54,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Kiểm tra xem người dùng đã đăng nhập chưa khi component mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+      const token = getAccessToken();
       if (token) {
         try {
           // Gọi API để lấy thông tin người dùng từ token
@@ -63,8 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
           console.error("Lỗi khi lấy thông tin người dùng:", error);
           // Nếu token không hợp lệ, đăng xuất người dùng
-          localStorage.removeItem(TOKEN_STORAGE_KEY);
-          localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+          clearAuthCookies();
         }
       }
       setIsLoading(false);
@@ -78,17 +76,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
 
     try {
-      // Gọi API đăng nhập
-      const response: LoginResponse = await apiLoginUser({ 
+      // Gọi API đăng nhập (token sẽ được lưu vào cookie trong loginUser API)
+      await apiLoginUser({ 
         usernameOrEmailOrPhone, 
         password 
       });
-      
-      // Lưu token vào localStorage
-      localStorage.setItem(TOKEN_STORAGE_KEY, response.accessToken);
-      if (response.refreshToken) {
-        localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, response.refreshToken);
-      }
       
       // Sau khi đăng nhập thành công, lấy thông tin người dùng
       const userProfile = await getCurrentUserProfile();
@@ -131,8 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Hàm đăng xuất
   const logout = () => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    clearAuthCookies();
     setUser(null);
     navigate("/login");
     toast.success("Đã đăng xuất");
