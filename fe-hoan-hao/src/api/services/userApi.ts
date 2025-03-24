@@ -129,4 +129,85 @@ export const getFriendRequests = async (page: number = 1, limit: number = 10): P
  */
 export const getFriendshipStatus = async (userId: number): Promise<{status: string}> => {
   return makeApiRequest<{status: string}>(`${USER_ENDPOINTS.FRIEND_STATUS}/${userId}`);
+};
+
+/**
+ * Cập nhật thông tin profile người dùng
+ */
+export const updateUserProfile = async (profileData: Partial<UserProfile>): Promise<{message: string}> => {
+  return makeApiRequest<{message: string}>(USER_ENDPOINTS.PROFILE_ME, "PUT", profileData);
+};
+
+/**
+ * Cập nhật ảnh đại diện
+ */
+export const updateProfilePicture = async (imageFile: File): Promise<{message: string, url: string}> => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+    
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    const response = await fetch(`${API_BASE_URL}/users/me/profile-picture`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Không thể cập nhật ảnh đại diện");
+    }
+    
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Đã xảy ra lỗi khi cập nhật ảnh đại diện");
+  }
+};
+
+/**
+ * Cập nhật ảnh bìa
+ */
+export const updateCoverPicture = async (imageFile: File): Promise<{message: string, url: string}> => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+    
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    const response = await fetch(`${API_BASE_URL}/users/me/cover-picture`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Không thể cập nhật ảnh bìa");
+    }
+    
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Đã xảy ra lỗi khi cập nhật ảnh bìa");
+  }
 }; 

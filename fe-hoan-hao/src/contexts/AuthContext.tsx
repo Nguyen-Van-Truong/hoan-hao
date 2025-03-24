@@ -21,7 +21,10 @@ import {
   registerUser as apiRegisterUser,
   requestPasswordReset as apiRequestPasswordReset,
   resetPassword as apiResetPassword,
-  getCurrentUserProfile
+  getCurrentUserProfile,
+  updateUserProfile as apiUpdateUserProfile,
+  updateProfilePicture as apiUpdateProfilePicture,
+  updateCoverPicture as apiUpdateCoverPicture
 } from "@/api";
 
 // Định nghĩa kiểu dữ liệu cho context
@@ -34,6 +37,9 @@ interface AuthContextType {
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
   confirmResetPassword: (token: string, newPassword: string) => Promise<boolean>;
+  updateProfile: (profileData: Partial<UserProfile>) => Promise<boolean>;
+  updateProfilePicture: (imageFile: File) => Promise<string | null>;
+  updateCoverPicture: (imageFile: File) => Promise<string | null>;
 }
 
 // Tạo context
@@ -177,6 +183,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Hàm cập nhật thông tin profile
+  const updateProfile = async (profileData: Partial<UserProfile>): Promise<boolean> => {
+    setIsLoading(true);
+
+    try {
+      // Gọi API cập nhật profile
+      await apiUpdateUserProfile(profileData);
+      
+      // Sau khi cập nhật thành công, cập nhật lại state user
+      if (user) {
+        setUser({ ...user, ...profileData });
+      }
+      
+      toast.success("Cập nhật thông tin thành công");
+      return true;
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã xảy ra lỗi khi cập nhật thông tin");
+      }
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Hàm cập nhật ảnh đại diện
+  const updateProfilePicture = async (imageFile: File): Promise<string | null> => {
+    setIsLoading(true);
+
+    try {
+      // Gọi API cập nhật ảnh đại diện
+      const response = await apiUpdateProfilePicture(imageFile);
+      
+      // Sau khi cập nhật thành công, cập nhật lại state user
+      if (user) {
+        setUser({ ...user, profile_picture_url: response.url });
+      }
+      
+      toast.success("Cập nhật ảnh đại diện thành công");
+      return response.url;
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã xảy ra lỗi khi cập nhật ảnh đại diện");
+      }
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Hàm cập nhật ảnh bìa
+  const updateCoverPicture = async (imageFile: File): Promise<string | null> => {
+    setIsLoading(true);
+
+    try {
+      // Gọi API cập nhật ảnh bìa
+      const response = await apiUpdateCoverPicture(imageFile);
+      
+      // Sau khi cập nhật thành công, cập nhật lại state user
+      if (user) {
+        setUser({ ...user, cover_picture_url: response.url });
+      }
+      
+      toast.success("Cập nhật ảnh bìa thành công");
+      return response.url;
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã xảy ra lỗi khi cập nhật ảnh bìa");
+      }
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Giá trị context
   const value = {
     user,
@@ -187,6 +274,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     resetPassword,
     confirmResetPassword,
+    updateProfile,
+    updateProfilePicture,
+    updateCoverPicture,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
