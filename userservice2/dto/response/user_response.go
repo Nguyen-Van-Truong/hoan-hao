@@ -24,3 +24,11 @@ type UserResponse struct {
 	IsVerified        bool              `json:"is_verified"`
 	CreatedAt         time.Time         `json:"created_at"`
 }
+
+// UserBrief đại diện cho thông tin tóm tắt về người dùng
+type UserBrief struct {
+	ID                int64  `json:"id"`
+	Username          string `json:"username"`
+	FullName          string `json:"full_name"`
+	ProfilePictureURL string `json:"profile_picture_url,omitempty"`
+}

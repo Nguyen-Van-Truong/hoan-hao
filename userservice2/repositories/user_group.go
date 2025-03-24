@@ -15,6 +15,8 @@ type UserGroupRepository interface {
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context, page, pageSize int) ([]models.UserGroup, int64, error)
 	ListUserGroups(ctx context.Context, userID int64, page, pageSize int) ([]models.UserGroup, int64, error)
+	IncrementMemberCount(ctx context.Context, groupID int64) error
+	DecrementMemberCount(ctx context.Context, groupID int64) error
 }
 
 // userGroupRepository triển khai UserGroupRepository
@@ -35,7 +37,7 @@ func (r *userGroupRepository) Create(ctx context.Context, group *models.UserGrou
 // FindByID tìm nhóm theo ID
 func (r *userGroupRepository) FindByID(ctx context.Context, id int64) (*models.UserGroup, error) {
 	var group models.UserGroup
-	err := r.db.First(&group, id).Error
+	err := r.db.Preload("Creator").First(&group, id).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -104,4 +106,20 @@ func (r *userGroupRepository) ListUserGroups(ctx context.Context, userID int64, 
 	}
 
 	return groups, total, nil
+}
+
+// IncrementMemberCount tăng số lượng thành viên của nhóm lên 1
+func (r *userGroupRepository) IncrementMemberCount(ctx context.Context, groupID int64) error {
+	return r.db.Model(&models.UserGroup{}).
+		Where("id = ?", groupID).
+		UpdateColumn("member_count", gorm.Expr("member_count + ?", 1)).
+		Error
+}
+
+// DecrementMemberCount giảm số lượng thành viên của nhóm đi 1
+func (r *userGroupRepository) DecrementMemberCount(ctx context.Context, groupID int64) error {
+	return r.db.Model(&models.UserGroup{}).
+		Where("id = ? AND member_count > 0", groupID).
+		UpdateColumn("member_count", gorm.Expr("member_count - ?", 1)).
+		Error
 }

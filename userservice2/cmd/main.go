@@ -69,17 +69,21 @@ func main() {
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
 	friendshipRepo := repositories.NewFriendshipRepository(db)
+	userGroupRepo := repositories.NewUserGroupRepository(db)
+	groupMemberRepo := repositories.NewGroupMemberRepository(db)
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
 	friendshipService := services.NewFriendshipService(friendshipRepo, userRepo)
+	groupService := services.NewGroupService(userGroupRepo, groupMemberRepo, userRepo)
 
 	// Initialize controllers
 	userController := controllers.NewUserController(userService, cloudinaryUploader)
 	friendshipController := controllers.NewFriendshipController(friendshipService)
+	groupController := controllers.NewGroupController(groupService)
 
 	// Setup routes
-	routes.SetupRoutes(router, userController, friendshipController)
+	routes.SetupRoutes(router, userController, friendshipController, groupController)
 
 	// Start server
 	port := os.Getenv("PORT")
