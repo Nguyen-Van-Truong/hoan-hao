@@ -26,8 +26,8 @@ const (
 // GroupMember đại diện cho thành viên trong nhóm
 type GroupMember struct {
 	ID       int64             `json:"id" gorm:"primaryKey;autoIncrement"`
-	GroupID  int64             `json:"group_id" gorm:"not null;index:idx_group_id"`
-	UserID   int64             `json:"user_id" gorm:"not null;index:idx_user_id"`
+	GroupID  int64             `json:"group_id" gorm:"not null;index:idx_group_id;uniqueIndex:unique_group_member"`
+	UserID   int64             `json:"user_id" gorm:"not null;index:idx_user_id;uniqueIndex:unique_group_member"`
 	Role     MemberRole        `json:"role" gorm:"type:enum('member','admin');default:'member';index:idx_role"`
 	Nickname string            `json:"nickname" gorm:"size:50"`
 	IsMuted  bool              `json:"is_muted" gorm:"default:false"`

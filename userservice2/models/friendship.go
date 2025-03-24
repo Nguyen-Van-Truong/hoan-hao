@@ -19,8 +19,8 @@ const (
 // Friendship đại diện cho mối quan hệ bạn bè giữa hai người dùng
 type Friendship struct {
 	ID        int64            `json:"id" gorm:"primaryKey;autoIncrement"`
-	UserID    int64            `json:"user_id" gorm:"not null;index:idx_user_id"`
-	FriendID  int64            `json:"friend_id" gorm:"not null;index:idx_friend_id"`
+	UserID    int64            `json:"user_id" gorm:"not null;index:idx_user_id;uniqueIndex:unique_friendship"`
+	FriendID  int64            `json:"friend_id" gorm:"not null;index:idx_friend_id;uniqueIndex:unique_friendship"`
 	Status    FriendshipStatus `json:"status" gorm:"type:enum('none','pending','accepted','rejected','blocked');default:'pending';index:idx_status"`
 	CreatedAt time.Time        `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time        `json:"updated_at" gorm:"autoUpdateTime"`

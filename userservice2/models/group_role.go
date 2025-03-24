@@ -28,8 +28,8 @@ func (p *RolePermissions) Scan(value interface{}) error {
 // GroupRole đại diện cho vai trò trong nhóm
 type GroupRole struct {
 	ID          int64           `json:"id" gorm:"primaryKey;autoIncrement"`
-	GroupID     int64           `json:"group_id" gorm:"not null;index:idx_group_id"`
-	Name        string          `json:"name" gorm:"size:50;not null"`
+	GroupID     int64           `json:"group_id" gorm:"not null;index:idx_group_id;uniqueIndex:unique_role_name"`
+	Name        string          `json:"name" gorm:"size:50;not null;uniqueIndex:unique_role_name"`
 	Permissions RolePermissions `json:"permissions" gorm:"type:json"`
 	CreatedAt   time.Time       `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time       `json:"updated_at" gorm:"autoUpdateTime"`
