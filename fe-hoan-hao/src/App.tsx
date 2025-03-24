@@ -107,10 +107,6 @@ function App() {
                   path="/messages/:conversationId"
                   element={<Messages />}
                 />
-                <Route
-                  path="/profile"
-                  element={<Profile isCurrentUser={true} />}
-                />
                 <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route

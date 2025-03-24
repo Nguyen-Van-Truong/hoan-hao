@@ -14,33 +14,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfileSectionProps {
-  user?: {
-    name: string;
-    username: string;
-    avatar: string;
-  };
   onLanguageChange?: (language: string) => void;
-  onLogout?: () => void;
 }
 
 const UserProfileSection = ({
-  user = {
-    name: "Jane Doe",
-    username: "@janedoe",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-  },
   onLanguageChange = () => {},
-  onLogout = () => {
-    window.location.href = "/login";
-  }, // Default to redirect to login
 }: UserProfileSectionProps) => {
   const { language, setLanguage, t } = useLanguage();
-  const auth = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value as "english" | "vietnamese");
@@ -49,31 +37,39 @@ const UserProfileSection = ({
     onLanguageChange(value);
   };
 
-  const handleLogout = () => {
-    if (auth && auth.logout) {
-      auth.logout();
-    } else {
-      onLogout();
+  const handleProfileClick = () => {
+    if (user && user.username) {
+      navigate(`/profile/${user.username}`);
     }
   };
+
+  const handleLogout = () => {
+    if (logout) {
+      logout();
+    }
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="p-4 rounded-lg bg-white shadow-sm w-full">
       <div className="flex items-center gap-3">
-        <a href="/profile">
+        <div onClick={handleProfileClick} className="cursor-pointer">
           <Avatar className="h-12 w-12 border-2 border-primary">
-            <AvatarImage src={user.avatar} alt={user.name} loading="lazy" />
+            <AvatarImage src={user.profile_picture_url || "/avatardefaut.png"} alt={user.full_name} loading="lazy" />
             <AvatarFallback className="bg-primary-light/20 text-primary">
-              {user.name.substring(0, 2).toUpperCase()}
+              {user.full_name?.substring(0, 2).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-        </a>
+        </div>
 
         <div className="flex-1">
-          <a href="/profile" className="hover:underline">
-            <h3 className="font-medium text-gray-900">{user.name}</h3>
-          </a>
-          <p className="text-sm text-gray-500">{user.username}</p>
+          <div className="cursor-pointer hover:underline" onClick={handleProfileClick}>
+            <h3 className="font-medium text-gray-900">{user.full_name}</h3>
+          </div>
+          <p className="text-sm text-gray-500">@{user.username}</p>
         </div>
 
         <DropdownMenu>
@@ -90,8 +86,9 @@ const UserProfileSection = ({
           <DropdownMenuContent className="w-auto min-w-[14rem] p-2" align="end">
             <DropdownMenuItem
               className="cursor-pointer flex items-center gap-2 hover:bg-primary/10"
-              onClick={() => (window.location.href = "/profile")}
+              onClick={handleProfileClick}
             >
+              <User size={16} />
               <span>{t("profile.profile")}</span>
             </DropdownMenuItem>
             <div className="mb-2 px-2 py-1.5 mt-2">

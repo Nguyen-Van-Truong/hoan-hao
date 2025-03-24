@@ -38,38 +38,6 @@ const RightColumn = ({
                            ctaText: "View Collection",
                          },
                        ],
-                       friendSuggestions = [
-                         {
-                           id: "1",
-                           name: "Emma Thompson",
-                           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma",
-                           mutualFriends: 12,
-                         },
-                         {
-                           id: "2",
-                           name: "Michael Chen",
-                           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-                           mutualFriends: 8,
-                         },
-                         {
-                           id: "3",
-                           name: "Sophia Rodriguez",
-                           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia",
-                           mutualFriends: 5,
-                         },
-                         {
-                           id: "4",
-                           name: "James Wilson",
-                           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-                           mutualFriends: 3,
-                         },
-                         {
-                           id: "5",
-                           name: "Olivia Parker",
-                           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia",
-                           mutualFriends: 7,
-                         },
-                       ],
                      }: RightColumnProps) => {
   const { toast } = useToast();
   const [currentLanguage, setCurrentLanguage] = useState("english");
@@ -107,13 +75,7 @@ const RightColumn = ({
       >
         {user && (
             <UserProfileSection
-                user={{
-                  name: user.full_name,
-                  username: user.username,
-                  avatar: user.profile_picture_url,
-                }}
                 onLanguageChange={handleLanguageChange}
-                onLogout={handleLogout}
             />
         )}
 
