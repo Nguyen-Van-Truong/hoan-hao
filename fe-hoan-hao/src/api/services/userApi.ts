@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "../config";
 import { ApiResponse, User, UpdateUserProfileRequest, UserProfile } from "../types";
+import axios from "axios";
 
 const USER_ENDPOINTS = {
   PROFILE: "/users/profile",
@@ -80,48 +81,6 @@ export const getPublicUserProfile = async (username: string): Promise<{profile: 
  */
 export const getFriendsList = async (page: number = 1, limit: number = 10): Promise<{friends: UserProfile[]}> => {
   return makeApiRequest<{friends: UserProfile[]}>(`${USER_ENDPOINTS.FRIENDS}?page=${page}&limit=${limit}`);
-};
-
-/**
- * Lấy danh sách gợi ý bạn bè
- */
-export const getFriendSuggestions = async (limit: number = 5): Promise<UserProfile[]> => {
-  return makeApiRequest<UserProfile[]>(`${USER_ENDPOINTS.FRIEND_SUGGESTIONS}?limit=${limit}`);
-};
-
-/**
- * Gửi lời mời kết bạn
- */
-export const sendFriendRequest = async (friendID: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_REQUESTS, "POST", { friendID });
-};
-
-/**
- * Hủy lời mời kết bạn
- */
-export const cancelFriendRequest = async (friendId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "cancel", friendId });
-};
-
-/**
- * Chấp nhận lời mời kết bạn
- */
-export const acceptFriendRequest = async (requestId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "accept", requestId });
-};
-
-/**
- * Từ chối lời mời kết bạn
- */
-export const rejectFriendRequest = async (requestId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "reject", requestId });
-};
-
-/**
- * Lấy danh sách lời mời kết bạn
- */
-export const getFriendRequests = async (page: number = 1, limit: number = 10): Promise<{requests: any[]}> => {
-  return makeApiRequest<{requests: any[]}>(`${USER_ENDPOINTS.FRIEND_REQUESTS}?page=${page}&limit=${limit}`);
 };
 
 /**
@@ -210,4 +169,162 @@ export const updateCoverPicture = async (imageFile: File): Promise<{message: str
     }
     throw new Error("Đã xảy ra lỗi khi cập nhật ảnh bìa");
   }
-}; 
+};
+
+// API liên quan đến bạn bè
+export const getFriends = async (status: string = 'accepted', page: number = 1, pageSize: number = 10) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.get(`${API_BASE_URL}/friends`, {
+      params: {
+        status,
+        page,
+        page_size: pageSize
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFriendRequests = async (type: 'incoming' | 'outgoing', page: number = 1, pageSize: number = 10) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.get(`${API_BASE_URL}/friends/requests`, {
+      params: {
+        type,
+        page,
+        page_size: pageSize
+      },
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFriendSuggestions = async (limit: number = 10) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.get(`${API_BASE_URL}/friends/suggestions`, {
+      params: { limit },
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendFriendRequest = async (userId: number) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/friends/requests`, {
+      friend_id: userId
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const acceptFriendRequest = async (requestId: number) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/accept`, {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rejectFriendRequest = async (requestId: number) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/reject`, {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const cancelFriendRequest = async (requestId: number) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/cancel`, {}, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const unfriend = async (friendId: number) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("Bạn chưa đăng nhập");
+    }
+
+    const response = await axios.delete(`${API_BASE_URL}/friends/${friendId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

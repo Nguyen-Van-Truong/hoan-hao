@@ -1,464 +1,365 @@
 import React, { useState, useEffect } from "react";
-import ThreeColumnLayout from "../components/layout/ThreeColumnLayout";
-import { Avatar } from "../components/ui/avatar";
-import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import { Input } from "../components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
-import {
-  Search,
-  UserPlus,
-  UserCheck,
-  UserX,
-  MessageCircle,
-  Loader2,
-} from "lucide-react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { 
-  getFriendsList, 
-  getFriendSuggestions, 
-  getFriendRequests,
-  sendFriendRequest, 
-  cancelFriendRequest,
-  acceptFriendRequest,
-  rejectFriendRequest
-} from "@/api/services/userApi";
-import { UserProfile } from "@/api/types";
+import { useAuth } from "@/contexts/AuthContext";
+import LazyThreeColumnLayout from "@/components/layout/LazyThreeColumnLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar } from "@/components/ui/avatar";
+import { Loader2, UserPlus, UserCheck, UserX, UserMinus } from "lucide-react";
 import { toast } from "react-hot-toast";
+import {
+  getFriends,
+  getFriendRequests,
+  getFriendSuggestions,
+  sendFriendRequest,
+  acceptFriendRequest,
+  rejectFriendRequest,
+  cancelFriendRequest,
+  unfriend,
+} from "@/api/services/userApi";
 
 interface Friend {
-  id: string;
-  name: string;
+  id: number;
+  user_id: number;
+  friend_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  friend: {
+    id: number;
+    username: string;
+    email: string;
+    full_name: string;
+    profile_picture_url?: string;
+    cover_picture_url?: string;
+  };
+}
+
+interface FriendSuggestion {
+  id: number;
   username: string;
-  avatar: string;
-  mutualFriends?: number;
+  email: string;
+  full_name: string;
+  profile_picture_url?: string;
+  cover_picture_url?: string;
 }
 
-interface FriendRequest {
-  id: string;
-  user: Friend;
-}
-
-interface FriendsProps {
-  initialTab?: string;
-}
-
-const Friends = ({ initialTab = "all" }: FriendsProps) => {
+const Friends = () => {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const tabFromUrl = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(tabFromUrl || initialTab);
-  const [searchQuery, setSearchQuery] = useState("");
-  
-  // State for actual data
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("friends");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // States cho danh sách bạn bè
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
-  const [suggestions, setSuggestions] = useState<Friend[]>([]);
-  
-  // Loading states
-  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
-  const [pendingActions, setPendingActions] = useState<string[]>([]);
+  const [friendsTotal, setFriendsTotal] = useState(0);
+  const [friendsPage, setFriendsPage] = useState(1);
 
-  // Update active tab when URL parameter changes
-  useEffect(() => {
-    if (tabFromUrl && ["all", "requests", "suggestions"].includes(tabFromUrl)) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [tabFromUrl]);
+  // States cho yêu cầu kết bạn
+  const [incomingRequests, setIncomingRequests] = useState<Friend[]>([]);
+  const [outgoingRequests, setOutgoingRequests] = useState<Friend[]>([]);
+  const [requestsPage, setRequestsPage] = useState(1);
 
-  // Fetch friends list
-  useEffect(() => {
-    const fetchFriends = async () => {
-      setIsLoadingFriends(true);
-      try {
-        const response = await getFriendsList(1, 20);
-        // Transform API data to component format
-        const formattedFriends = response.friends.map((friend: UserProfile) => ({
-          id: friend.id.toString(),
-          name: friend.full_name,
-          username: friend.username,
-          avatar: friend.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.username}`,
-        }));
-        setFriends(formattedFriends);
-      } catch (error) {
-        console.error("Error fetching friends:", error);
-        toast.error("Không thể tải danh sách bạn bè");
-      } finally {
-        setIsLoadingFriends(false);
-      }
-    };
+  // States cho gợi ý kết bạn
+  const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
 
-    fetchFriends();
-  }, []);
-
-  // Fetch friend suggestions
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (activeTab === "suggestions") {
-        setIsLoadingSuggestions(true);
-        try {
-          const data = await getFriendSuggestions(10);
-          // Transform API data to component format
-          const formattedSuggestions = data.map((user: UserProfile) => ({
-            id: user.id.toString(),
-            name: user.full_name,
-            username: user.username,
-            avatar: user.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`,
-            mutualFriends: Math.floor(Math.random() * 10) + 1 // Mock mutual friends count
-          }));
-          setSuggestions(formattedSuggestions);
-        } catch (error) {
-          console.error("Error fetching friend suggestions:", error);
-          toast.error("Không thể tải gợi ý kết bạn");
-        } finally {
-          setIsLoadingSuggestions(false);
-        }
-      }
-    };
-
-    fetchSuggestions();
-  }, [activeTab]);
-
-  // Fetch friend requests
-  useEffect(() => {
-    const fetchFriendRequests = async () => {
-      if (activeTab === "requests") {
-        setIsLoadingRequests(true);
-        try {
-          const data = await getFriendRequests(1, 20);
-          // Transform API data to component format
-          const formattedRequests = data.requests.map((request: any) => ({
-            id: request.id.toString(),
-            user: {
-              id: request.sender.id.toString(),
-              name: request.sender.full_name,
-              username: request.sender.username,
-              avatar: request.sender.profile_picture_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.sender.username}`,
-            }
-          }));
-          setFriendRequests(formattedRequests);
-        } catch (error) {
-          console.error("Error fetching friend requests:", error);
-          toast.error("Không thể tải danh sách lời mời kết bạn");
-        } finally {
-          setIsLoadingRequests(false);
-        }
-      }
-    };
-
-    fetchFriendRequests();
-  }, [activeTab]);
-
-  // Handle send friend request
-  const handleSendFriendRequest = async (userId: string) => {
+  // Load danh sách bạn bè
+  const loadFriends = async () => {
     try {
-      setPendingActions((prev) => [...prev, userId]);
-      await sendFriendRequest(parseInt(userId));
+      const response = await getFriends('accepted', friendsPage);
+      setFriends(response.friends);
+      setFriendsTotal(response.total);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách bạn bè:", error);
+      toast.error("Không thể tải danh sách bạn bè");
+    }
+  };
+
+  // Load yêu cầu kết bạn
+  const loadFriendRequests = async () => {
+    try {
+      const [incomingResponse, outgoingResponse] = await Promise.all([
+        getFriendRequests('incoming', requestsPage),
+        getFriendRequests('outgoing', requestsPage)
+      ]);
+      setIncomingRequests(incomingResponse.friends);
+      setOutgoingRequests(outgoingResponse.friends);
+    } catch (error) {
+      console.error("Lỗi khi tải yêu cầu kết bạn:", error);
+      toast.error("Không thể tải yêu cầu kết bạn");
+    }
+  };
+
+  // Load gợi ý kết bạn
+  const loadSuggestions = async () => {
+    try {
+      const response = await getFriendSuggestions();
+      setSuggestions(response.suggestions);
+    } catch (error) {
+      console.error("Lỗi khi tải gợi ý kết bạn:", error);
+      toast.error("Không thể tải gợi ý kết bạn");
+    }
+  };
+
+  // Load dữ liệu khi tab thay đổi
+  useEffect(() => {
+    setIsLoading(true);
+    switch (activeTab) {
+      case "friends":
+        loadFriends();
+        break;
+      case "requests":
+        loadFriendRequests();
+        break;
+      case "suggestions":
+        loadSuggestions();
+        break;
+    }
+    setIsLoading(false);
+  }, [activeTab]);
+
+  // Xử lý các hành động kết bạn
+  const handleSendRequest = async (userId: number) => {
+    try {
+      await sendFriendRequest(userId);
       toast.success("Đã gửi lời mời kết bạn");
-      // Update suggestions list
-      setSuggestions((prev) => prev.filter((s) => s.id !== userId));
+      loadSuggestions();
     } catch (error) {
-      console.error("Error sending friend request:", error);
       toast.error("Không thể gửi lời mời kết bạn");
-    } finally {
-      setPendingActions((prev) => prev.filter((id) => id !== userId));
     }
   };
 
-  // Handle accept friend request
-  const handleAcceptFriendRequest = async (requestId: string) => {
+  const handleAcceptRequest = async (requestId: number) => {
     try {
-      setPendingActions((prev) => [...prev, requestId]);
-      await acceptFriendRequest(parseInt(requestId));
+      await acceptFriendRequest(requestId);
       toast.success("Đã chấp nhận lời mời kết bạn");
-      // Remove from requests and add to friends
-      const request = friendRequests.find(req => req.id === requestId);
-      if (request) {
-        setFriends((prev) => [...prev, request.user]);
-        setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
-      }
+      loadFriendRequests();
+      loadFriends();
     } catch (error) {
-      console.error("Error accepting friend request:", error);
       toast.error("Không thể chấp nhận lời mời kết bạn");
-    } finally {
-      setPendingActions((prev) => prev.filter((id) => id !== requestId));
     }
   };
 
-  // Handle reject friend request
-  const handleRejectFriendRequest = async (requestId: string) => {
+  const handleRejectRequest = async (requestId: number) => {
     try {
-      setPendingActions((prev) => [...prev, requestId]);
-      await rejectFriendRequest(parseInt(requestId));
+      await rejectFriendRequest(requestId);
       toast.success("Đã từ chối lời mời kết bạn");
-      // Remove from requests
-      setFriendRequests((prev) => prev.filter((req) => req.id !== requestId));
+      loadFriendRequests();
     } catch (error) {
-      console.error("Error rejecting friend request:", error);
       toast.error("Không thể từ chối lời mời kết bạn");
-    } finally {
-      setPendingActions((prev) => prev.filter((id) => id !== requestId));
     }
   };
 
-  const handleNavigateToProfile = (username: string) => {
-    navigate(`/profile/${username}`);
+  const handleCancelRequest = async (requestId: number) => {
+    try {
+      await cancelFriendRequest(requestId);
+      toast.success("Đã hủy lời mời kết bạn");
+      loadFriendRequests();
+    } catch (error) {
+      toast.error("Không thể hủy lời mời kết bạn");
+    }
   };
 
-  const handleNavigateToMessages = (friend: Friend) => {
-    navigate("/messages", {
-      state: {
-        newConversation: {
-          user: {
-            id: friend.id,
-            name: friend.name,
-            avatar: friend.avatar,
-          },
-        },
-      },
-    });
+  const handleUnfriend = async (friendId: number) => {
+    try {
+      await unfriend(friendId);
+      toast.success("Đã hủy kết bạn");
+      loadFriends();
+    } catch (error) {
+      toast.error("Không thể hủy kết bạn");
+    }
   };
 
-  const filterFriends = (friends: Friend[]) => {
-    if (!searchQuery) return friends;
-    return friends.filter((friend) =>
-      friend.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
-
-  const getDisplayedFriends = () => {
-    return filterFriends(friends);
-  };
-
-  const displayedFriends = getDisplayedFriends();
-
-  // For styling
-  const getTabClassNames = (isActive: boolean) => {
-    return isActive
-      ? "font-semibold border-b-2 border-primary"
-      : "text-gray-600";
-  };
+  // Component hiển thị loading
+  const LoadingState = () => (
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+    </div>
+  );
 
   return (
-    <ThreeColumnLayout>
-      <div className="max-w-3xl mx-auto p-4">
-        <Card className="shadow-sm">
-          <CardContent className="p-6">
-            <h1 className="text-2xl font-bold mb-6">{t("friends.title") || "Bạn bè"}</h1>
+    <div className="min-h-screen bg-gray-100">
+      <LazyThreeColumnLayout>
+        <div className="w-full max-w-[950px] mx-auto">
+          <Card className="mt-4">
+            <CardContent className="p-6">
+              <Tabs defaultValue="friends" value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="w-full bg-white rounded-lg shadow-sm">
+                  <TabsTrigger value="friends" className="flex-1">
+                    {t("friends.friends") || "Bạn bè"}
+                  </TabsTrigger>
+                  <TabsTrigger value="requests" className="flex-1">
+                    {t("friends.requests") || "Yêu cầu kết bạn"}
+                  </TabsTrigger>
+                  <TabsTrigger value="suggestions" className="flex-1">
+                    {t("friends.suggestions") || "Gợi ý kết bạn"}
+                  </TabsTrigger>
+                </TabsList>
 
-            <div className="relative mb-6">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <Input
-                type="text"
-                placeholder={t("friends.searchPlaceholder") || "Tìm bạn bè..."}
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3 mb-6">
-                <TabsTrigger value="all">
-                  {t("friends.allFriends") || "Tất cả bạn bè"}
-                </TabsTrigger>
-                <TabsTrigger value="requests">
-                  {t("friends.requests") || "Lời mời"}
-                </TabsTrigger>
-                <TabsTrigger value="suggestions">
-                  {t("friends.suggestions") || "Gợi ý"}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="all">
-                {isLoadingFriends ? (
-                  <div className="flex justify-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : displayedFriends.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {displayedFriends.map((friend) => (
-                      <div
-                        key={friend.id}
-                        className="border rounded-lg p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-14 w-14 cursor-pointer" onClick={() => handleNavigateToProfile(friend.username)}>
-                            <img src={friend.avatar} alt={friend.name} />
-                          </Avatar>
-                          <div>
-                            <h3 
-                              className="font-medium text-base cursor-pointer hover:underline" 
-                              onClick={() => handleNavigateToProfile(friend.username)}
+                {/* Tab Danh sách bạn bè */}
+                <TabsContent value="friends" className="mt-4">
+                  {isLoading ? (
+                    <LoadingState />
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {friends.map((friend) => (
+                        <div key={friend.id} className="bg-white rounded-lg shadow-sm p-4">
+                          <div className="flex flex-col items-center">
+                            <Avatar className="h-20 w-20 mb-2">
+                              <img
+                                src={friend.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                alt={friend.friend.full_name}
+                                className="rounded-full"
+                              />
+                            </Avatar>
+                            <h3 className="font-semibold text-center">{friend.friend.full_name}</h3>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2 text-red-500 hover:text-red-600"
+                              onClick={() => handleUnfriend(friend.friend.id)}
                             >
-                              {friend.name}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              @{friend.username}
-                            </p>
+                              <UserMinus className="h-4 w-4 mr-1" />
+                              {t("friends.unfriend") || "Hủy kết bạn"}
+                            </Button>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-primary hover:bg-primary/10"
-                          onClick={() => handleNavigateToMessages(friend)}
-                        >
-                          <MessageCircle className="h-5 w-5 mr-2" />
-                          {t("friends.message") || "Nhắn tin"}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    {t("friends.noFriendsFound") || "Không tìm thấy bạn bè nào."}
-                  </div>
-                )}
-              </TabsContent>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
-              <TabsContent value="requests">
-                {isLoadingRequests ? (
-                  <div className="flex justify-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : friendRequests.length > 0 ? (
-                  <div className="space-y-4">
-                    {friendRequests.map((request) => (
-                      <div
-                        key={request.id}
-                        className="border rounded-lg p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-14 w-14 cursor-pointer" onClick={() => handleNavigateToProfile(request.user.username)}>
-                            <img src={request.user.avatar} alt={request.user.name} />
-                          </Avatar>
-                          <div>
-                            <h3 
-                              className="font-medium text-base cursor-pointer hover:underline" 
-                              onClick={() => handleNavigateToProfile(request.user.username)}
-                            >
-                              {request.user.name}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              @{request.user.username}
-                            </p>
+                {/* Tab Yêu cầu kết bạn */}
+                <TabsContent value="requests" className="mt-4">
+                  {isLoading ? (
+                    <LoadingState />
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Yêu cầu đến */}
+                      {incomingRequests.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">
+                            {t("friends.incomingRequests") || "Yêu cầu đến"}
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {incomingRequests.map((request) => (
+                              <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
+                                <div className="flex flex-col items-center">
+                                  <Avatar className="h-20 w-20 mb-2">
+                                    <img
+                                      src={request.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                      alt={request.friend.full_name}
+                                      className="rounded-full"
+                                    />
+                                  </Avatar>
+                                  <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                                  <div className="flex space-x-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-green-500 hover:bg-green-600"
+                                      onClick={() => handleAcceptRequest(request.id)}
+                                    >
+                                      <UserCheck className="h-4 w-4 mr-1" />
+                                      {t("friends.accept") || "Chấp nhận"}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-600"
+                                      onClick={() => handleRejectRequest(request.id)}
+                                    >
+                                      <UserX className="h-4 w-4 mr-1" />
+                                      {t("friends.reject") || "Từ chối"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="bg-primary hover:bg-primary-dark"
-                            onClick={() => handleAcceptFriendRequest(request.id)}
-                            disabled={pendingActions.includes(request.id)}
-                          >
-                            {pendingActions.includes(request.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                {t("friends.accept") || "Chấp nhận"}
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-300"
-                            onClick={() => handleRejectFriendRequest(request.id)}
-                            disabled={pendingActions.includes(request.id)}
-                          >
-                            {pendingActions.includes(request.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserX className="h-4 w-4 mr-2" />
-                                {t("friends.decline") || "Từ chối"}
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    {t("friends.noRequests") || "Không có lời mời kết bạn nào."}
-                  </div>
-                )}
-              </TabsContent>
+                      )}
 
-              <TabsContent value="suggestions">
-                {isLoadingSuggestions ? (
-                  <div className="flex justify-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : suggestions.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {suggestions.map((suggestion) => (
-                      <div
-                        key={suggestion.id}
-                        className="border rounded-lg p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-14 w-14 cursor-pointer" onClick={() => handleNavigateToProfile(suggestion.username)}>
-                            <img src={suggestion.avatar} alt={suggestion.name} />
-                          </Avatar>
-                          <div>
-                            <h3 
-                              className="font-medium text-base cursor-pointer hover:underline" 
-                              onClick={() => handleNavigateToProfile(suggestion.username)}
-                            >
-                              {suggestion.name}
-                            </h3>
-                            {suggestion.mutualFriends && (
-                              <p className="text-xs text-gray-500">
-                                {suggestion.mutualFriends} {t("friends.mutualFriends") || "bạn chung"}
-                              </p>
-                            )}
+                      {/* Yêu cầu đã gửi */}
+                      {outgoingRequests.length > 0 && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">
+                            {t("friends.outgoingRequests") || "Yêu cầu đã gửi"}
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {outgoingRequests.map((request) => (
+                              <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
+                                <div className="flex flex-col items-center">
+                                  <Avatar className="h-20 w-20 mb-2">
+                                    <img
+                                      src={request.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                      alt={request.friend.full_name}
+                                      className="rounded-full"
+                                    />
+                                  </Avatar>
+                                  <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2 text-red-500 hover:text-red-600"
+                                    onClick={() => handleCancelRequest(request.id)}
+                                  >
+                                    <UserX className="h-4 w-4 mr-1" />
+                                    {t("friends.cancel") || "Hủy yêu cầu"}
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          className="bg-primary hover:bg-primary-dark"
-                          onClick={() => handleSendFriendRequest(suggestion.id)}
-                          disabled={pendingActions.includes(suggestion.id)}
-                        >
-                          {pendingActions.includes(suggestion.id) ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <UserPlus className="h-4 w-4 mr-2" />
-                              {t("friends.add") || "Kết bạn"}
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    {t("friends.noSuggestions") || "Không có gợi ý kết bạn nào."}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
-    </ThreeColumnLayout>
+                      )}
+
+                      {incomingRequests.length === 0 && outgoingRequests.length === 0 && (
+                        <p className="text-center text-gray-500">
+                          {t("friends.noRequests") || "Không có yêu cầu kết bạn nào"}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Tab Gợi ý kết bạn */}
+                <TabsContent value="suggestions" className="mt-4">
+                  {isLoading ? (
+                    <LoadingState />
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {suggestions.map((suggestion) => (
+                        <div key={suggestion.id} className="bg-white rounded-lg shadow-sm p-4">
+                          <div className="flex flex-col items-center">
+                            <Avatar className="h-20 w-20 mb-2">
+                              <img
+                                src={suggestion.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                alt={suggestion.full_name}
+                                className="rounded-full"
+                              />
+                            </Avatar>
+                            <h3 className="font-semibold text-center">{suggestion.full_name}</h3>
+                            <Button
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => handleSendRequest(suggestion.id)}
+                            >
+                              <UserPlus className="h-4 w-4 mr-1" />
+                              {t("friends.addFriend") || "Kết bạn"}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </LazyThreeColumnLayout>
+    </div>
   );
 };
 
