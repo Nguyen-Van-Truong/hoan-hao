@@ -208,7 +208,7 @@ const Friends = () => {
                           <div className="flex flex-col items-center">
                             <Avatar className="h-20 w-20 mb-2">
                               <img
-                                src={friend.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                src={friend.friend.profile_picture_url || "/imgdefault.jpg"}
                                 alt={friend.friend.full_name}
                                 className="rounded-full"
                               />
@@ -248,7 +248,7 @@ const Friends = () => {
                                 <div className="flex flex-col items-center">
                                   <Avatar className="h-20 w-20 mb-2">
                                     <img
-                                      src={request.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                      src={request.friend.profile_picture_url || "/imgdefault.jpg"}
                                       alt={request.friend.full_name}
                                       className="rounded-full"
                                     />
@@ -292,7 +292,7 @@ const Friends = () => {
                                 <div className="flex flex-col items-center">
                                   <Avatar className="h-20 w-20 mb-2">
                                     <img
-                                      src={request.friend.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                      src={request.friend.profile_picture_url || "/imgdefault.jpg"}
                                       alt={request.friend.full_name}
                                       className="rounded-full"
                                     />
@@ -334,7 +334,7 @@ const Friends = () => {
                           <div className="flex flex-col items-center">
                             <Avatar className="h-20 w-20 mb-2">
                               <img
-                                src={suggestion.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                src={suggestion.profile_picture_url || "/imgdefault.jpg"}
                                 alt={suggestion.full_name}
                                 className="rounded-full"
                               />
