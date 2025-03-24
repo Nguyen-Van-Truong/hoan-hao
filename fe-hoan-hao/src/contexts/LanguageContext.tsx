@@ -432,6 +432,9 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Friends Page
     "friends.title": "Friends",
+    "friends.friends": "Friends",
+    "friends.outgoingRequests": "Outgoing",
+    "friends.incomingRequests": "Incoming",
     "friends.suggestedFriends": "Suggested Friends",
     "friends.seeAll": "See All",
     "friends.mutualFriends": "mutual friends",
@@ -448,7 +451,9 @@ const translations: Record<Language, Record<string, string>> = {
         "We don't have any friend suggestions for you right now.",
     "friends.message": "Message",
     "friends.accept": "Accept",
-    "friends.decline": "Decline",
+    "friends.cancel": "Cancel",
+    "friends.unfriend": "Un Friend",
+    "friends.reject": "Decline",
     "friends.addFriend": "Add Friend",
     "friends.online": "Online",
     "friends.offline": "Offline",
@@ -928,6 +933,9 @@ const translations: Record<Language, Record<string, string>> = {
 
     // Friends Page
     "friends.title": "Bạn bè",
+    "friends.friends": "Bạn bè",
+    "friends.outgoingRequests": "Lời mời đã gửi",
+    "friends.incomingRequests": "Lời mời đã nhận",
     "friends.suggestedFriends": "Gợi ý kết bạn",
     "friends.seeAll": "Xem tất cả",
     "friends.mutualFriends": "bạn chung",
@@ -944,7 +952,9 @@ const translations: Record<Language, Record<string, string>> = {
       "Hiện tại chúng tôi không có gợi ý kết bạn nào cho bạn.",
     "friends.message": "Nhắn tin",
     "friends.accept": "Chấp nhận",
-    "friends.decline": "Từ chối",
+    "friends.cancel": "Hủy lời mời",
+    "friends.unfriend": "Hủy bạn bè",
+    "friends.reject": "Từ chối",
     "friends.addFriend": "Kết bạn",
     "friends.online": "Trực tuyến",
     "friends.offline": "Ngoại tuyến",

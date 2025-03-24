@@ -110,6 +110,7 @@ const Friends = () => {
         loadFriends();
         break;
       case "requests":
+      case "incoming":
         loadFriendRequests();
         break;
       case "suggestions":
@@ -189,8 +190,11 @@ const Friends = () => {
                   <TabsTrigger value="friends" className="flex-1">
                     {t("friends.friends") || "Bạn bè"}
                   </TabsTrigger>
+                  <TabsTrigger value="incoming" className="flex-1">
+                    {t("friends.incomingRequests") || "Lời mời kết bạn"}
+                  </TabsTrigger>
                   <TabsTrigger value="requests" className="flex-1">
-                    {t("friends.requests") || "Yêu cầu kết bạn"}
+                    {t("friends.outgoingRequests") || "Yêu cầu đã gửi"}
                   </TabsTrigger>
                   <TabsTrigger value="suggestions" className="flex-1">
                     {t("friends.suggestions") || "Gợi ý kết bạn"}
@@ -208,7 +212,7 @@ const Friends = () => {
                           <div className="flex flex-col items-center">
                             <Avatar className="h-20 w-20 mb-2">
                               <img
-                                src={friend.friend.profile_picture_url || "/imgdefault.jpg"}
+                                src={friend.friend.profile_picture_url || "/avatardefaut.png"}
                                 alt={friend.friend.full_name}
                                 className="rounded-full"
                               />
@@ -230,93 +234,86 @@ const Friends = () => {
                   )}
                 </TabsContent>
 
-                {/* Tab Yêu cầu kết bạn */}
+                {/* Tab Lời mời kết bạn */}
+                <TabsContent value="incoming" className="mt-4">
+                  {isLoading ? (
+                    <LoadingState />
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {incomingRequests.map((request) => (
+                        <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
+                          <div className="flex flex-col items-center">
+                            <Avatar className="h-20 w-20 mb-2">
+                              <img
+                                src={request.friend.profile_picture_url || "/avatardefaut.png"}
+                                alt={request.friend.full_name}
+                                className="rounded-full"
+                              />
+                            </Avatar>
+                            <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                            <div className="flex space-x-2 mt-2">
+                              <Button
+                                size="sm"
+                                className="bg-green-500 hover:bg-green-600"
+                                onClick={() => handleAcceptRequest(request.id)}
+                              >
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                {t("friends.accept") || "Chấp nhận"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-500 hover:text-red-600"
+                                onClick={() => handleRejectRequest(request.id)}
+                              >
+                                <UserX className="h-4 w-4 mr-1" />
+                                {t("friends.reject") || "Từ chối"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {incomingRequests.length === 0 && (
+                        <p className="text-center text-gray-500 col-span-full">
+                          {t("friends.noIncomingRequests") || "Không có lời mời kết bạn nào"}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                {/* Tab Yêu cầu đã gửi */}
                 <TabsContent value="requests" className="mt-4">
                   {isLoading ? (
                     <LoadingState />
                   ) : (
-                    <div className="space-y-4">
-                      {/* Yêu cầu đến */}
-                      {incomingRequests.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">
-                            {t("friends.incomingRequests") || "Yêu cầu đến"}
-                          </h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {incomingRequests.map((request) => (
-                              <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
-                                <div className="flex flex-col items-center">
-                                  <Avatar className="h-20 w-20 mb-2">
-                                    <img
-                                      src={request.friend.profile_picture_url || "/imgdefault.jpg"}
-                                      alt={request.friend.full_name}
-                                      className="rounded-full"
-                                    />
-                                  </Avatar>
-                                  <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
-                                  <div className="flex space-x-2 mt-2">
-                                    <Button
-                                      size="sm"
-                                      className="bg-green-500 hover:bg-green-600"
-                                      onClick={() => handleAcceptRequest(request.id)}
-                                    >
-                                      <UserCheck className="h-4 w-4 mr-1" />
-                                      {t("friends.accept") || "Chấp nhận"}
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-red-500 hover:text-red-600"
-                                      onClick={() => handleRejectRequest(request.id)}
-                                    >
-                                      <UserX className="h-4 w-4 mr-1" />
-                                      {t("friends.reject") || "Từ chối"}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {outgoingRequests.map((request) => (
+                        <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
+                          <div className="flex flex-col items-center">
+                            <Avatar className="h-20 w-20 mb-2">
+                              <img
+                                src={request.friend.profile_picture_url || "/avatardefaut.png"}
+                                alt={request.friend.full_name}
+                                className="rounded-full"
+                              />
+                            </Avatar>
+                            <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2 text-red-500 hover:text-red-600"
+                              onClick={() => handleCancelRequest(request.id)}
+                            >
+                              <UserX className="h-4 w-4 mr-1" />
+                              {t("friends.cancel") || "Hủy yêu cầu"}
+                            </Button>
                           </div>
                         </div>
-                      )}
-
-                      {/* Yêu cầu đã gửi */}
-                      {outgoingRequests.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">
-                            {t("friends.outgoingRequests") || "Yêu cầu đã gửi"}
-                          </h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {outgoingRequests.map((request) => (
-                              <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
-                                <div className="flex flex-col items-center">
-                                  <Avatar className="h-20 w-20 mb-2">
-                                    <img
-                                      src={request.friend.profile_picture_url || "/imgdefault.jpg"}
-                                      alt={request.friend.full_name}
-                                      className="rounded-full"
-                                    />
-                                  </Avatar>
-                                  <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2 text-red-500 hover:text-red-600"
-                                    onClick={() => handleCancelRequest(request.id)}
-                                  >
-                                    <UserX className="h-4 w-4 mr-1" />
-                                    {t("friends.cancel") || "Hủy yêu cầu"}
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {incomingRequests.length === 0 && outgoingRequests.length === 0 && (
-                        <p className="text-center text-gray-500">
-                          {t("friends.noRequests") || "Không có yêu cầu kết bạn nào"}
+                      ))}
+                      {outgoingRequests.length === 0 && (
+                        <p className="text-center text-gray-500 col-span-full">
+                          {t("friends.noOutgoingRequests") || "Không có yêu cầu kết bạn nào đã gửi"}
                         </p>
                       )}
                     </div>
@@ -334,7 +331,7 @@ const Friends = () => {
                           <div className="flex flex-col items-center">
                             <Avatar className="h-20 w-20 mb-2">
                               <img
-                                src={suggestion.profile_picture_url || "/imgdefault.jpg"}
+                                src={suggestion.profile_picture_url || "/avatardefaut.png"}
                                 alt={suggestion.full_name}
                                 className="rounded-full"
                               />
@@ -351,6 +348,11 @@ const Friends = () => {
                           </div>
                         </div>
                       ))}
+                      {suggestions.length === 0 && (
+                        <p className="text-center text-gray-500 col-span-full">
+                          {t("friends.noSuggestions") || "Không có gợi ý kết bạn nào"}
+                        </p>
+                      )}
                     </div>
                   )}
                 </TabsContent>

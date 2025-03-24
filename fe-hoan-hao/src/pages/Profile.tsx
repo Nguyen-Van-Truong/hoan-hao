@@ -690,7 +690,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
           {/* Cover Photo */}
           <div className="relative w-full h-[300px] rounded-b-lg overflow-hidden">
             <img
-              src={userProfile.cover_picture_url || "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200&q=80"}
+              src={userProfile.cover_picture_url || "/coverphotodefault.png"}
               alt="Cover"
               className="w-full h-full object-cover"
               loading="lazy"
