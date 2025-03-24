@@ -7,6 +7,7 @@ Tài liệu này mô tả các API liên quan đến chức năng bạn bè tron
 - Tất cả các API đều yêu cầu xác thực bằng JWT token.
 - Token JWT phải được gửi trong header `Authorization` với format `Bearer <token>`.
 - Response mặc định sẽ trả về dạng JSON.
+- Base URL cho các API là: `http://localhost:8083`
 
 ## API Danh sách
 
@@ -20,6 +21,18 @@ GET /friends
 - `status` (tùy chọn): Lọc theo trạng thái (`accepted`, `pending`, `rejected`, `blocked`). Mặc định: `accepted`
 - `page` (tùy chọn): Số trang (bắt đầu từ 1). Mặc định: 1
 - `page_size` (tùy chọn): Kích thước trang (tối đa 100). Mặc định: 10
+
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends?status=accepted&page=1&page_size=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends?status=accepted&page=1&page_size=10
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
 
 **Response**:
 ```json
@@ -58,6 +71,18 @@ GET /friends/requests
 - `page` (tùy chọn): Số trang (bắt đầu từ 1). Mặc định: 1
 - `page_size` (tùy chọn): Kích thước trang (tối đa 100). Mặc định: 10
 
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends/requests?type=incoming&page=1&page_size=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends/requests?type=incoming&page=1&page_size=10
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+
 **Response**:
 ```json
 {
@@ -93,6 +118,18 @@ GET /friends/suggestions
 **Tham số query**:
 - `limit` (tùy chọn): Số lượng gợi ý (tối đa 50). Mặc định: 10
 
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends/suggestions?limit=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends/suggestions?limit=10
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+
 **Response**:
 ```json
 {
@@ -121,6 +158,20 @@ GET /friends/user/:id
 - `page` (tùy chọn): Số trang (bắt đầu từ 1). Mặc định: 1
 - `page_size` (tùy chọn): Kích thước trang (tối đa 100). Mặc định: 10
 
+**Lưu ý**: Khi xem danh sách bạn bè của người khác, chỉ bạn bè với trạng thái `accepted` được hiển thị.
+
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends/user/123?page=1&page_size=10" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends/user/123?page=1&page_size=10
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+
 **Response**: Tương tự như API lấy danh sách bạn bè.
 
 ### 5. Lấy số lượng bạn chung
@@ -131,6 +182,18 @@ GET /friends/mutual/:id
 
 **Tham số path**:
 - `id`: ID của người dùng cần so sánh
+
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends/mutual/123" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends/mutual/123
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
 
 **Response**:
 ```json
@@ -147,6 +210,18 @@ GET /friends/status/:id
 
 **Tham số path**:
 - `id`: ID của người dùng cần kiểm tra
+
+**Ví dụ CURL**:
+```bash
+curl -X GET "http://localhost:8083/friends/status/123" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Ví dụ Postman**:
+- Method: GET
+- URL: http://localhost:8083/friends/status/123
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
 
 **Response**:
 ```json
@@ -174,6 +249,167 @@ POST /friends/:action
   - `unblock`: Bỏ chặn người dùng
 
 **Body request** (dạng JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Gửi lời mời kết bạn
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/send-request" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/send-request
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Chấp nhận lời mời kết bạn
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/accept" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/accept
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Từ chối lời mời kết bạn
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/reject" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/reject
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Hủy lời mời kết bạn đã gửi
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/cancel" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/cancel
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Hủy kết bạn
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/unfriend" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/unfriend
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Chặn người dùng
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/block" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/block
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
+```json
+{
+  "friend_id": 123
+}
+```
+
+### Bỏ chặn người dùng
+
+**Ví dụ CURL**:
+```bash
+curl -X POST "http://localhost:8083/friends/unblock" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"friend_id": 123}'
+```
+
+**Ví dụ Postman**:
+- Method: POST
+- URL: http://localhost:8083/friends/unblock
+- Headers: 
+  - Authorization: Bearer YOUR_JWT_TOKEN
+  - Content-Type: application/json
+- Body (raw JSON):
 ```json
 {
   "friend_id": 123
