@@ -2,84 +2,75 @@ import { API_BASE_URL } from "../config";
 import { ApiResponse, User, UpdateUserProfileRequest, UserProfile } from "../types";
 
 const USER_ENDPOINTS = {
-  PROFILE: "/users/profile",
-  PROFILE_ME: "/user/profile/me",
-  PROFILE_PUBLIC: "/user/profile/public/username",
-  UPDATE_PROFILE: "/users/profile",
-  FRIENDS: "/user/friends",
-  FRIEND_SUGGESTIONS: "/user/friends/suggestions",
-  FRIEND_REQUESTS: "/user/friends/requests",
-  FRIEND_REQUEST: "/user/friend/request",
-  FRIEND_CANCEL: "/user/friend/cancel",
-  FRIEND_ACCEPT: "/user/friend/accept",
-  FRIEND_REJECT: "/user/friend/reject",
+  USER_ME: "/users/me",
+  USER_BY_ID: "/users",
+  USERS_LIST: "/users",
+  UPDATE_PROFILE: "/users/me",
+  UPLOAD_PROFILE_PICTURE: "/users/me/profile-picture",
+  UPLOAD_COVER_PICTURE: "/users/me/cover-picture",
+  
+  FRIENDS: "/friends",
+  FRIEND_SUGGESTIONS: "/friends/suggestions",
+  FRIEND_REQUESTS: "/friends/requests",
+  FRIEND_STATUS: "/friends/status",
+  FRIEND_MUTUAL: "/friends/mutual",
+  FRIEND_ACTION: "/friends",
+  
+  GROUPS: "/groups",
+  GROUP_BY_ID: "/groups",
+  GROUP_ME: "/groups/me",
+  GROUP_MEMBERS: "/groups",
+  GROUP_JOIN: "/groups/join",
+  GROUP_LEAVE: "/groups",
+  GROUP_INVITE: "/groups",
+  GROUP_MEMBER_ACTION: "/groups",
 };
 
-/**
- * Lấy thông tin profile người dùng
- */
-export const getUserProfile = async (
-  userId?: string
-): Promise<ApiResponse<User>> => {
+// Chuẩn hóa hàm api với các header thích hợp
+const makeApiRequest = async <T>(
+  url: string, 
+  method: string = "GET", 
+  body?: any,
+  requiresAuth: boolean = true
+): Promise<T> => {
   try {
-    const endpoint = userId 
-      ? `${USER_ENDPOINTS.PROFILE}/${userId}` 
-      : USER_ENDPOINTS.PROFILE;
-
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Không thể lấy thông tin người dùng");
+    const token = localStorage.getItem("accessToken");
+    
+    if (requiresAuth && !token) {
+      throw new Error("Bạn chưa đăng nhập");
     }
-
-    return data;
+    
+    const headers: HeadersInit = {};
+    if (body) {
+      headers["Content-Type"] = "application/json";
+    }
+    if (requiresAuth && token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
+    const requestOptions: RequestInit = {
+      method,
+      headers,
+      credentials: "include"
+    };
+    
+    if (body) {
+      requestOptions.body = JSON.stringify(body);
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, requestOptions);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Không thể thực hiện yêu cầu ${method} tới ${url}`);
+    }
+    
+    return await response.json();
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(error.message);
     }
-    throw new Error("Đã xảy ra lỗi khi lấy thông tin người dùng");
-  }
-};
-
-/**
- * Cập nhật thông tin profile người dùng
- */
-export const updateUserProfile = async (
-  profileData: UpdateUserProfileRequest
-): Promise<ApiResponse<User>> => {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}${USER_ENDPOINTS.UPDATE_PROFILE}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
-        },
-        body: JSON.stringify(profileData),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || "Không thể cập nhật thông tin người dùng");
-    }
-
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi cập nhật thông tin người dùng");
+    throw new Error(`Đã xảy ra lỗi khi thực hiện yêu cầu ${method} tới ${url}`);
   }
 };
 
@@ -87,308 +78,82 @@ export const updateUserProfile = async (
  * Lấy thông tin profile của người dùng đăng nhập hiện tại
  */
 export const getCurrentUserProfile = async (): Promise<UserProfile> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.PROFILE_ME}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể lấy thông tin người dùng");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi lấy thông tin người dùng");
-  }
+  return makeApiRequest<UserProfile>(USER_ENDPOINTS.USER_ME);
 };
 
 /**
- * Lấy thông tin profile người dùng công khai theo username
+ * Lấy thông tin profile người dùng công khai theo ID
  */
-export const getPublicUserProfile = async (username: string): Promise<{profile: UserProfile, friend_status: string}> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.PROFILE_PUBLIC}/${username}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+export const getUserProfileById = async (userId: number): Promise<UserProfile> => {
+  return makeApiRequest<UserProfile>(`${USER_ENDPOINTS.USER_BY_ID}/${userId}`, "GET", undefined, false);
+};
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể lấy thông tin người dùng");
-    }
+/**
+ * Cập nhật thông tin profile
+ */
+export const updateUserProfile = async (profileData: UpdateUserProfileRequest): Promise<UserProfile> => {
+  return makeApiRequest<UserProfile>(USER_ENDPOINTS.UPDATE_PROFILE, "PUT", profileData);
+};
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi lấy thông tin người dùng");
-  }
+/**
+ * Tải lên ảnh đại diện
+ */
+export const uploadProfilePicture = async (fileUrl: string): Promise<UserProfile> => {
+  return makeApiRequest<UserProfile>(USER_ENDPOINTS.UPLOAD_PROFILE_PICTURE, "PUT", { file_url: fileUrl });
 };
 
 /**
  * Lấy danh sách bạn bè
  */
-export const getFriendsList = async (page: number = 1, limit: number = 10): Promise<{friends: UserProfile[]}> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIENDS}?page=${page}&limit=${limit}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể lấy danh sách bạn bè");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi lấy danh sách bạn bè");
-  }
+export const getFriendsList = async (page: number = 1, pageSize: number = 10): Promise<{friends: UserProfile[]}> => {
+  return makeApiRequest<{friends: UserProfile[]}>(`${USER_ENDPOINTS.FRIENDS}?page=${page}&page_size=${pageSize}`);
 };
 
 /**
  * Lấy danh sách gợi ý bạn bè
  */
-export const getFriendSuggestions = async (limit: number = 5): Promise<UserProfile[]> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_SUGGESTIONS}?limit=${limit}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể lấy danh sách gợi ý bạn bè");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi lấy danh sách gợi ý bạn bè");
-  }
+export const getFriendSuggestions = async (page: number = 1, pageSize: number = 5): Promise<{suggestions: UserProfile[]}> => {
+  return makeApiRequest<{suggestions: UserProfile[]}>(`${USER_ENDPOINTS.FRIEND_SUGGESTIONS}?page=${page}&page_size=${pageSize}`);
 };
 
 /**
  * Gửi lời mời kết bạn
  */
-export const sendFriendRequest = async (friendID: number): Promise<ApiResponse> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_REQUEST}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ friendID }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể gửi lời mời kết bạn");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi gửi lời mời kết bạn");
-  }
+export const sendFriendRequest = async (userId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/send-request`, "POST", { user_id: userId });
 };
 
 /**
- * Hủy lời mời kết bạn
+ * Hủy kết bạn
  */
-export const cancelFriendRequest = async (friendId: number): Promise<ApiResponse> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_CANCEL}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ friendId }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể hủy lời mời kết bạn");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi hủy lời mời kết bạn");
-  }
+export const unfriend = async (userId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/unfriend`, "POST", { user_id: userId });
 };
 
 /**
  * Chấp nhận lời mời kết bạn
  */
-export const acceptFriendRequest = async (requestId: number): Promise<ApiResponse> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_ACCEPT}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ requestId }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể chấp nhận lời mời kết bạn");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi chấp nhận lời mời kết bạn");
-  }
+export const acceptFriendRequest = async (userId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/accept-request`, "POST", { user_id: userId });
 };
 
 /**
  * Từ chối lời mời kết bạn
  */
-export const rejectFriendRequest = async (requestId: number): Promise<ApiResponse> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_REJECT}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-      body: JSON.stringify({ requestId }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể từ chối lời mời kết bạn");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi từ chối lời mời kết bạn");
-  }
+export const rejectFriendRequest = async (userId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/reject-request`, "POST", { user_id: userId });
 };
 
 /**
- * Lấy danh sách yêu cầu kết bạn
+ * Lấy danh sách lời mời kết bạn
  */
-export const getFriendRequests = async (page: number = 1, limit: number = 10): Promise<{requests: any[]}> => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-    
-    const response = await fetch(`${API_BASE_URL}${USER_ENDPOINTS.FRIEND_REQUESTS}?page=${page}&limit=${limit}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    });
+export const getFriendRequests = async (page: number = 1, pageSize: number = 10): Promise<{requests: any[]}> => {
+  return makeApiRequest<{requests: any[]}>(`${USER_ENDPOINTS.FRIEND_REQUESTS}?page=${page}&page_size=${pageSize}`);
+};
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Không thể lấy danh sách yêu cầu kết bạn");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Đã xảy ra lỗi khi lấy danh sách yêu cầu kết bạn");
-  }
+/**
+ * Kiểm tra trạng thái bạn bè với một người dùng
+ */
+export const getFriendshipStatus = async (userId: number): Promise<{status: string}> => {
+  return makeApiRequest<{status: string}>(`${USER_ENDPOINTS.FRIEND_STATUS}/${userId}`);
 }; 
