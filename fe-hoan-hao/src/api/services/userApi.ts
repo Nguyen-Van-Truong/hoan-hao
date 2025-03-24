@@ -2,28 +2,15 @@ import { API_BASE_URL } from "../config";
 import { ApiResponse, User, UpdateUserProfileRequest, UserProfile } from "../types";
 
 const USER_ENDPOINTS = {
-  USER_ME: "/users/me",
-  USER_BY_ID: "/users",
-  USERS_LIST: "/users",
-  UPDATE_PROFILE: "/users/me",
-  UPLOAD_PROFILE_PICTURE: "/users/me/profile-picture",
-  UPLOAD_COVER_PICTURE: "/users/me/cover-picture",
-  
-  FRIENDS: "/friends",
-  FRIEND_SUGGESTIONS: "/friends/suggestions",
-  FRIEND_REQUESTS: "/friends/requests",
-  FRIEND_STATUS: "/friends/status",
-  FRIEND_MUTUAL: "/friends/mutual",
-  FRIEND_ACTION: "/friends",
-  
-  GROUPS: "/groups",
-  GROUP_BY_ID: "/groups",
-  GROUP_ME: "/groups/me",
-  GROUP_MEMBERS: "/groups",
-  GROUP_JOIN: "/groups/join",
-  GROUP_LEAVE: "/groups",
-  GROUP_INVITE: "/groups",
-  GROUP_MEMBER_ACTION: "/groups",
+  PROFILE: "/users/profile",
+  PROFILE_ME: "/users/me",
+  PROFILE_PUBLIC: "/users/profile/public/username",
+  UPDATE_PROFILE: "/users/profile",
+  FRIENDS: "/users/friends",
+  FRIEND_SUGGESTIONS: "/users/friends/suggestions",
+  FRIEND_REQUESTS: "/users/friends/requests",
+  FRIEND_ACTION: "/users/friends/actions",
+  FRIEND_STATUS: "/users/friends/status",
 };
 
 // Chuẩn hóa hàm api với các header thích hợp
@@ -78,77 +65,63 @@ const makeApiRequest = async <T>(
  * Lấy thông tin profile của người dùng đăng nhập hiện tại
  */
 export const getCurrentUserProfile = async (): Promise<UserProfile> => {
-  return makeApiRequest<UserProfile>(USER_ENDPOINTS.USER_ME);
+  return makeApiRequest<UserProfile>(USER_ENDPOINTS.PROFILE_ME);
 };
 
 /**
- * Lấy thông tin profile người dùng công khai theo ID
+ * Lấy thông tin profile người dùng công khai theo username
  */
-export const getUserProfileById = async (userId: number): Promise<UserProfile> => {
-  return makeApiRequest<UserProfile>(`${USER_ENDPOINTS.USER_BY_ID}/${userId}`, "GET", undefined, false);
-};
-
-/**
- * Cập nhật thông tin profile
- */
-export const updateUserProfile = async (profileData: UpdateUserProfileRequest): Promise<UserProfile> => {
-  return makeApiRequest<UserProfile>(USER_ENDPOINTS.UPDATE_PROFILE, "PUT", profileData);
-};
-
-/**
- * Tải lên ảnh đại diện
- */
-export const uploadProfilePicture = async (fileUrl: string): Promise<UserProfile> => {
-  return makeApiRequest<UserProfile>(USER_ENDPOINTS.UPLOAD_PROFILE_PICTURE, "PUT", { file_url: fileUrl });
+export const getPublicUserProfile = async (username: string): Promise<{profile: UserProfile, friend_status: string}> => {
+  return makeApiRequest<{profile: UserProfile, friend_status: string}>(`${USER_ENDPOINTS.PROFILE_PUBLIC}/${username}`);
 };
 
 /**
  * Lấy danh sách bạn bè
  */
-export const getFriendsList = async (page: number = 1, pageSize: number = 10): Promise<{friends: UserProfile[]}> => {
-  return makeApiRequest<{friends: UserProfile[]}>(`${USER_ENDPOINTS.FRIENDS}?page=${page}&page_size=${pageSize}`);
+export const getFriendsList = async (page: number = 1, limit: number = 10): Promise<{friends: UserProfile[]}> => {
+  return makeApiRequest<{friends: UserProfile[]}>(`${USER_ENDPOINTS.FRIENDS}?page=${page}&limit=${limit}`);
 };
 
 /**
  * Lấy danh sách gợi ý bạn bè
  */
-export const getFriendSuggestions = async (page: number = 1, pageSize: number = 5): Promise<{suggestions: UserProfile[]}> => {
-  return makeApiRequest<{suggestions: UserProfile[]}>(`${USER_ENDPOINTS.FRIEND_SUGGESTIONS}?page=${page}&page_size=${pageSize}`);
+export const getFriendSuggestions = async (limit: number = 5): Promise<UserProfile[]> => {
+  return makeApiRequest<UserProfile[]>(`${USER_ENDPOINTS.FRIEND_SUGGESTIONS}?limit=${limit}`);
 };
 
 /**
  * Gửi lời mời kết bạn
  */
-export const sendFriendRequest = async (userId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/send-request`, "POST", { user_id: userId });
+export const sendFriendRequest = async (friendID: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_REQUESTS, "POST", { friendID });
 };
 
 /**
- * Hủy kết bạn
+ * Hủy lời mời kết bạn
  */
-export const unfriend = async (userId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/unfriend`, "POST", { user_id: userId });
+export const cancelFriendRequest = async (friendId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "cancel", friendId });
 };
 
 /**
  * Chấp nhận lời mời kết bạn
  */
-export const acceptFriendRequest = async (userId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/accept-request`, "POST", { user_id: userId });
+export const acceptFriendRequest = async (requestId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "accept", requestId });
 };
 
 /**
  * Từ chối lời mời kết bạn
  */
-export const rejectFriendRequest = async (userId: number): Promise<ApiResponse> => {
-  return makeApiRequest<ApiResponse>(`${USER_ENDPOINTS.FRIEND_ACTION}/reject-request`, "POST", { user_id: userId });
+export const rejectFriendRequest = async (requestId: number): Promise<ApiResponse> => {
+  return makeApiRequest<ApiResponse>(USER_ENDPOINTS.FRIEND_ACTION, "POST", { action: "reject", requestId });
 };
 
 /**
  * Lấy danh sách lời mời kết bạn
  */
-export const getFriendRequests = async (page: number = 1, pageSize: number = 10): Promise<{requests: any[]}> => {
-  return makeApiRequest<{requests: any[]}>(`${USER_ENDPOINTS.FRIEND_REQUESTS}?page=${page}&page_size=${pageSize}`);
+export const getFriendRequests = async (page: number = 1, limit: number = 10): Promise<{requests: any[]}> => {
+  return makeApiRequest<{requests: any[]}>(`${USER_ENDPOINTS.FRIEND_REQUESTS}?page=${page}&limit=${limit}`);
 };
 
 /**

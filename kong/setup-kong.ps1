@@ -13,12 +13,16 @@ Write-Host "Kong is running."
 # Bước 0: Kích hoạt CORS plugin ở cấp global
 Write-Host "Enabling CORS plugin globally..."
 
-# Tạo form data cho CORS plugin với mảng các methods
-$formData = "name=cors&config.origins=*&config.credentials=true&config.max_age=3600&config.preflight_continue=false"
-$formData += "&config.methods=GET&config.methods=POST&config.methods=PUT&config.methods=DELETE&config.methods=OPTIONS"
+# Tạo form data cho CORS plugin với cấu hình đầy đủ hơn
+$formData = "name=cors"
+$formData += "&config.origins=*"
+$formData += "&config.methods=GET&config.methods=POST&config.methods=PUT&config.methods=DELETE&config.methods=OPTIONS&config.methods=PATCH"
 $formData += "&config.headers=Accept&config.headers=Accept-Version&config.headers=Content-Length&config.headers=Content-MD5"
-$formData += "&config.headers=Content-Type&config.headers=Date&config.headers=X-Auth-Token&config.headers=Authorization"
+$formData += "&config.headers=Content-Type&config.headers=Date&config.headers=X-Auth-Token&config.headers=Authorization&config.headers=Origin"
 $formData += "&config.exposed_headers=Authorization"
+$formData += "&config.credentials=true"
+$formData += "&config.max_age=3600"
+$formData += "&config.preflight_continue=false"
 
 Invoke-RestMethod -Uri "http://localhost:8001/plugins" -Method Post -Body $formData -ContentType "application/x-www-form-urlencoded"
 
@@ -298,21 +302,51 @@ if (Wait-RouteCreation "comment-auth-route") {
     Write-Warning "Skipping JWT plugin for comment-auth-route"
 }
 
+# Thêm route riêng cho request OPTIONS để xử lý CORS preflight
+Write-Host "Adding route for OPTIONS requests to handle CORS preflight..."
+
+# Tạo route cho OPTIONS request trên AuthService
+Invoke-RestMethod -Uri "http://localhost:8001/services/auth-service/routes" -Method Post -Body @{
+    "paths[]"   = "/auth"
+    name        = "auth-options-route"
+    "methods[]" = "OPTIONS"
+    strip_path  = "false"
+    regex_priority = 2000  # Ưu tiên cao hơn
+} -ContentType "application/x-www-form-urlencoded"
+
+# Tạo route cho OPTIONS request trên UserService
+Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/routes" -Method Post -Body @{
+    "paths[]"   = "/users"
+    name        = "users-options-route"
+    "methods[]" = "OPTIONS"
+    strip_path  = "false"
+    regex_priority = 2000  # Ưu tiên cao hơn
+} -ContentType "application/x-www-form-urlencoded"
+
+# Tạo route cho OPTIONS request trên PostService
+Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/routes" -Method Post -Body @{
+    "paths[]"   = "/post"
+    name        = "post-options-route"
+    "methods[]" = "OPTIONS"
+    strip_path  = "false"
+    regex_priority = 2000  # Ưu tiên cao hơn
+} -ContentType "application/x-www-form-urlencoded"
+
 # Bước 4: Thêm plugin CORS cho tất cả services
 # Kích hoạt plugin CORS cho AuthService
-Write-Host "Enabling CORS plugin for AuthService..."
-$bodyCorsAuth = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
-Invoke-RestMethod -Uri "http://localhost:8001/services/auth-service/plugins" -Method Post -Body $bodyCorsAuth -ContentType "application/x-www-form-urlencoded"
+# Write-Host "Enabling CORS plugin for AuthService..."
+# $bodyCorsAuth = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+# Invoke-RestMethod -Uri "http://localhost:8001/services/auth-service/plugins" -Method Post -Body $bodyCorsAuth -ContentType "application/x-www-form-urlencoded"
 
 # Kích hoạt plugin CORS cho UserService
-Write-Host "Enabling CORS plugin for UserService..."
-$bodyCorsUser = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
-Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/plugins" -Method Post -Body $bodyCorsUser -ContentType "application/x-www-form-urlencoded"
+# Write-Host "Enabling CORS plugin for UserService..."
+# $bodyCorsUser = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+# Invoke-RestMethod -Uri "http://localhost:8001/services/user-service/plugins" -Method Post -Body $bodyCorsUser -ContentType "application/x-www-form-urlencoded"
 
 # Kích hoạt plugin CORS cho PostService
-Write-Host "Enabling CORS plugin for PostService..."
-$bodyCorsPost = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
-Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/plugins" -Method Post -Body $bodyCorsPost -ContentType "application/x-www-form-urlencoded"
+# Write-Host "Enabling CORS plugin for PostService..."
+# $bodyCorsPost = "name=cors&config.origins=*&config.methods[]=GET&config.methods[]=POST&config.methods[]=PUT&config.methods[]=DELETE&config.methods[]=OPTIONS&config.headers[]=Content-Type&config.headers[]=Authorization&config.credentials=true&config.preflight_continue=false"
+# Invoke-RestMethod -Uri "http://localhost:8001/services/post-service/plugins" -Method Post -Body $bodyCorsPost -ContentType "application/x-www-form-urlencoded"
 
 # Bước 5: Tạo Consumer và JWT Credential
 Write-Host "Creating consumer 'test-user'..."

@@ -23,13 +23,14 @@ export const registerUser = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
+        credentials: "include",
       }
     );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Đăng ký thất bại");
+      throw new Error(data.error || data.message || "Đăng ký thất bại");
     }
 
     return data;

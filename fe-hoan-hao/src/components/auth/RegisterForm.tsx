@@ -41,11 +41,14 @@ const RegisterForm = () => {
   const { register: registerAuth } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formValues, setFormValues] = useState<Partial<RegisterFormValues>>({});
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
+    reset,
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -62,6 +65,16 @@ const RegisterForm = () => {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
+    // Lưu lại dữ liệu form trừ mật khẩu
+    setFormValues({
+      fullName: data.fullName,
+      username: data.username,
+      email: data.email,
+      dateOfBirth: data.dateOfBirth,
+      phoneNumber: data.phoneNumber,
+      countryCode: data.countryCode,
+    });
+    
     try {
       // Tạo dữ liệu để gửi đến API
       const userData: RegisterRequest = {
@@ -81,6 +94,13 @@ const RegisterForm = () => {
       if (success) {
         toast.success("Đăng ký thành công! Vui lòng đăng nhập.");
         navigate("/login");
+      } else {
+        // Giữ lại form trừ mật khẩu khi đăng ký thất bại
+        reset({
+          ...formValues,
+          password: "",
+          confirmPassword: "",
+        });
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -88,6 +108,12 @@ const RegisterForm = () => {
       } else {
         toast.error("Đã xảy ra lỗi khi đăng ký");
       }
+      // Giữ lại form trừ mật khẩu khi đăng ký thất bại
+      reset({
+        ...formValues,
+        password: "",
+        confirmPassword: "",
+      });
     } finally {
       setIsSubmitting(false); // Đặt lại trạng thái sau khi hoàn tất
     }
