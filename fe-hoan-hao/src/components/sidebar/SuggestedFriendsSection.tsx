@@ -1,90 +1,77 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { getFriends, getFriendSuggestions, sendFriendRequest } from "@/api/services/userApi";
 
 interface FriendSuggestion {
-  id: string;
-  name: string;
-  avatar: string;
-  mutualFriends: number;
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  profile_picture_url?: string;
+  cover_picture_url?: string;
+  mutual_friends?: number;
 }
 
 interface Friend {
-  id: string;
-  name: string;
-  avatar: string;
+  id: number;
+  username: string;
+  email: string;
+  full_name: string;
+  profile_picture_url?: string;
+  cover_picture_url?: string;
   status?: "online" | "offline";
-  lastActive?: string;
+  last_active?: string;
 }
 
 interface SuggestedFriendsSectionProps {
-  friends?: Friend[];
-  suggestions?: FriendSuggestion[];
   onSeeAll?: () => void;
-  onAddFriend?: (id: string) => void;
+  onAddFriend?: (id: number) => void;
 }
 
 const SuggestedFriendsSection = ({
-  friends = [
-    {
-      id: "f1",
-      name: "Alex Johnson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-      status: "online",
-    },
-    {
-      id: "f2",
-      name: "Sarah Williams",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-      status: "offline",
-      lastActive: "2 hours ago",
-    },
-    {
-      id: "f3",
-      name: "David Lee",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-      status: "online",
-    },
-  ],
-  suggestions = [
-    {
-      id: "1",
-      name: "Emma Thompson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma",
-      mutualFriends: 12,
-    },
-    {
-      id: "2",
-      name: "Michael Chen",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-      mutualFriends: 8,
-    },
-    {
-      id: "3",
-      name: "Sophia Rodriguez",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia",
-      mutualFriends: 5,
-    },
-    {
-      id: "4",
-      name: "James Wilson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James",
-      mutualFriends: 3,
-    },
-    {
-      id: "5",
-      name: "Olivia Parker",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia",
-      mutualFriends: 7,
-    },
-  ],
   onSeeAll,
-  onAddFriend = (id) => console.log(`Add friend ${id} clicked`),
+  onAddFriend,
 }: SuggestedFriendsSectionProps) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingActions, setPendingActions] = useState<number[]>([]);
+
+  // Load danh sách bạn bè
+  const loadFriends = async () => {
+    try {
+      const response = await getFriends('accepted', 1, 3); // Lấy 3 bạn bè mới nhất
+      setFriends(response.friends);
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách bạn bè:", error);
+      toast.error("Không thể tải danh sách bạn bè");
+    }
+  };
+
+  // Load gợi ý kết bạn
+  const loadSuggestions = async () => {
+    try {
+      const response = await getFriendSuggestions(5); // Lấy 5 gợi ý
+      setSuggestions(response.suggestions);
+    } catch (error) {
+      console.error("Lỗi khi tải gợi ý kết bạn:", error);
+      toast.error("Không thể tải gợi ý kết bạn");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFriends();
+    loadSuggestions();
+  }, []);
 
   const handleSeeAll = () => {
     if (onSeeAll) {
@@ -100,15 +87,42 @@ const SuggestedFriendsSection = ({
         newConversation: {
           user: {
             id: friend.id,
-            name: friend.name,
-            avatar: friend.avatar,
+            name: friend.full_name,
+            avatar: friend.profile_picture_url,
             status: friend.status,
-            lastActive: friend.lastActive,
+            lastActive: friend.last_active,
           },
         },
       },
     });
   };
+
+  const handleAddFriend = async (id: number) => {
+    try {
+      setPendingActions(prev => [...prev, id]);
+      await sendFriendRequest(id);
+      toast.success("Đã gửi lời mời kết bạn");
+      // Cập nhật lại danh sách gợi ý
+      loadSuggestions();
+      if (onAddFriend) {
+        onAddFriend(id);
+      }
+    } catch (error) {
+      toast.error("Không thể gửi lời mời kết bạn");
+    } finally {
+      setPendingActions(prev => prev.filter(friendId => friendId !== id));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="p-4 bg-white rounded-lg shadow-sm">
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 bg-white rounded-lg shadow-sm">
@@ -138,11 +152,11 @@ const SuggestedFriendsSection = ({
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full overflow-hidden relative">
                     <a
-                      href={`/profile/${friend.name.toLowerCase().replace(" ", "-")}`}
+                      href={`/profile/${friend.username}`}
                     >
                       <img
-                        src={friend.avatar}
-                        alt={friend.name}
+                        src={friend.profile_picture_url || "/avatardefaut.png"}
+                        alt={friend.full_name}
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -156,16 +170,16 @@ const SuggestedFriendsSection = ({
                   <div>
                     <p className="font-medium text-sm text-gray-800">
                       <a
-                        href={`/profile/${friend.name.toLowerCase().replace(" ", "-")}`}
+                        href={`/profile/${friend.username}`}
                         className="hover:underline"
                       >
-                        {friend.name}
+                        {friend.full_name}
                       </a>
                     </p>
                     <p className="text-xs text-gray-500">
                       {friend.status === "online"
                         ? t("friends.online") || "Online"
-                        : friend.lastActive}
+                        : friend.last_active}
                     </p>
                   </div>
                 </div>
@@ -205,11 +219,11 @@ const SuggestedFriendsSection = ({
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full overflow-hidden">
                   <a
-                    href={`/profile/${friend.name.toLowerCase().replace(" ", "-")}`}
+                    href={`/profile/${friend.username}`}
                   >
                     <img
-                      src={friend.avatar}
-                      alt={friend.name}
+                      src={friend.profile_picture_url || "/avatardefaut.png"}
+                      alt={friend.full_name}
                       className="h-full w-full object-cover"
                     />
                   </a>
@@ -217,23 +231,28 @@ const SuggestedFriendsSection = ({
                 <div>
                   <p className="font-medium text-sm text-gray-800">
                     <a
-                      href={`/profile/${friend.name.toLowerCase().replace(" ", "-")}`}
+                      href={`/profile/${friend.username}`}
                       className="hover:underline"
                     >
-                      {friend.name}
+                      {friend.full_name}
                     </a>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {friend.mutualFriends} {t("friends.mutualFriends")}
+                    {friend.mutual_friends} {t("friends.mutualFriends")}
                   </p>
                 </div>
               </div>
               <Button
                 size="sm"
                 className="bg-[#f2a2d2] hover:bg-pink-400 text-white"
-                onClick={() => onAddFriend(friend.id)}
+                onClick={() => handleAddFriend(friend.id)}
+                disabled={pendingActions.includes(friend.id)}
               >
-                {t("friends.add")}
+                {pendingActions.includes(friend.id) ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  t("friends.add") || "Kết bạn"
+                )}
               </Button>
             </div>
           ))}

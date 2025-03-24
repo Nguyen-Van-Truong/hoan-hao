@@ -14,7 +14,7 @@ import { Separator } from "../components/ui/separator";
 import PostFeed from "../components/post/PostFeed";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getCurrentUserProfile, getPublicUserProfile } from "@/api/services/userApi";
+import { getCurrentUserProfile, getPublicUserProfile, getFriends } from "@/api/services/userApi";
 import {
   Camera,
   Image,
@@ -492,6 +492,23 @@ const EditProfileDialog = ({
   );
 };
 
+interface Friend {
+  id: number;
+  user_id: number;
+  friend_id: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  friend: {
+    id: number;
+    username: string;
+    email: string;
+    full_name: string;
+    profile_picture_url?: string;
+    cover_picture_url?: string;
+  };
+}
+
 interface ProfileProps {
   isCurrentUser?: boolean;
 }
@@ -507,6 +524,8 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
   const [friendStatus, setFriendStatus] = useState<string | null>(null);
+  const [userFriends, setUserFriends] = useState<Friend[]>([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
 
   // Xác định xem đây là profile của người dùng hiện tại hay người khác
   const isSelfProfile = !userId || isCurrentUser;
@@ -634,29 +653,25 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=300&q=80",
   ];
 
-  // Mock friends for the friends tab
-  const userFriends = [
-    {
-      id: "f1",
-      name: "Alex Johnson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-    },
-    {
-      id: "f2",
-      name: "Sarah Miller",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-    },
-    {
-      id: "f3",
-      name: "Michael Brown",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-    },
-    {
-      id: "f4",
-      name: "Emily Wilson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-    },
-  ];
+  // Load danh sách bạn bè khi chuyển đến tab bạn bè
+  useEffect(() => {
+    const loadFriends = async () => {
+      if (activeTab === "friends" && userProfile) {
+        setIsLoadingFriends(true);
+        try {
+          const response = await getFriends('accepted', 1, 8); // Lấy 8 bạn bè đầu tiên
+          setUserFriends(response.friends);
+        } catch (error) {
+          console.error("Lỗi khi tải danh sách bạn bè:", error);
+          toast.error("Không thể tải danh sách bạn bè");
+        } finally {
+          setIsLoadingFriends(false);
+        }
+      }
+    };
+
+    loadFriends();
+  }, [activeTab, userProfile]);
 
   // Hiển thị trạng thái loading
   if (isLoading) {
@@ -903,32 +918,39 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                         </a>
                       </Button>
                     </div>
-                    {userFriends.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {userFriends.map((friend) => (
-                        <a
-                          key={friend.id}
-                          href={`/profile/${friend.name.toLowerCase().replace(" ", "-")}`}
-                          className="block group"
-                        >
-                          <div className="bg-gray-50 rounded-lg overflow-hidden transition-all group-hover:shadow-md">
-                            <div className="aspect-square">
-                              <img
-                                src={friend.avatar}
-                                alt={friend.name}
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            </div>
-                            <div className="p-2 text-center">
-                              <div className="font-medium text-sm group-hover:text-pink-500 transition-colors">
-                                {friend.name}
+                    {isLoadingFriends ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+                      </div>
+                    ) : userFriends.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {userFriends.map((friend) => (
+                          <a
+                            key={friend.id}
+                            href={`/profile/${friend.friend.username}`}
+                            className="block group"
+                          >
+                            <div className="bg-gray-50 rounded-lg overflow-hidden transition-all group-hover:shadow-md">
+                              <div className="aspect-square">
+                                <img
+                                  src={friend.friend.profile_picture_url || "/avatardefaut.png"}
+                                  alt={friend.friend.full_name}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                              <div className="p-2 text-center">
+                                <div className="font-medium text-sm group-hover:text-pink-500 transition-colors">
+                                  {friend.friend.full_name}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  @{friend.friend.username}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
+                          </a>
+                        ))}
+                      </div>
                     ) : (
                       <p className="text-center text-gray-500">Chưa có bạn bè</p>
                     )}
