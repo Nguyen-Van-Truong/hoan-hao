@@ -25,7 +25,7 @@ func SetupRoutes(
 	{
 		// Các route không yêu cầu xác thực
 		userRoutes.GET("", userController.GetUsers)
-		userRoutes.GET("/:id", userController.GetUser)
+		userRoutes.GET("/:username", userController.GetUser)
 
 		// Các route yêu cầu xác thực
 		protectedRoutes := userRoutes.Group("")
@@ -50,16 +50,16 @@ func SetupRoutes(
 			friendshipRoutes.GET("/suggestions", friendshipController.GetFriendSuggestions)
 
 			// Lấy danh sách bạn bè của người dùng khác
-			friendshipRoutes.GET("/user/:id", friendshipController.GetUserFriends)
+			friendshipRoutes.GET("/user/:username", friendshipController.GetUserFriends)
 
 			// Lấy số lượng bạn chung
-			friendshipRoutes.GET("/mutual/:id", friendshipController.GetMutualFriends)
+			friendshipRoutes.GET("/mutual/:username", friendshipController.GetMutualFriends)
 
 			// API đa năng xử lý các hành động bạn bè theo action
 			friendshipRoutes.POST("/:action", friendshipController.FriendshipActionHandler)
 
 			// Lấy trạng thái bạn bè với một người dùng
-			friendshipRoutes.GET("/status/:id", friendshipController.GetFriendshipStatus)
+			friendshipRoutes.GET("/status/:username", friendshipController.GetFriendshipStatus)
 		}
 	}
 

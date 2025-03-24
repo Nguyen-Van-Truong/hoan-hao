@@ -2,7 +2,7 @@ package request
 
 // FriendshipActionRequest là DTO cho các hành động về quan hệ bạn bè
 type FriendshipActionRequest struct {
-	FriendID int64 `json:"friend_id" binding:"required"`
+	FriendUsername string `json:"friend_username" binding:"required"`
 }
 
 // FriendListRequest là DTO cho việc lấy danh sách bạn bè

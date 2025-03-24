@@ -24,6 +24,7 @@ type FriendshipService interface {
 	GetFriendRequests(ctx context.Context, userID int64, req *request.FriendRequestsListRequest) (*response.FriendListResponse, error)
 	GetFriendSuggestions(ctx context.Context, userID int64, req *request.FriendSuggestionsRequest) (*response.FriendSuggestionListResponse, error)
 	GetMutualFriendsCount(ctx context.Context, userID, friendID int64) (int, error)
+	GetUserByUsername(ctx context.Context, username string) (*response.UserResponse, error)
 }
 
 // friendshipService triển khai FriendshipService
@@ -376,4 +377,40 @@ func (s *friendshipService) GetFriendSuggestions(ctx context.Context, userID int
 // GetMutualFriendsCount lấy số lượng bạn chung
 func (s *friendshipService) GetMutualFriendsCount(ctx context.Context, userID, friendID int64) (int, error) {
 	return s.friendshipRepo.GetMutualFriendsCount(ctx, userID, friendID)
+}
+
+// GetUserByUsername lấy thông tin người dùng theo username
+func (s *friendshipService) GetUserByUsername(ctx context.Context, username string) (*response.UserResponse, error) {
+	// Tìm người dùng từ repository
+	user, err := s.userRepo.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, nil
+	}
+
+	// Tạo UserResponse
+	userResponse := &response.UserResponse{
+		ID:                user.ID,
+		Username:          user.Username,
+		Email:             user.Email,
+		Phone:             user.Phone,
+		FullName:          user.FullName,
+		Bio:               user.Bio,
+		Location:          user.Location,
+		Website:           user.Website,
+		ProfilePictureURL: user.ProfilePictureURL,
+		CoverPictureURL:   user.CoverPictureURL,
+		IsVerified:        user.IsVerified,
+		CreatedAt:         user.CreatedAt,
+	}
+
+	// Định dạng ngày sinh nếu có
+	if !user.DateOfBirth.IsZero() {
+		userResponse.DateOfBirth = user.DateOfBirth.Format("2006-01-02")
+	}
+
+	return userResponse, nil
 }

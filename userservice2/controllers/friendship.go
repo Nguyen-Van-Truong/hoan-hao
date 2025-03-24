@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
+	_ "strconv"
 
 	"github.com/gin-gonic/gin"
 	"userservice2/dto/request"
@@ -30,13 +30,25 @@ func (c *FriendshipController) GetFriendshipStatus(ctx *gin.Context) {
 		return
 	}
 
-	friendID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID người dùng không hợp lệ"})
+	username := ctx.Param("username")
+	if username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username không hợp lệ"})
 		return
 	}
 
-	status, err := c.friendshipService.GetFriendshipStatus(ctx, userID.(int64), friendID)
+	// Tìm người dùng theo username
+	friend, err := c.friendshipService.GetUserByUsername(ctx, username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng: " + err.Error()})
+		return
+	}
+
+	if friend == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy người dùng"})
+		return
+	}
+
+	status, err := c.friendshipService.GetFriendshipStatus(ctx, userID.(int64), friend.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy trạng thái: " + err.Error()})
 		return
@@ -59,31 +71,43 @@ func (c *FriendshipController) FriendshipActionHandler(ctx *gin.Context) {
 		return
 	}
 
+	// Tìm người dùng theo username
+	friend, err := c.friendshipService.GetUserByUsername(ctx, req.FriendUsername)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng: " + err.Error()})
+		return
+	}
+
+	if friend == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy người dùng"})
+		return
+	}
+
 	action := ctx.Param("action")
-	var err error
+	var actionErr error
 
 	switch action {
 	case "send-request":
-		err = c.friendshipService.SendFriendRequest(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.SendFriendRequest(ctx, userID.(int64), friend.ID)
 	case "accept":
-		err = c.friendshipService.AcceptFriendRequest(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.AcceptFriendRequest(ctx, userID.(int64), friend.ID)
 	case "reject":
-		err = c.friendshipService.RejectFriendRequest(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.RejectFriendRequest(ctx, userID.(int64), friend.ID)
 	case "cancel":
-		err = c.friendshipService.CancelFriendRequest(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.CancelFriendRequest(ctx, userID.(int64), friend.ID)
 	case "unfriend":
-		err = c.friendshipService.Unfriend(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.Unfriend(ctx, userID.(int64), friend.ID)
 	case "block":
-		err = c.friendshipService.BlockFriend(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.BlockFriend(ctx, userID.(int64), friend.ID)
 	case "unblock":
-		err = c.friendshipService.UnblockFriend(ctx, userID.(int64), req.FriendID)
+		actionErr = c.friendshipService.UnblockFriend(ctx, userID.(int64), friend.ID)
 	default:
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Hành động không hợp lệ"})
 		return
 	}
 
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if actionErr != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": actionErr.Error()})
 		return
 	}
 
@@ -167,9 +191,21 @@ func (c *FriendshipController) GetUserFriends(ctx *gin.Context) {
 		return
 	}
 
-	targetUserID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	username := ctx.Param("username")
+	if username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username không hợp lệ"})
+		return
+	}
+
+	// Tìm người dùng theo username
+	targetUser, err := c.friendshipService.GetUserByUsername(ctx, username)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID người dùng không hợp lệ"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng: " + err.Error()})
+		return
+	}
+
+	if targetUser == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy người dùng"})
 		return
 	}
 
@@ -180,7 +216,7 @@ func (c *FriendshipController) GetUserFriends(ctx *gin.Context) {
 	}
 
 	// Kiểm tra nếu đang xem danh sách bạn bè của chính mình
-	if targetUserID == userID.(int64) {
+	if targetUser.ID == userID.(int64) {
 		result, err := c.friendshipService.GetFriends(ctx, userID.(int64), &req)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy danh sách bạn bè: " + err.Error()})
@@ -192,7 +228,7 @@ func (c *FriendshipController) GetUserFriends(ctx *gin.Context) {
 
 	// Nếu xem danh sách bạn bè của người khác, bắt buộc status phải là accepted
 	req.Status = "accepted"
-	result, err := c.friendshipService.GetFriends(ctx, targetUserID, &req)
+	result, err := c.friendshipService.GetFriends(ctx, targetUser.ID, &req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy danh sách bạn bè: " + err.Error()})
 		return
@@ -209,13 +245,25 @@ func (c *FriendshipController) GetMutualFriends(ctx *gin.Context) {
 		return
 	}
 
-	friendID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID người dùng không hợp lệ"})
+	username := ctx.Param("username")
+	if username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username không hợp lệ"})
 		return
 	}
 
-	count, err := c.friendshipService.GetMutualFriendsCount(ctx, userID.(int64), friendID)
+	// Tìm người dùng theo username
+	friend, err := c.friendshipService.GetUserByUsername(ctx, username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng: " + err.Error()})
+		return
+	}
+
+	if friend == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Không tìm thấy người dùng"})
+		return
+	}
+
+	count, err := c.friendshipService.GetMutualFriendsCount(ctx, userID.(int64), friend.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy số bạn chung: " + err.Error()})
 		return

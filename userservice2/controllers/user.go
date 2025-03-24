@@ -78,15 +78,15 @@ func (c *UserController) GetMe(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// GetUser lấy thông tin người dùng theo ID
+// GetUser lấy thông tin người dùng theo username
 func (c *UserController) GetUser(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID không hợp lệ"})
+	username := ctx.Param("username")
+	if username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username không hợp lệ"})
 		return
 	}
 
-	user, err := c.userService.GetUserByID(ctx, id)
+	user, err := c.userService.GetUserByUsername(ctx, username)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Không thể lấy thông tin người dùng"})
 		return
