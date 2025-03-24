@@ -88,9 +88,6 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 		"full_name":           user.FullName,
 		"bio":                 user.Bio,
 		"location":            user.Location,
-		"country_id":          user.CountryID,
-		"province_id":         user.ProvinceID,
-		"district_id":         user.DistrictID,
 		"website":             user.Website,
 		"profile_picture_url": user.ProfilePictureURL,
 		"cover_picture_url":   user.CoverPictureURL,
@@ -102,6 +99,19 @@ func (r *userRepository) Update(ctx context.Context, user *models.User) error {
 		"is_verified":         user.IsVerified,
 		"updated_at":          user.UpdatedAt,
 		"last_login_at":       user.LastLoginAt,
+	}
+
+	// Chỉ cập nhật các ID tham chiếu khi chúng có giá trị lớn hơn 0
+	if user.CountryID > 0 {
+		updates["country_id"] = user.CountryID
+	}
+
+	if user.ProvinceID > 0 {
+		updates["province_id"] = user.ProvinceID
+	}
+
+	if user.DistrictID > 0 {
+		updates["district_id"] = user.DistrictID
 	}
 
 	// Debug SQL
