@@ -40,7 +40,8 @@ func (r *friendshipRepository) Create(ctx context.Context, friendship *models.Fr
 // FindByID tìm mối quan hệ bạn bè theo ID
 func (r *friendshipRepository) FindByID(ctx context.Context, id int64) (*models.Friendship, error) {
 	var friendship models.Friendship
-	if err := r.db.Preload("User").Preload("Friend").Where("id = ?", id).First(&friendship).Error; err != nil {
+	err := r.db.Preload("User").Preload("Friend").First(&friendship, id).Error
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -49,13 +50,13 @@ func (r *friendshipRepository) FindByID(ctx context.Context, id int64) (*models.
 	return &friendship, nil
 }
 
-// FindByUserAndFriend tìm mối quan hệ bạn bè giữa hai người dùng
+// FindByUserAndFriend tìm quan hệ giữa hai người dùng
 func (r *friendshipRepository) FindByUserAndFriend(ctx context.Context, userID, friendID int64) (*models.Friendship, error) {
 	var friendship models.Friendship
 	err := r.db.Where(
 		"(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
 		userID, friendID, friendID, userID,
-	).First(&friendship).Error
+	).Preload("User").Preload("Friend").First(&friendship).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -63,6 +64,7 @@ func (r *friendshipRepository) FindByUserAndFriend(ctx context.Context, userID, 
 		}
 		return nil, err
 	}
+
 	return &friendship, nil
 }
 
@@ -79,55 +81,68 @@ func (r *friendshipRepository) Delete(ctx context.Context, id int64) error {
 
 // GetFriends lấy danh sách bạn bè của người dùng
 func (r *friendshipRepository) GetFriends(ctx context.Context, userID int64, page, pageSize int) ([]models.Friendship, int64, error) {
-	var friendships []models.Friendship
 	var total int64
+	offset := (page - 1) * pageSize
 
-	query := r.db.Model(&models.Friendship{}).
-		Preload("User").
-		Preload("Friend").
-		Where("(user_id = ? OR friend_id = ?) AND status = ?",
-			userID, userID, models.FriendshipStatusAccepted)
-
-	if err := query.Count(&total).Error; err != nil {
+	// Đếm tổng số bạn bè
+	err := r.db.Model(&models.Friendship{}).
+		Where("(user_id = ? OR friend_id = ?) AND status = ?", userID, userID, models.FriendshipStatusAccepted).
+		Count(&total).Error
+	if err != nil {
 		return nil, 0, err
 	}
 
-	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Order("updated_at DESC").Find(&friendships).Error; err != nil {
+	// Lấy danh sách bạn bè với phân trang
+	var friendships []models.Friendship
+	err = r.db.
+		Where("(user_id = ? OR friend_id = ?) AND status = ?", userID, userID, models.FriendshipStatusAccepted).
+		Preload("User").
+		Preload("Friend").
+		Offset(offset).
+		Limit(pageSize).
+		Order("updated_at DESC").
+		Find(&friendships).Error
+	if err != nil {
 		return nil, 0, err
 	}
 
 	return friendships, total, nil
 }
 
-// GetFriendRequests lấy danh sách yêu cầu kết bạn
+// GetFriendRequests lấy danh sách lời mời kết bạn của người dùng
 func (r *friendshipRepository) GetFriendRequests(ctx context.Context, userID int64, incoming bool, page, pageSize int) ([]models.Friendship, int64, error) {
-	var friendships []models.Friendship
 	var total int64
+	offset := (page - 1) * pageSize
 
-	var query *gorm.DB
+	var condition string
+	var args []interface{}
+
 	if incoming {
-		// Yêu cầu đến
-		query = r.db.Model(&models.Friendship{}).
-			Preload("User").
-			Preload("Friend").
-			Where("friend_id = ? AND status = ?",
-				userID, models.FriendshipStatusPending)
+		// Các yêu cầu đến (người khác gửi cho mình)
+		condition = "friend_id = ? AND status = ?"
+		args = []interface{}{userID, models.FriendshipStatusPending}
 	} else {
-		// Yêu cầu đi
-		query = r.db.Model(&models.Friendship{}).
-			Preload("User").
-			Preload("Friend").
-			Where("user_id = ? AND status = ?",
-				userID, models.FriendshipStatusPending)
+		// Các yêu cầu đi (mình gửi cho người khác)
+		condition = "user_id = ? AND status = ?"
+		args = []interface{}{userID, models.FriendshipStatusPending}
 	}
 
-	if err := query.Count(&total).Error; err != nil {
+	// Đếm tổng số lời mời
+	err := r.db.Model(&models.Friendship{}).Where(condition, args...).Count(&total).Error
+	if err != nil {
 		return nil, 0, err
 	}
 
-	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&friendships).Error; err != nil {
+	// Lấy danh sách lời mời với phân trang
+	var friendships []models.Friendship
+	err = r.db.Where(condition, args...).
+		Preload("User").
+		Preload("Friend").
+		Offset(offset).
+		Limit(pageSize).
+		Order("created_at DESC").
+		Find(&friendships).Error
+	if err != nil {
 		return nil, 0, err
 	}
 
@@ -136,10 +151,10 @@ func (r *friendshipRepository) GetFriendRequests(ctx context.Context, userID int
 
 // GetFriendSuggestions lấy gợi ý kết bạn
 func (r *friendshipRepository) GetFriendSuggestions(ctx context.Context, userID int64, limit int) ([]models.User, error) {
-	var users []models.User
-
+	// Tìm danh sách ID của người dùng tiềm năng
+	var userIDs []int64
 	err := r.db.Raw(`
-		SELECT u.* FROM users u
+		SELECT u.id FROM users u
 		WHERE u.id != ? AND u.is_active = true
 		AND u.id NOT IN (
 			SELECT user_id FROM friendships 
@@ -150,7 +165,23 @@ func (r *friendshipRepository) GetFriendSuggestions(ctx context.Context, userID 
 		)
 		ORDER BY RAND()
 		LIMIT ?
-	`, userID, userID, userID, limit).Scan(&users).Error
+	`, userID, userID, userID, limit).Pluck("id", &userIDs).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(userIDs) == 0 {
+		return []models.User{}, nil
+	}
+
+	// Lấy thông tin đầy đủ của người dùng bao gồm các preload cần thiết
+	var users []models.User
+	err = r.db.Where("id IN (?)", userIDs).
+		Preload("Country").
+		Preload("Province").
+		Preload("District").
+		Find(&users).Error
 
 	if err != nil {
 		return nil, err

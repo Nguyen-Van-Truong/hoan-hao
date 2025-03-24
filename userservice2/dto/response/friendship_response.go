@@ -21,7 +21,7 @@ type FriendResponse struct {
 type UserBasic struct {
 	ID                int64  `json:"id"`
 	Username          string `json:"username"`
-	Email             string `json:"email,omitempty"`
+	Email             string `json:"email"`
 	FullName          string `json:"full_name"`
 	ProfilePictureURL string `json:"profile_picture_url,omitempty"`
 	CoverPictureURL   string `json:"cover_picture_url,omitempty"`
@@ -39,7 +39,7 @@ type FriendListResponse struct {
 type FriendSuggestionResponse struct {
 	ID                 int64  `json:"id"`
 	Username           string `json:"username"`
-	Email              string `json:"email,omitempty"`
+	Email              string `json:"email"`
 	FullName           string `json:"full_name"`
 	ProfilePictureURL  string `json:"profile_picture_url,omitempty"`
 	CoverPictureURL    string `json:"cover_picture_url,omitempty"`

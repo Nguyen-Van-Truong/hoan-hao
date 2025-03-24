@@ -193,9 +193,6 @@ func (s *groupService) UpdateGroup(ctx context.Context, userID, groupID int64, r
 	if req.CoverImage != "" {
 		group.CoverImage = req.CoverImage
 	}
-	if req.Avatar != "" {
-		group.Avatar = req.Avatar
-	}
 	if req.Privacy != "" {
 		if req.Privacy == "public" {
 			group.Privacy = models.GroupPrivacyPublic

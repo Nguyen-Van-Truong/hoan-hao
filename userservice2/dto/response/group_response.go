@@ -12,7 +12,6 @@ type GroupResponse struct {
 	Description string    `json:"description"`
 	Privacy     string    `json:"privacy"`
 	CoverImage  string    `json:"cover_image"`
-	Avatar      string    `json:"avatar"`
 	MemberCount int       `json:"member_count"`
 	CreatedBy   int64     `json:"created_by"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -81,7 +80,6 @@ func ConvertToGroupResponse(group *models.UserGroup) GroupResponse {
 		Description: group.Description,
 		Privacy:     string(group.Privacy),
 		CoverImage:  group.CoverImage,
-		Avatar:      group.Avatar,
 		MemberCount: group.MemberCount,
 		CreatedBy:   group.CreatedBy,
 		CreatedAt:   group.CreatedAt,
@@ -89,8 +87,10 @@ func ConvertToGroupResponse(group *models.UserGroup) GroupResponse {
 		Creator: UserBrief{
 			ID:                group.Creator.ID,
 			Username:          group.Creator.Username,
+			Email:             group.Creator.Email,
 			FullName:          group.Creator.FullName,
 			ProfilePictureURL: group.Creator.ProfilePictureURL,
+			CoverPictureURL:   group.Creator.CoverPictureURL,
 		},
 	}
 }
@@ -110,8 +110,10 @@ func ConvertToGroupMemberResponse(member *models.GroupMember) GroupMemberRespons
 		User: UserBrief{
 			ID:                member.User.ID,
 			Username:          member.User.Username,
+			Email:             member.User.Email,
 			FullName:          member.User.FullName,
 			ProfilePictureURL: member.User.ProfilePictureURL,
+			CoverPictureURL:   member.User.CoverPictureURL,
 		},
 	}
 }

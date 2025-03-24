@@ -41,7 +41,7 @@ func (r *userRepository) Create(ctx context.Context, user *models.User) error {
 // FindByID tìm người dùng theo ID
 func (r *userRepository) FindByID(ctx context.Context, id int64) (*models.User, error) {
 	var user models.User
-	if err := r.db.Where("id = ?", id).First(&user).Error; err != nil {
+	if err := r.db.Preload("Country").Preload("Province").Preload("District").Where("id = ?", id).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -53,7 +53,7 @@ func (r *userRepository) FindByID(ctx context.Context, id int64) (*models.User, 
 // FindByUsername tìm người dùng theo tên đăng nhập
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
-	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
+	if err := r.db.Preload("Country").Preload("Province").Preload("District").Where("username = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -65,7 +65,7 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 // FindByEmail tìm người dùng theo email
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
-	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.db.Preload("Country").Preload("Province").Preload("District").Where("email = ?", email).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -129,7 +129,7 @@ func (r *userRepository) List(ctx context.Context, page, pageSize int) ([]models
 	}
 
 	offset := (page - 1) * pageSize
-	if err := r.db.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
+	if err := r.db.Preload("Country").Preload("Province").Preload("District").Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -141,11 +141,11 @@ func (s *userService) GetUserByID(ctx context.Context, id int64) (*response.User
 	if err != nil {
 		return nil, err
 	}
-
 	if user == nil {
 		return nil, ErrUserNotFound
 	}
 
+	// Chuyển đổi sang UserResponse
 	return convertToUserResponse(user), nil
 }
 

@@ -20,7 +20,6 @@ type UserGroup struct {
 	Description string       `json:"description" gorm:"type:text"`
 	Privacy     GroupPrivacy `json:"privacy" gorm:"type:enum('public','private');default:'public';index:idx_privacy"`
 	CoverImage  string       `json:"cover_image" gorm:"size:255"`
-	Avatar      string       `json:"avatar" gorm:"size:255"`
 	CreatedBy   int64        `json:"created_by" gorm:"not null;index:idx_created_by"`
 	MemberCount int          `json:"member_count" gorm:"default:0"`
 	CreatedAt   time.Time    `json:"created_at" gorm:"autoCreateTime"`

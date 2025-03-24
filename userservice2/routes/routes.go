@@ -81,10 +81,6 @@ func SetupRoutes(
 			protectedGroupRoutes.DELETE("/:id", groupController.DeleteGroup)
 			protectedGroupRoutes.GET("/me", groupController.ListMyGroups)
 
-			// Upload ảnh nhóm
-			protectedGroupRoutes.PUT("/:id/cover-image", groupController.UploadGroupCoverImage)
-			protectedGroupRoutes.PUT("/:id/avatar", groupController.UploadGroupAvatar)
-
 			// Tham gia/rời nhóm
 			protectedGroupRoutes.POST("/join", groupController.JoinGroup)
 			protectedGroupRoutes.POST("/:id/leave", groupController.LeaveGroup)

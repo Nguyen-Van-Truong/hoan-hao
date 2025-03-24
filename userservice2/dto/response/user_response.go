@@ -29,6 +29,8 @@ type UserResponse struct {
 type UserBrief struct {
 	ID                int64  `json:"id"`
 	Username          string `json:"username"`
+	Email             string `json:"email,omitempty"`
 	FullName          string `json:"full_name"`
 	ProfilePictureURL string `json:"profile_picture_url,omitempty"`
+	CoverPictureURL   string `json:"cover_picture_url,omitempty"`
 }
