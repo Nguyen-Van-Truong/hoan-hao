@@ -211,7 +211,7 @@ public class AuthService implements IAuthService {
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
 
-        String userServiceUrl = "http://localhost:8083/user/createProfile";
+        String userServiceUrl = "http://localhost:8081/user/createProfile";
         UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
                 savedUser.getId(),
                 userDto.getUsername(),
