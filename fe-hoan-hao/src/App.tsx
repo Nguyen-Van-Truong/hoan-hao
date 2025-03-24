@@ -111,7 +111,7 @@ function App() {
                   path="/profile"
                   element={<Profile isCurrentUser={true} />}
                 />
-                <Route path="/profile/:userId" element={<Profile />} />
+                <Route path="/profile/:username" element={<Profile />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route
                   path="/friends/suggestions"

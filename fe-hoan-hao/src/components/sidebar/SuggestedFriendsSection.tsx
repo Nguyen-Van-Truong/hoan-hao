@@ -159,6 +159,9 @@ const SuggestedFriendsSection = ({
                         alt={friend.full_name}
                         className="h-full w-full object-cover"
                         loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "/avatardefaut.png";
+                        }}
                       />
                     </a>
                     {friend.status && (
@@ -225,6 +228,10 @@ const SuggestedFriendsSection = ({
                       src={friend.profile_picture_url || "/avatardefaut.png"}
                       alt={friend.full_name}
                       className="h-full w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = "/avatardefaut.png";
+                      }}
                     />
                   </a>
                 </div>

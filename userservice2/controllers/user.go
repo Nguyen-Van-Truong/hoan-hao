@@ -97,6 +97,37 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 		return
 	}
 
+	// Kiểm tra xem người dùng đã đăng nhập chưa
+	currentUserID, exists := ctx.Get("userID")
+
+	// Nếu người dùng đã đăng nhập, thêm thông tin về mối quan hệ bạn bè
+	if exists && currentUserID != nil {
+		loggedInUserID := currentUserID.(int64)
+
+		// Nếu đang xem chính profile của mình
+		if loggedInUserID == user.ID {
+			// Trả về với friendship_status là "self"
+			response := gin.H{
+				"user":              user,
+				"friendship_status": "self",
+			}
+			ctx.JSON(http.StatusOK, response)
+			return
+		}
+
+		// Nếu đang xem profile của người khác, lấy trạng thái bạn bè
+		friendshipStatus, err := c.userService.GetFriendshipStatus(ctx, loggedInUserID, user.ID)
+		if err == nil {
+			response := gin.H{
+				"user":              user,
+				"friendship_status": string(friendshipStatus),
+			}
+			ctx.JSON(http.StatusOK, response)
+			return
+		}
+	}
+
+	// Trường hợp người dùng chưa đăng nhập hoặc có lỗi khi lấy trạng thái bạn bè
 	ctx.JSON(http.StatusOK, user)
 }
 

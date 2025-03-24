@@ -30,6 +30,10 @@ import {
   Pencil,
   Loader2,
   Upload,
+  UserMinus,
+  UserX,
+  UserCheck,
+  Ban,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import {
@@ -52,8 +56,8 @@ interface UserProfileData {
   username: string;
   full_name: string; 
   email?: string;
-  profile_picture_url: string;
-  cover_picture_url: string;
+  profile_picture_url?: string;
+  cover_picture_url?: string;
   bio?: string;
   date_of_birth?: string;
   phone?: string;
@@ -64,11 +68,9 @@ interface UserProfileData {
   is_verified?: boolean;
   created_at?: string;
   // Thống kê cơ bản
-  friends_count?: number;
+  friend_count?: number;
   photos_count?: number;
   videos_count?: number;
-  // Status bạn bè
-  friend_status?: string;
 }
 
 interface UserPost {
@@ -308,9 +310,12 @@ const EditProfileDialog = ({
           {/* Phần ảnh bìa */}
           <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100">
             <img
-              src={previewCover}
+              src={previewCover || "/coverphotodefault.png"}
               alt="Cover"
               className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = "/coverphotodefault.png";
+              }}
             />
             <div className="absolute bottom-4 right-4 flex space-x-2">
               <Button
@@ -355,9 +360,12 @@ const EditProfileDialog = ({
             <div className="relative">
               <div className="h-24 w-24 rounded-full overflow-hidden border-4 border-white shadow-md">
                 <img
-                  src={previewAvatar}
+                  src={previewAvatar || "/avatardefaut.png"}
                   alt="Avatar"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/avatardefaut.png";
+                  }}
                 />
               </div>
               <Button
@@ -377,7 +385,7 @@ const EditProfileDialog = ({
                 className="hidden"
               />
             </div>
-            {editData.profile_picture && (
+            {editData.profile_picture&& (
               <Button
                 type="button"
                 variant="outline"
@@ -528,7 +536,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
-  const [friendStatus, setFriendStatus] = useState<string>("none");
+  const [friendshipStatus, setFriendshipStatus] = useState<string>("none");
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -536,22 +544,25 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   const friendsPerPage = 8;
   
   // Xác định xem đây là profile của người dùng hiện tại hay người khác
-  const isSelfProfile = !username || isCurrentUser;
+  const isSelfProfile = !username || (username === user?.username) || isCurrentUser;
 
   // Load thông tin profile
   useEffect(() => {
     const fetchProfileData = async () => {
       setIsLoading(true);
       try {
-        if (isSelfProfile && user) {
+        if (isSelfProfile) {
           // Nếu là profile của người dùng hiện tại
           const profileData = await getCurrentUserProfile();
           setUserProfile(profileData);
+          setFriendshipStatus("self");
         } else if (username) {
           // Nếu là profile của người khác
-          const { profile, friend_status } = await getPublicUserProfile(username);
-          setUserProfile(profile);
-          setFriendStatus(friend_status);
+          const response = await getPublicUserProfile(username);
+          if (response && response.user) {
+            setUserProfile(response.user);
+            setFriendshipStatus(response.friendship_status || "none");
+          }
         }
       } catch (error) {
         console.error("Lỗi khi tải thông tin profile:", error);
@@ -566,8 +577,6 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
 
   // Handle profile update
   const handleProfileUpdate = async (updatedProfile: Partial<UserProfileData>) => {
-    // Thay vì chỉ cập nhật state, chuyển logic cập nhật đến EditProfileDialog
-    // State userProfile sẽ được cập nhật thông qua AuthContext hook useAuth
     setUserProfile(prev => prev ? { ...prev, ...updatedProfile } : null);
   };
 
@@ -579,7 +588,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       state: {
         newConversation: {
           user: {
-            id: userProfile.id || username || "unknown",
+            id: userProfile.id,
             name: userProfile.full_name,
             avatar: userProfile.profile_picture_url,
             status: "online", // Giả định online
@@ -589,13 +598,41 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     });
   };
 
-  // Handle add friend
-  const handleAddFriend = async () => {
+  // Handle friend actions
+  const handleFriendAction = async () => {
+    if (!userProfile) return;
+
     try {
-      // API call to add friend would go here
-      toast.success(`Đã gửi lời mời kết bạn đến ${userProfile?.full_name}`);
+      switch (friendshipStatus) {
+        case "none":
+          // Gửi lời mời kết bạn
+          // API call to send friend request would go here
+          toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
+          setFriendshipStatus("pending");
+          break;
+        case "pending":
+          // Hủy lời mời hoặc chấp nhận lời mời (tùy theo hướng của lời mời)
+          // API call would go here
+          toast.success(`Đã hủy lời mời kết bạn với ${userProfile.full_name}`);
+          setFriendshipStatus("none");
+          break;
+        case "accepted":
+          // Hủy kết bạn
+          // API call would go here
+          toast.success(`Đã hủy kết bạn với ${userProfile.full_name}`);
+          setFriendshipStatus("none");
+          break;
+        case "rejected":
+          // Gửi lại lời mời kết bạn
+          // API call would go here
+          toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
+          setFriendshipStatus("pending");
+          break;
+        default:
+          break;
+      }
     } catch (error) {
-      toast.error("Không thể gửi lời mời kết bạn");
+      toast.error("Không thể thực hiện hành động này");
     }
   };
 
@@ -605,58 +642,48 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       // Ở đây sẽ gọi API để lấy bài viết của user
       // Mock data cho demo
       setUserPosts([
-    {
-      id: "u1",
+        {
+          id: "u1",
           type: "gallery",
-      author: {
-            name: userProfile.full_name,
-            avatar: userProfile.profile_picture_url,
-            timestamp: "2 giờ trước",
+          author: {
+                name: userProfile.full_name,
+                avatar: userProfile.profile_picture_url || "/avatardefaut.png",
+                timestamp: "2 giờ trước",
+              },
+              content: "Một ngày đẹp trời tại bãi biển! #Weekend #Ocean",
+          engagement: {
+            likes: 87,
+            comments: 23,
+            shares: 7,
           },
-          content: "Một ngày đẹp trời tại bãi biển! #Weekend #Ocean",
-      engagement: {
-        likes: 87,
-        comments: 23,
-        shares: 7,
-      },
-      images: [
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80",
-        "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=500&q=80",
-        "https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=500&q=80",
-      ],
-      totalImages: 3,
-      commentsList: [],
-    },
-    {
-      id: "u2",
+          images: [
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80",
+            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=500&q=80",
+            "https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=500&q=80",
+          ],
+          totalImages: 3,
+          commentsList: [],
+        },
+        {
+          id: "u2",
           type: "regular",
-      author: {
-            name: userProfile.full_name,
-            avatar: userProfile.profile_picture_url,
-            timestamp: "Hôm qua",
-      },
-      content:
-            "Vừa đọc xong một cuốn sách tuyệt vời! Tôi rất khuyên các bạn đọc 'The Midnight Library' của Matt Haig. Ai đã đọc cuốn này chưa? #BookRecommendations #Reading",
-      engagement: {
-        likes: 42,
-        comments: 15,
-        shares: 3,
-      },
-      commentsList: [],
-    },
+          author: {
+                name: userProfile.full_name,
+                avatar: userProfile.profile_picture_url || "/avatardefaut.png",
+                timestamp: "Hôm qua",
+          },
+          content:
+                "Vừa đọc xong một cuốn sách tuyệt vời! Tôi rất khuyên các bạn đọc 'The Midnight Library' của Matt Haig. Ai đã đọc cuốn này chưa? #BookRecommendations #Reading",
+          engagement: {
+            likes: 42,
+            comments: 15,
+            shares: 3,
+          },
+          commentsList: [],
+        },
       ]);
     }
   }, [userProfile]);
-
-  // Mock photos for the photos tab
-  const userPhotos = [
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=80",
-    "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=300&q=80",
-    "https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=300&q=80",
-    "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=300&q=80",
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&q=80",
-    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=300&q=80",
-  ];
 
   // Load danh sách bạn bè khi chuyển đến tab bạn bè
   useEffect(() => {
@@ -665,8 +692,8 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
         setIsLoadingFriends(true);
         try {
           const response = await getFriends('accepted', currentPage, friendsPerPage);
-          setUserFriends(response.friends);
-          setTotalPages(Math.ceil(response.total / friendsPerPage));
+          setUserFriends(response.friends || []);
+          setTotalPages(Math.ceil((response.total || 0) / friendsPerPage));
         } catch (error) {
           console.error("Lỗi khi tải danh sách bạn bè:", error);
           toast.error("Không thể tải danh sách bạn bè");
@@ -720,6 +747,9 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
               alt="Cover"
               className="w-full h-full object-cover"
               loading="lazy"
+              onError={(e) => {
+                e.currentTarget.src = "/coverphotodefault.png";
+              }}
             />
             {isSelfProfile && (
               <Button
@@ -739,10 +769,13 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
             <div className="flex flex-col md:flex-row items-center md:items-end">
               <Avatar className="h-32 w-32 border-4 border-white -mt-20 md:-mt-24 mb-2 md:mb-0">
                 <img
-                  src={userProfile.profile_picture_url}
+                  src={userProfile.profile_picture_url || "/avatardefaut.png"}
                   alt={userProfile.full_name}
                   className="rounded-full"
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.src = "/avatardefaut.png";
+                  }}
                 />
               </Avatar>
 
@@ -772,22 +805,49 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                     <>
                       <Button 
                         className="bg-pink-500 hover:bg-pink-600 text-white"
-                        onClick={handleAddFriend}
+                        onClick={handleFriendAction}
                       >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        {friendStatus === "none" && (t("profile.addFriend") || "Kết bạn")}
-                        {friendStatus === "pending_sent" && (t("profile.pendingRequest") || "Đã gửi lời mời")}
-                        {friendStatus === "pending_received" && (t("profile.acceptRequest") || "Xác nhận lời mời")}
-                        {friendStatus === "friends" && (t("profile.friends") || "Bạn bè")}
+                        {friendshipStatus === "none" && (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            {t("profile.addFriend") || "Kết bạn"}
+                          </>
+                        )}
+                        {friendshipStatus === "pending" && (
+                          <>
+                            <UserX className="h-4 w-4 mr-1" />
+                            {t("profile.cancelRequest") || "Hủy lời mời"}
+                          </>
+                        )}
+                        {friendshipStatus === "accepted" && (
+                          <>
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            {t("profile.friends") || "Bạn bè"}
+                          </>
+                        )}
+                        {friendshipStatus === "rejected" && (
+                          <>
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            {t("profile.sendRequest") || "Gửi lời mời kết bạn"}
+                          </>
+                        )}
+                        {friendshipStatus === "blocked" && (
+                          <>
+                            <Ban className="h-4 w-4 mr-1" />
+                            {t("profile.blocked") || "Đã chặn"}
+                          </>
+                        )}
                       </Button>
-                      <Button
-                        variant="outline"
-                        className="border-pink-300 text-pink-600 hover:bg-pink-50"
-                        onClick={handleMessageClick}
-                      >
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        {t("profile.message") || "Nhắn tin"}
-                      </Button>
+                      {friendshipStatus !== "blocked" && (
+                        <Button
+                          variant="outline"
+                          className="border-pink-300 text-pink-600 hover:bg-pink-50"
+                          onClick={handleMessageClick}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {t("profile.message") || "Nhắn tin"}
+                        </Button>
+                      )}
                     </>
                   )}
                   <Button variant="outline" size="icon">
@@ -802,7 +862,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
             {/* Profile Stats */}
             <div className="flex flex-wrap justify-around text-center">
               <div className="px-4 py-2">
-                <div className="font-semibold">{userProfile.friends_count || 0}</div>
+                <div className="font-semibold">{userProfile.friend_count || 0}</div>
                 <div className="text-sm text-gray-500">
                   {t("profile.friends") || "Bạn bè"}
                 </div>
@@ -918,7 +978,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-xl font-semibold">
-                        {userProfile.friends_count || 0} {t("profile.friends") || "Bạn bè"}
+                        {userProfile.friend_count || 0} {t("profile.friends") || "Bạn bè"}
                       </h2>
                       <Button
                         variant="outline"
@@ -949,6 +1009,9 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                                     alt={friend.friend.full_name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "/avatardefaut.png";
+                                    }}
                                   />
                                 </div>
                                 <div className="p-2 text-center">
@@ -995,25 +1058,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                         {t("profile.seeAllPhotos") || "Xem tất cả ảnh"}
                       </Button>
                     </div>
-                    {userPhotos.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      {userPhotos.map((photo, index) => (
-                        <div
-                          key={index}
-                          className="aspect-square rounded-lg overflow-hidden"
-                        >
-                          <img
-                            src={photo}
-                            alt={`Photo ${index + 1}`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                            loading="lazy"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    ) : (
-                      <p className="text-center text-gray-500">Chưa có ảnh nào</p>
-                    )}
+                    {/* User photos content */}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1033,8 +1078,8 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                 work: userProfile.work || "",
                 education: userProfile.education || "",
                 relationship: userProfile.relationship || "",
-                avatar: userProfile.profile_picture_url,
-                coverPhoto: userProfile.cover_picture_url,
+                avatar: userProfile.profile_picture_url || "",
+                coverPhoto: userProfile.cover_picture_url || "",
               }}
             />
           )}

@@ -30,6 +30,7 @@ type UserService interface {
 	UploadCoverPicture(ctx context.Context, id int64, fileURL string) error
 	ListUsers(ctx context.Context, page, pageSize int) (*response.UserListResponse, error)
 	CreateUserProfileFromAuth(ctx context.Context, user *models.User) error
+	GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error)
 }
 
 // userService triển khai UserService
@@ -282,4 +283,27 @@ func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*respo
 		PageSize:   pageSize,
 		TotalPages: totalPages,
 	}, nil
+}
+
+// GetFriendshipStatus lấy trạng thái quan hệ bạn bè giữa hai người dùng
+func (s *userService) GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error) {
+	if userID == friendID {
+		return models.FriendshipStatusNone, nil
+	}
+
+	friendship, err := s.friendshipRepo.FindByUserAndFriend(ctx, userID, friendID)
+	if err != nil {
+		return "", err
+	}
+
+	if friendship == nil {
+		return models.FriendshipStatusNone, nil
+	}
+
+	// Nếu người dùng bị chặn, trả về none (để bảo vệ thông tin)
+	if friendship.Status == models.FriendshipStatusBlocked && friendship.UserID != userID {
+		return models.FriendshipStatusNone, nil
+	}
+
+	return friendship.Status, nil
 }

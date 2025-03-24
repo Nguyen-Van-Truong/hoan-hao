@@ -5,13 +5,15 @@ import axios from "axios";
 const USER_ENDPOINTS = {
   PROFILE: "/users/profile",
   PROFILE_ME: "/users/me",
-  PROFILE_PUBLIC: "/users/profile/public/username",
+  PROFILE_PUBLIC: "/users",
   UPDATE_PROFILE: "/users/profile",
-  FRIENDS: "/users/friends",
-  FRIEND_SUGGESTIONS: "/users/friends/suggestions",
-  FRIEND_REQUESTS: "/users/friends/requests",
-  FRIEND_ACTION: "/users/friends/actions",
-  FRIEND_STATUS: "/users/friends/status",
+  FRIENDS: "/friends",
+  FRIEND_SUGGESTIONS: "/friends/suggestions",
+  FRIEND_REQUESTS: "/friends/requests",
+  FRIEND_ACTION: "/friends",
+  FRIEND_STATUS: "/friends/status",
+  FRIEND_USER: "/friends/user",
+  FRIEND_MUTUAL: "/friends/mutual",
 };
 
 // Chuẩn hóa hàm api với các header thích hợp
@@ -72,8 +74,8 @@ export const getCurrentUserProfile = async (): Promise<UserProfile> => {
 /**
  * Lấy thông tin profile người dùng công khai theo username
  */
-export const getPublicUserProfile = async (username: string): Promise<{profile: UserProfile, friend_status: string}> => {
-  return makeApiRequest<{profile: UserProfile, friend_status: string}>(`${USER_ENDPOINTS.PROFILE_PUBLIC}/${username}`);
+export const getPublicUserProfile = async (username: string): Promise<{user: UserProfile, friendship_status: string}> => {
+  return makeApiRequest<{user: UserProfile, friendship_status: string}>(`${USER_ENDPOINTS.PROFILE_PUBLIC}/${username}`);
 };
 
 /**
