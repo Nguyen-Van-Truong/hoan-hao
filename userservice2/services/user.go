@@ -34,13 +34,15 @@ type UserService interface {
 
 // userService triển khai UserService
 type userService struct {
-	userRepo repositories.UserRepository
+	userRepo       repositories.UserRepository
+	friendshipRepo repositories.FriendshipRepository
 }
 
 // NewUserService tạo instance mới của UserService
-func NewUserService(userRepo repositories.UserRepository) UserService {
+func NewUserService(userRepo repositories.UserRepository, friendshipRepo repositories.FriendshipRepository) UserService {
 	return &userService{
-		userRepo: userRepo,
+		userRepo:       userRepo,
+		friendshipRepo: friendshipRepo,
 	}
 }
 
@@ -79,7 +81,7 @@ func convertToLocationResponse(country *models.Country, province *models.Provinc
 }
 
 // convertToUserResponse chuyển đổi từ User sang UserResponse
-func convertToUserResponse(user *models.User) *response.UserResponse {
+func (s *userService) convertToUserResponse(ctx context.Context, user *models.User) *response.UserResponse {
 	if user == nil {
 		return nil
 	}
@@ -115,6 +117,12 @@ func convertToUserResponse(user *models.User) *response.UserResponse {
 		userResp.LocationDetail = convertToLocationResponse(user.Country, user.Province, user.District)
 	}
 
+	// Thêm số lượng bạn bè
+	friendCount, err := s.friendshipRepo.GetFriendCount(ctx, user.ID)
+	if err == nil {
+		userResp.FriendCount = friendCount
+	}
+
 	return userResp
 }
 
@@ -146,7 +154,7 @@ func (s *userService) GetUserByID(ctx context.Context, id int64) (*response.User
 	}
 
 	// Chuyển đổi sang UserResponse
-	return convertToUserResponse(user), nil
+	return s.convertToUserResponse(ctx, user), nil
 }
 
 // GetUserByUsername lấy thông tin người dùng theo username
@@ -160,7 +168,7 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 		return nil, ErrUserNotFound
 	}
 
-	return convertToUserResponse(user), nil
+	return s.convertToUserResponse(ctx, user), nil
 }
 
 // UpdateProfile cập nhật thông tin cá nhân
@@ -261,7 +269,7 @@ func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*respo
 	userResponses := make([]response.UserResponse, 0, len(users))
 	for _, user := range users {
 		userCopy := user // Tạo bản sao để tránh vấn đề với biến trong vòng lặp
-		userResponse := convertToUserResponse(&userCopy)
+		userResponse := s.convertToUserResponse(ctx, &userCopy)
 		userResponses = append(userResponses, *userResponse)
 	}
 

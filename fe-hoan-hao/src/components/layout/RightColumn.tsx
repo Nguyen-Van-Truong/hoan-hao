@@ -119,7 +119,7 @@ const RightColumn = ({
 
         <AdvertisingSection ads={ads} />
 
-        <SuggestedFriendsSection suggestions={friendSuggestions} />
+        <SuggestedFriendsSection />
       </div>
   );
 };

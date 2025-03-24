@@ -45,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import Pagination from "@/components/ui/pagination";
 
 interface UserProfileData {
   id?: number;
@@ -514,34 +515,41 @@ interface ProfileProps {
 }
 
 const Profile = ({ isCurrentUser = false }: ProfileProps) => {
+  const { username } = useParams();
   const { t } = useLanguage();
-  const { userId } = useParams<{ userId: string }>();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState("posts");
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Basic states
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
-  const [friendStatus, setFriendStatus] = useState<string | null>(null);
+  const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [userFriends, setUserFriends] = useState<Friend[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
-
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("posts");
+  const [friendStatus, setFriendStatus] = useState<string>("none");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const friendsPerPage = 8;
+  
   // Xác định xem đây là profile của người dùng hiện tại hay người khác
-  const isSelfProfile = !userId || isCurrentUser;
+  const isSelfProfile = !username || isCurrentUser;
 
   // Load thông tin profile
   useEffect(() => {
     const fetchProfileData = async () => {
       setIsLoading(true);
       try {
-        if (isSelfProfile && authUser) {
+        if (isSelfProfile && user) {
           // Nếu là profile của người dùng hiện tại
           const profileData = await getCurrentUserProfile();
           setUserProfile(profileData);
-        } else if (userId) {
+        } else if (username) {
           // Nếu là profile của người khác
-          const { profile, friend_status } = await getPublicUserProfile(userId);
+          const { profile, friend_status } = await getPublicUserProfile(username);
           setUserProfile(profile);
           setFriendStatus(friend_status);
         }
@@ -554,7 +562,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     };
 
     fetchProfileData();
-  }, [userId, isSelfProfile, authUser]);
+  }, [username, isSelfProfile, user]);
 
   // Handle profile update
   const handleProfileUpdate = async (updatedProfile: Partial<UserProfileData>) => {
@@ -571,7 +579,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       state: {
         newConversation: {
           user: {
-            id: userProfile.id || userId || "unknown",
+            id: userProfile.id || username || "unknown",
             name: userProfile.full_name,
             avatar: userProfile.profile_picture_url,
             status: "online", // Giả định online
@@ -591,9 +599,6 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     }
   };
 
-  // Mock user posts
-  const [userPosts, setUserPosts] = useState<UserPost[]>([]);
-  
   // Load bài viết của user
   useEffect(() => {
     if (userProfile) {
@@ -659,8 +664,9 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       if (activeTab === "friends" && userProfile) {
         setIsLoadingFriends(true);
         try {
-          const response = await getFriends('accepted', 1, 8); // Lấy 8 bạn bè đầu tiên
+          const response = await getFriends('accepted', currentPage, friendsPerPage);
           setUserFriends(response.friends);
+          setTotalPages(Math.ceil(response.total / friendsPerPage));
         } catch (error) {
           console.error("Lỗi khi tải danh sách bạn bè:", error);
           toast.error("Không thể tải danh sách bạn bè");
@@ -671,8 +677,13 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     };
 
     loadFriends();
-  }, [activeTab, userProfile]);
+  }, [activeTab, userProfile, currentPage]);
 
+  // Xử lý khi thay đổi trang
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  
   // Hiển thị trạng thái loading
   if (isLoading) {
     return (
@@ -923,34 +934,46 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                         <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
                       </div>
                     ) : userFriends.length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {userFriends.map((friend) => (
-                          <a
-                            key={friend.id}
-                            href={`/profile/${friend.friend.username}`}
-                            className="block group"
-                          >
-                            <div className="bg-gray-50 rounded-lg overflow-hidden transition-all group-hover:shadow-md">
-                              <div className="aspect-square">
-                                <img
-                                  src={friend.friend.profile_picture_url || "/avatardefaut.png"}
-                                  alt={friend.friend.full_name}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
-                              </div>
-                              <div className="p-2 text-center">
-                                <div className="font-medium text-sm group-hover:text-pink-500 transition-colors">
-                                  {friend.friend.full_name}
+                      <>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {userFriends.map((friend) => (
+                            <a
+                              key={friend.id}
+                              href={`/profile/${friend.friend.username}`}
+                              className="block group"
+                            >
+                              <div className="bg-gray-50 rounded-lg overflow-hidden transition-all group-hover:shadow-md">
+                                <div className="aspect-square">
+                                  <img
+                                    src={friend.friend.profile_picture_url || "/avatardefaut.png"}
+                                    alt={friend.friend.full_name}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
                                 </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  @{friend.friend.username}
+                                <div className="p-2 text-center">
+                                  <div className="font-medium text-sm group-hover:text-pink-500 transition-colors">
+                                    {friend.friend.full_name}
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    @{friend.friend.username}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
+                            </a>
+                          ))}
+                        </div>
+                        
+                        {totalPages > 1 && (
+                          <div className="mt-6">
+                            <Pagination
+                              currentPage={currentPage}
+                              totalPages={totalPages}
+                              onPageChange={handlePageChange}
+                            />
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <p className="text-center text-gray-500">Chưa có bạn bè</p>
                     )}

@@ -21,6 +21,7 @@ type UserResponse struct {
 	Work              string            `json:"work,omitempty"`
 	Education         string            `json:"education,omitempty"`
 	Relationship      string            `json:"relationship,omitempty"`
+	FriendCount       int               `json:"friend_count"`
 	IsVerified        bool              `json:"is_verified"`
 	CreatedAt         time.Time         `json:"created_at"`
 }

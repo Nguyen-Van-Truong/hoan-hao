@@ -115,11 +115,11 @@ function App() {
                 <Route path="/friends" element={<Friends />} />
                 <Route
                   path="/friends/suggestions"
-                  element={<Friends initialTab="suggestions" />}
+                  element={<Friends/>}
                 />
                 <Route
                   path="/friends/requests"
-                  element={<Friends initialTab="requests" />}
+                  element={<Friends/>}
                 />
                 <Route path="/games" element={<Games />} />
                 <Route path="/games/:gameId" element={<GameDetail />} />

@@ -20,6 +20,7 @@ type FriendshipRepository interface {
 	GetFriendRequests(ctx context.Context, userID int64, incoming bool, page, pageSize int) ([]models.Friendship, int64, error)
 	GetFriendSuggestions(ctx context.Context, userID int64, limit int) ([]models.User, error)
 	GetMutualFriendsCount(ctx context.Context, userID, otherUserID int64) (int, error)
+	GetFriendCount(ctx context.Context, userID int64) (int, error)
 }
 
 // friendshipRepository triển khai FriendshipRepository
@@ -215,4 +216,14 @@ func (r *friendshipRepository) GetMutualFriendsCount(ctx context.Context, userID
 	}
 
 	return count, nil
+}
+
+// GetFriendCount lấy số lượng bạn bè của người dùng
+func (r *friendshipRepository) GetFriendCount(ctx context.Context, userID int64) (int, error) {
+	var count int
+	err := r.db.Model(&models.Friendship{}).
+		Where("(user_id = ? OR friend_id = ?) AND status = ?", userID, userID, models.FriendshipStatusAccepted).
+		Count(&count).Error
+
+	return count, err
 }

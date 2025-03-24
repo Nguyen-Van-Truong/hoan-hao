@@ -75,7 +75,7 @@ func main() {
 	groupMemberRepo := repositories.NewGroupMemberRepository(db)
 
 	// Initialize services
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, friendshipRepo)
 	friendshipService := services.NewFriendshipService(friendshipRepo, userRepo)
 	groupService := services.NewGroupService(userGroupRepo, groupMemberRepo, userRepo)
 
