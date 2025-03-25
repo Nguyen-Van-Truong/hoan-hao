@@ -235,7 +235,12 @@ const Friends = () => {
                                 />
                               </Avatar>
                             </a>
-                            <h3 className="font-semibold text-center">{friend.friend.full_name}</h3>
+                            <h3 className="font-semibold text-center">
+                              <a href={`/profile/${friend.friend.username}`} className="hover:text-pink-500 transition-colors">
+                                {friend.friend.full_name}
+                              </a>
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">@{friend.friend.username}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -278,7 +283,12 @@ const Friends = () => {
                                 />
                               </Avatar>
                             </a>
-                            <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                            <h3 className="font-semibold text-center">
+                              <a href={`/profile/${request.friend.username}`} className="hover:text-pink-500 transition-colors">
+                                {request.friend.full_name}
+                              </a>
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">@{request.friend.username}</p>
                             <div className="flex space-x-2 mt-2">
                               <Button
                                 size="sm"
@@ -331,7 +341,12 @@ const Friends = () => {
                                 />
                               </Avatar>
                             </a>
-                            <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
+                            <h3 className="font-semibold text-center">
+                              <a href={`/profile/${request.friend.username}`} className="hover:text-pink-500 transition-colors">
+                                {request.friend.full_name}
+                              </a>
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">@{request.friend.username}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -374,7 +389,12 @@ const Friends = () => {
                                 />
                               </Avatar>
                             </a>
-                            <h3 className="font-semibold text-center">{suggestion.full_name}</h3>
+                            <h3 className="font-semibold text-center">
+                              <a href={`/profile/${suggestion.username}`} className="hover:text-pink-500 transition-colors">
+                                {suggestion.full_name}
+                              </a>
+                            </h3>
+                            <p className="text-xs text-gray-500 mb-2">@{suggestion.username}</p>
                             <Button
                               size="sm"
                               className="mt-2"
