@@ -30,7 +30,7 @@ type UserService interface {
 	UploadCoverPicture(ctx context.Context, id int64, fileURL string) error
 	ListUsers(ctx context.Context, page, pageSize int) (*response.UserListResponse, error)
 	CreateUserProfileFromAuth(ctx context.Context, user *models.User) error
-	GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error)
+	GetFriendshipStatus(ctx context.Context, userID, friendID int64) (string, error)
 }
 
 // userService triển khai UserService
@@ -286,9 +286,9 @@ func (s *userService) ListUsers(ctx context.Context, page, pageSize int) (*respo
 }
 
 // GetFriendshipStatus lấy trạng thái quan hệ bạn bè giữa hai người dùng
-func (s *userService) GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error) {
+func (s *userService) GetFriendshipStatus(ctx context.Context, userID, friendID int64) (string, error) {
 	if userID == friendID {
-		return models.FriendshipStatusNone, nil
+		return "self", nil
 	}
 
 	friendship, err := s.friendshipRepo.FindByUserAndFriend(ctx, userID, friendID)
@@ -297,13 +297,24 @@ func (s *userService) GetFriendshipStatus(ctx context.Context, userID, friendID 
 	}
 
 	if friendship == nil {
-		return models.FriendshipStatusNone, nil
+		return string(models.FriendshipStatusNone), nil
 	}
 
 	// Nếu người dùng bị chặn, trả về none (để bảo vệ thông tin)
 	if friendship.Status == models.FriendshipStatusBlocked && friendship.UserID != userID {
-		return models.FriendshipStatusNone, nil
+		return string(models.FriendshipStatusNone), nil
 	}
 
-	return friendship.Status, nil
+	// Nếu trạng thái là pending, xác định ai là người gửi lời mời
+	if friendship.Status == models.FriendshipStatusPending {
+		if friendship.UserID == userID {
+			// Người dùng hiện tại là người gửi lời mời
+			return "pending_outgoing", nil
+		} else {
+			// Người dùng hiện tại là người nhận lời mời
+			return "pending_incoming", nil
+		}
+	}
+
+	return string(friendship.Status), nil
 }

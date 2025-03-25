@@ -4,10 +4,11 @@ import (
 	"net/http"
 	_ "strconv"
 
-	"github.com/gin-gonic/gin"
 	"userservice2/dto/request"
 	_ "userservice2/dto/response"
 	"userservice2/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // FriendshipController xử lý các API liên quan đến bạn bè
@@ -54,7 +55,7 @@ func (c *FriendshipController) GetFriendshipStatus(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"status": string(status)})
+	ctx.JSON(http.StatusOK, gin.H{"status": status})
 }
 
 // FriendshipActionHandler xử lý chung cho các hành động về bạn bè

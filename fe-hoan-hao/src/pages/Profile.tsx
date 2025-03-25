@@ -50,6 +50,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import Pagination from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UserProfileData {
   id?: number;
@@ -598,6 +606,59 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     });
   };
 
+  // Xử lý chặn/bỏ chặn người dùng
+  const handleBlockUser = async () => {
+    if (!userProfile) return;
+    
+    try {
+      // Trong trường hợp thực tế, sẽ gọi API tại đây
+      const newStatus = friendshipStatus === "blocked" ? "none" : "blocked";
+      
+      // Cập nhật UI trước, API thực sự sẽ được triển khai sau
+      setFriendshipStatus(newStatus);
+      
+      // Hiển thị thông báo thành công
+      if (newStatus === "blocked") {
+        toast.success(`Đã chặn ${userProfile.full_name}`);
+      } else {
+        toast.success(`Đã bỏ chặn ${userProfile.full_name}`);
+      }
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái chặn:", error);
+      toast.error("Không thể thực hiện hành động này");
+    }
+  };
+
+  // Xử lý hủy kết bạn
+  const handleUnfriend = async () => {
+    if (!userProfile) return;
+    
+    try {
+      // Gọi API hủy kết bạn sẽ được thêm ở đây
+      // Cập nhật UI trước
+      setFriendshipStatus("none");
+      toast.success(`Đã hủy kết bạn với ${userProfile.full_name}`);
+    } catch (error) {
+      console.error("Lỗi khi hủy kết bạn:", error);
+      toast.error("Không thể hủy kết bạn");
+    }
+  };
+
+  // Xử lý từ chối lời mời kết bạn
+  const handleRejectFriendRequest = async () => {
+    if (!userProfile) return;
+    
+    try {
+      // Gọi API từ chối lời mời kết bạn sẽ được thêm ở đây
+      // Cập nhật UI trước
+      setFriendshipStatus("none");
+      toast.success(`Đã từ chối lời mời kết bạn từ ${userProfile.full_name}`);
+    } catch (error) {
+      console.error("Lỗi khi từ chối lời mời kết bạn:", error);
+      toast.error("Không thể từ chối lời mời kết bạn");
+    }
+  };
+
   // Handle friend actions
   const handleFriendAction = async () => {
     if (!userProfile) return;
@@ -608,25 +669,25 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
           // Gửi lời mời kết bạn
           // API call to send friend request would go here
           toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
-          setFriendshipStatus("pending");
+          setFriendshipStatus("pending_outgoing");
           break;
-        case "pending":
-          // Hủy lời mời hoặc chấp nhận lời mời (tùy theo hướng của lời mời)
+        case "pending_outgoing":
+          // Hủy lời mời kết bạn đã gửi
           // API call would go here
           toast.success(`Đã hủy lời mời kết bạn với ${userProfile.full_name}`);
           setFriendshipStatus("none");
           break;
-        case "accepted":
-          // Hủy kết bạn
+        case "pending_incoming":
+          // Chấp nhận lời mời kết bạn
           // API call would go here
-          toast.success(`Đã hủy kết bạn với ${userProfile.full_name}`);
-          setFriendshipStatus("none");
+          toast.success(`Đã chấp nhận lời mời kết bạn từ ${userProfile.full_name}`);
+          setFriendshipStatus("accepted");
           break;
         case "rejected":
           // Gửi lại lời mời kết bạn
           // API call would go here
           toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
-          setFriendshipStatus("pending");
+          setFriendshipStatus("pending_outgoing");
           break;
         default:
           break;
@@ -803,56 +864,114 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                         </>
                     ) : (
                         <>
-                          <Button
+                          {friendshipStatus === "accepted" ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  className="bg-pink-500 hover:bg-pink-600 text-white"
+                                >
+                                  <UserCheck className="h-4 w-4 mr-1" />
+                                  {t("profile.friends") || "Bạn bè"}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={handleUnfriend}>
+                                  <UserMinus className="h-4 w-4 mr-2" />
+                                  {t("profile.unfriend") || "Hủy kết bạn"}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <Button
                               className="bg-pink-500 hover:bg-pink-600 text-white"
                               onClick={handleFriendAction}
-                          >
-                            {friendshipStatus === "none" && (
+                            >
+                              {friendshipStatus === "none" && (
                                 <>
                                   <UserPlus className="h-4 w-4 mr-1" />
                                   {t("profile.addFriend") || "Kết bạn"}
                                 </>
-                            )}
-                            {friendshipStatus === "pending" && (
+                              )}
+                              {friendshipStatus === "pending_outgoing" && (
                                 <>
                                   <UserX className="h-4 w-4 mr-1" />
                                   {t("profile.cancelRequest") || "Hủy lời mời"}
                                 </>
-                            )}
-                            {friendshipStatus === "accepted" && (
+                              )}
+                              {friendshipStatus === "pending_incoming" && (
                                 <>
                                   <UserCheck className="h-4 w-4 mr-1" />
-                                  {t("profile.friends") || "Bạn bè"}
+                                  {t("profile.acceptFriend") || "Chấp nhận"}
                                 </>
-                            )}
-                            {friendshipStatus === "rejected" && (
+                              )}
+                              {friendshipStatus === "rejected" && (
                                 <>
                                   <UserPlus className="h-4 w-4 mr-1" />
                                   {t("profile.sendRequest") || "Gửi lời mời kết bạn"}
                                 </>
-                            )}
-                            {friendshipStatus === "blocked" && (
+                              )}
+                              {friendshipStatus === "blocked" && (
                                 <>
                                   <Ban className="h-4 w-4 mr-1" />
                                   {t("profile.blocked") || "Đã chặn"}
                                 </>
-                            )}
-                          </Button>
-                          {friendshipStatus !== "blocked" && (
-                              <Button
-                                  variant="outline"
-                                  className="border-pink-300 text-pink-600 hover:bg-pink-50"
-                                  onClick={handleMessageClick}
-                              >
-                                <MessageCircle className="h-4 w-4 mr-1" />
-                                {t("profile.message") || "Nhắn tin"}
-                              </Button>
+                              )}
+                            </Button>
+                          )}
+                          
+                          {friendshipStatus === "pending_incoming" && (
+                            <Button
+                              variant="outline"
+                              className="border-pink-300 text-pink-600 hover:bg-pink-50"
+                              onClick={handleRejectFriendRequest}
+                            >
+                              <UserX className="h-4 w-4 mr-1" />
+                              {t("profile.rejectFriend") || "Từ chối"}
+                            </Button>
+                          )}
+                          
+                          {(friendshipStatus === "accepted" || friendshipStatus === "none" || friendshipStatus === "pending_outgoing" || friendshipStatus === "rejected") && friendshipStatus !== "blocked" && (
+                            <Button
+                              variant="outline"
+                              className="border-pink-300 text-pink-600 hover:bg-pink-50"
+                              onClick={handleMessageClick}
+                            >
+                              <MessageCircle className="h-4 w-4 mr-1" />
+                              {t("profile.message") || "Nhắn tin"}
+                            </Button>
                           )}
                         </>
                     )}
-                    <Button variant="outline" size="icon">
-                      <MoreHorizontal className="h-5 w-5" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>{t("profile.options") || "Tùy chọn"}</DropdownMenuLabel>
+                        {!isSelfProfile && (
+                          <>
+                            {friendshipStatus !== "blocked" ? (
+                              <DropdownMenuItem onClick={handleBlockUser}>
+                                <Ban className="h-4 w-4 mr-2" />
+                                {t("profile.blockUser") || "Chặn người dùng này"}
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={handleBlockUser}>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                {t("profile.unblockUser") || "Bỏ chặn người dùng này"}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <DropdownMenuItem>
+                          <Mail className="h-4 w-4 mr-2" />
+                          {t("profile.reportUser") || "Báo cáo vi phạm"}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>

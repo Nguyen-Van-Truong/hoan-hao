@@ -374,6 +374,16 @@ const translations: Record<Language, Record<string, string>> = {
     "profile.backToHome": "Back to Home",
     "profile.loading": "Loading...",
 
+    "profile.cancelRequest": "Cancel Request",
+    "profile.options": "Options",
+    "profile.blockUser": "Block",
+    "profile.reportUser": "Report",
+    "profile.blocked": "Blocked",
+    "profile.unfriend": "Un Friend",
+    "profile.acceptFriend": "Accept",
+    "profile.rejectFriend": "Reject",
+    "profile.unblockUser": "Unblock",
+
     // Common (Added from your request)
     "common.cancel": "Cancel",
     "common.saving": "Saving...",
@@ -457,6 +467,7 @@ const translations: Record<Language, Record<string, string>> = {
     "friends.addFriend": "Add Friend",
     "friends.online": "Online",
     "friends.offline": "Offline",
+
 
     // Games Page
     "games.title": "Games",
@@ -875,6 +886,17 @@ const translations: Record<Language, Record<string, string>> = {
     "profile.backToHome": "Quay về trang chủ",
     "profile.loading": "Đang tải thông tin...",
 
+    "profile.acceptFriend": "Chấp nhận",
+    "profile.rejectFriend": "Từ chối",
+
+    "profile.cancelRequest": "Hủy yêu cầu",
+    "profile.options": "Lựa chọn",
+    "profile.blockUser": "Chặn",
+    "profile.reportUser": "Báo cáo",
+    "profile.blocked": "Đã bị chặn",
+    "profile.unfriend": "Hủy bạn bè",
+    "profile.unblockUser": "Hủy chặn",
+
     // Common (Added from your request)
     "common.cancel": "Hủy",
     "common.saving": "Đang lưu...",
@@ -958,6 +980,7 @@ const translations: Record<Language, Record<string, string>> = {
     "friends.addFriend": "Kết bạn",
     "friends.online": "Trực tuyến",
     "friends.offline": "Ngoại tuyến",
+
 
     // Games Page
     "games.title": "Trò chơi",

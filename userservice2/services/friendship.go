@@ -19,7 +19,7 @@ type FriendshipService interface {
 	Unfriend(ctx context.Context, userID, friendID int64) error
 	BlockFriend(ctx context.Context, userID, friendID int64) error
 	UnblockFriend(ctx context.Context, userID, friendID int64) error
-	GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error)
+	GetFriendshipStatus(ctx context.Context, userID, friendID int64) (string, error)
 	GetFriends(ctx context.Context, userID int64, req *request.FriendListRequest) (*response.FriendListResponse, error)
 	GetFriendRequests(ctx context.Context, userID int64, req *request.FriendRequestsListRequest) (*response.FriendListResponse, error)
 	GetFriendSuggestions(ctx context.Context, userID int64, req *request.FriendSuggestionsRequest) (*response.FriendSuggestionListResponse, error)
@@ -124,7 +124,7 @@ func (s *friendshipService) RejectFriendRequest(ctx context.Context, userID, fri
 		return errors.New("không thể từ chối lời mời kết bạn này")
 	}
 
-	friendship.Status = models.FriendshipStatusRejected
+	friendship.Status = models.FriendshipStatusNone
 	return s.friendshipRepo.Update(ctx, friendship)
 }
 
@@ -218,7 +218,7 @@ func (s *friendshipService) UnblockFriend(ctx context.Context, userID, friendID 
 	}
 
 	// Chỉ bỏ chặn khi người dùng là người đã chặn và trạng thái là blocked
-	if friendship.UserID != userID || friendship.Status != models.FriendshipStatusBlocked {
+	if friendship.UserID != userID || friendship.Status != models.FriendshipStatusNone {
 		return errors.New("người dùng này chưa bị chặn")
 	}
 
@@ -226,9 +226,9 @@ func (s *friendshipService) UnblockFriend(ctx context.Context, userID, friendID 
 }
 
 // GetFriendshipStatus lấy trạng thái quan hệ bạn bè
-func (s *friendshipService) GetFriendshipStatus(ctx context.Context, userID, friendID int64) (models.FriendshipStatus, error) {
+func (s *friendshipService) GetFriendshipStatus(ctx context.Context, userID, friendID int64) (string, error) {
 	if userID == friendID {
-		return models.FriendshipStatusNone, nil
+		return "self", nil
 	}
 
 	friendship, err := s.friendshipRepo.FindByUserAndFriend(ctx, userID, friendID)
@@ -237,15 +237,26 @@ func (s *friendshipService) GetFriendshipStatus(ctx context.Context, userID, fri
 	}
 
 	if friendship == nil {
-		return models.FriendshipStatusNone, nil
+		return string(models.FriendshipStatusNone), nil
 	}
 
 	// Nếu người dùng bị chặn, trả về none (để bảo vệ thông tin)
 	if friendship.Status == models.FriendshipStatusBlocked && friendship.UserID != userID {
-		return models.FriendshipStatusNone, nil
+		return string(models.FriendshipStatusNone), nil
 	}
 
-	return friendship.Status, nil
+	// Nếu trạng thái là pending, xác định ai là người gửi lời mời
+	if friendship.Status == models.FriendshipStatusPending {
+		if friendship.UserID == userID {
+			// Người dùng hiện tại là người gửi lời mời
+			return "pending_outgoing", nil
+		} else {
+			// Người dùng hiện tại là người nhận lời mời
+			return "pending_incoming", nil
+		}
+	}
+
+	return string(friendship.Status), nil
 }
 
 // GetFriends lấy danh sách bạn bè

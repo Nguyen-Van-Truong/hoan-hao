@@ -243,15 +243,16 @@ export const getFriendSuggestions = async (limit: number = 10) => {
   }
 };
 
-export const sendFriendRequest = async (userId: number) => {
+// API hành động bạn bè theo thiết kế mới
+export const friendshipAction = async (action: string, friendUsername: string): Promise<{message: string}> => {
   try {
     const token = getAccessToken();
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }
 
-    const response = await axios.post(`${API_BASE_URL}/friends/requests`, {
-      friend_id: userId
+    const response = await axios.post(`${API_BASE_URL}/friends/${action}`, {
+      friend_username: friendUsername
     }, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -264,78 +265,37 @@ export const sendFriendRequest = async (userId: number) => {
   }
 };
 
-export const acceptFriendRequest = async (requestId: number) => {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-
-    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/accept`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// Hàm gửi lời mời kết bạn
+export const sendFriendRequest = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('send-request', username);
 };
 
-export const rejectFriendRequest = async (requestId: number) => {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-
-    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/reject`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// Hàm chấp nhận lời mời kết bạn
+export const acceptFriendRequest = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('accept', username);
 };
 
-export const cancelFriendRequest = async (requestId: number) => {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
-
-    const response = await axios.post(`${API_BASE_URL}/friends/requests/${requestId}/cancel`, {}, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// Hàm từ chối lời mời kết bạn
+export const rejectFriendRequest = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('reject', username);
 };
 
-export const unfriend = async (friendId: number) => {
-  try {
-    const token = getAccessToken();
-    if (!token) {
-      throw new Error("Bạn chưa đăng nhập");
-    }
+// Hàm hủy lời mời kết bạn đã gửi
+export const cancelFriendRequest = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('cancel', username);
+};
 
-    const response = await axios.delete(`${API_BASE_URL}/friends/${friendId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      withCredentials: true
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+// Hàm hủy kết bạn
+export const unfriend = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('unfriend', username);
+};
+
+// Hàm chặn người dùng
+export const blockUser = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('block', username);
+};
+
+// Hàm bỏ chặn người dùng
+export const unblockUser = async (username: string): Promise<{message: string}> => {
+  return friendshipAction('unblock', username);
 };

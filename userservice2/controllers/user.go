@@ -11,9 +11,10 @@ import (
 	_ "userservice2/dto/response"
 	"userservice2/utils"
 
-	"github.com/gin-gonic/gin"
 	_ "userservice2/models"
 	"userservice2/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // UserController xử lý các request liên quan đến người dùng
@@ -120,7 +121,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 		if err == nil {
 			response := gin.H{
 				"user":              user,
-				"friendship_status": string(friendshipStatus),
+				"friendship_status": friendshipStatus,
 			}
 			ctx.JSON(http.StatusOK, response)
 			return
