@@ -14,7 +14,18 @@ import { Separator } from "../components/ui/separator";
 import PostFeed from "../components/post/PostFeed";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getCurrentUserProfile, getPublicUserProfile, getFriends } from "@/api/services/userApi";
+import {
+  getCurrentUserProfile,
+  getPublicUserProfile,
+  getFriends,
+  sendFriendRequest,
+  cancelFriendRequest,
+  acceptFriendRequest,
+  rejectFriendRequest,
+  unfriend,
+  blockUser,
+  unblockUser
+} from "@/api/services/userApi";
 import {
   Camera,
   Image,
@@ -611,17 +622,16 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     if (!userProfile) return;
     
     try {
-      // Trong trường hợp thực tế, sẽ gọi API tại đây
-      const newStatus = friendshipStatus === "blocked" ? "none" : "blocked";
-      
-      // Cập nhật UI trước, API thực sự sẽ được triển khai sau
-      setFriendshipStatus(newStatus);
-      
-      // Hiển thị thông báo thành công
-      if (newStatus === "blocked") {
-        toast.success(`Đã chặn ${userProfile.full_name}`);
-      } else {
+      if (friendshipStatus === "blocked") {
+        // Bỏ chặn người dùng
+        await unblockUser(userProfile.username);
+        setFriendshipStatus("none");
         toast.success(`Đã bỏ chặn ${userProfile.full_name}`);
+      } else {
+        // Chặn người dùng
+        await blockUser(userProfile.username);
+        setFriendshipStatus("blocked");
+        toast.success(`Đã chặn ${userProfile.full_name}`);
       }
     } catch (error) {
       console.error("Lỗi khi thay đổi trạng thái chặn:", error);
@@ -634,8 +644,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     if (!userProfile) return;
     
     try {
-      // Gọi API hủy kết bạn sẽ được thêm ở đây
-      // Cập nhật UI trước
+      await unfriend(userProfile.username);
       setFriendshipStatus("none");
       toast.success(`Đã hủy kết bạn với ${userProfile.full_name}`);
     } catch (error) {
@@ -649,13 +658,26 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     if (!userProfile) return;
     
     try {
-      // Gọi API từ chối lời mời kết bạn sẽ được thêm ở đây
-      // Cập nhật UI trước
+      await rejectFriendRequest(userProfile.username);
       setFriendshipStatus("none");
       toast.success(`Đã từ chối lời mời kết bạn từ ${userProfile.full_name}`);
     } catch (error) {
       console.error("Lỗi khi từ chối lời mời kết bạn:", error);
       toast.error("Không thể từ chối lời mời kết bạn");
+    }
+  };
+
+  // Xử lý chấp nhận lời mời kết bạn
+  const handleAcceptFriendRequest = async () => {
+    if (!userProfile) return;
+    
+    try {
+      await acceptFriendRequest(userProfile.username);
+      setFriendshipStatus("accepted");
+      toast.success(`Đã chấp nhận lời mời kết bạn từ ${userProfile.full_name}`);
+    } catch (error) {
+      console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
+      toast.error("Không thể chấp nhận lời mời kết bạn");
     }
   };
 
@@ -667,25 +689,25 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       switch (friendshipStatus) {
         case "none":
           // Gửi lời mời kết bạn
-          // API call to send friend request would go here
+          await sendFriendRequest(userProfile.username);
           toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
           setFriendshipStatus("pending_outgoing");
           break;
         case "pending_outgoing":
           // Hủy lời mời kết bạn đã gửi
-          // API call would go here
+          await cancelFriendRequest(userProfile.username);
           toast.success(`Đã hủy lời mời kết bạn với ${userProfile.full_name}`);
           setFriendshipStatus("none");
           break;
         case "pending_incoming":
           // Chấp nhận lời mời kết bạn
-          // API call would go here
+          await acceptFriendRequest(userProfile.username);
           toast.success(`Đã chấp nhận lời mời kết bạn từ ${userProfile.full_name}`);
           setFriendshipStatus("accepted");
           break;
         case "rejected":
           // Gửi lại lời mời kết bạn
-          // API call would go here
+          await sendFriendRequest(userProfile.username);
           toast.success(`Đã gửi lời mời kết bạn đến ${userProfile.full_name}`);
           setFriendshipStatus("pending_outgoing");
           break;
@@ -693,6 +715,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
           break;
       }
     } catch (error) {
+      console.error("Lỗi khi thực hiện hành động kết bạn:", error);
       toast.error("Không thể thực hiện hành động này");
     }
   };
@@ -881,6 +904,24 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                          ) : friendshipStatus === "pending_incoming" ? (
+                            <div className="flex space-x-2">
+                              <Button
+                                className="bg-pink-500 hover:bg-pink-600 text-white"
+                                onClick={handleAcceptFriendRequest}
+                              >
+                                <UserCheck className="h-4 w-4 mr-1" />
+                                {t("profile.acceptFriend") || "Chấp nhận"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-pink-300 text-pink-600 hover:bg-pink-50"
+                                onClick={handleRejectFriendRequest}
+                              >
+                                <UserX className="h-4 w-4 mr-1" />
+                                {t("profile.rejectFriend") || "Từ chối"}
+                              </Button>
+                            </div>
                           ) : (
                             <Button
                               className="bg-pink-500 hover:bg-pink-600 text-white"
@@ -898,12 +939,6 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                                   {t("profile.cancelRequest") || "Hủy lời mời"}
                                 </>
                               )}
-                              {friendshipStatus === "pending_incoming" && (
-                                <>
-                                  <UserCheck className="h-4 w-4 mr-1" />
-                                  {t("profile.acceptFriend") || "Chấp nhận"}
-                                </>
-                              )}
                               {friendshipStatus === "rejected" && (
                                 <>
                                   <UserPlus className="h-4 w-4 mr-1" />
@@ -919,18 +954,7 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                             </Button>
                           )}
                           
-                          {friendshipStatus === "pending_incoming" && (
-                            <Button
-                              variant="outline"
-                              className="border-pink-300 text-pink-600 hover:bg-pink-50"
-                              onClick={handleRejectFriendRequest}
-                            >
-                              <UserX className="h-4 w-4 mr-1" />
-                              {t("profile.rejectFriend") || "Từ chối"}
-                            </Button>
-                          )}
-                          
-                          {(friendshipStatus === "accepted" || friendshipStatus === "none" || friendshipStatus === "pending_outgoing" || friendshipStatus === "rejected") && friendshipStatus !== "blocked" && (
+                          {friendshipStatus !== "blocked" && friendshipStatus !== "pending_incoming" && (
                             <Button
                               variant="outline"
                               className="border-pink-300 text-pink-600 hover:bg-pink-50"
