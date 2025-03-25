@@ -67,18 +67,22 @@ const Friends = () => {
   // Load danh sách bạn bè
   const loadFriends = async () => {
     try {
+      setIsLoading(true);
       const response = await getFriends('accepted', friendsPage);
       setFriends(response.friends);
       setFriendsTotal(response.total);
     } catch (error) {
       console.error("Lỗi khi tải danh sách bạn bè:", error);
       toast.error("Không thể tải danh sách bạn bè");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Load yêu cầu kết bạn
   const loadFriendRequests = async () => {
     try {
+      setIsLoading(true);
       const [incomingResponse, outgoingResponse] = await Promise.all([
         getFriendRequests('incoming', requestsPage),
         getFriendRequests('outgoing', requestsPage)
@@ -88,86 +92,95 @@ const Friends = () => {
     } catch (error) {
       console.error("Lỗi khi tải yêu cầu kết bạn:", error);
       toast.error("Không thể tải yêu cầu kết bạn");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Load gợi ý kết bạn
   const loadSuggestions = async () => {
     try {
+      setIsLoading(true);
       const response = await getFriendSuggestions();
       setSuggestions(response.suggestions);
     } catch (error) {
       console.error("Lỗi khi tải gợi ý kết bạn:", error);
       toast.error("Không thể tải gợi ý kết bạn");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Load dữ liệu khi tab thay đổi
   useEffect(() => {
-    setIsLoading(true);
     switch (activeTab) {
       case "friends":
         loadFriends();
         break;
-      case "requests":
       case "incoming":
+      case "requests":
         loadFriendRequests();
         break;
       case "suggestions":
         loadSuggestions();
         break;
     }
-    setIsLoading(false);
   }, [activeTab]);
 
   // Xử lý các hành động kết bạn
-  const handleSendRequest = async (userId: number) => {
+  const handleSendRequest = async (username: string) => {
     try {
-      await sendFriendRequest(userId);
+      await sendFriendRequest(username);
       toast.success("Đã gửi lời mời kết bạn");
       loadSuggestions();
     } catch (error) {
+      console.error("Lỗi khi gửi lời mời kết bạn:", error);
       toast.error("Không thể gửi lời mời kết bạn");
     }
   };
 
-  const handleAcceptRequest = async (requestId: number) => {
+  const handleAcceptRequest = async (username: string) => {
     try {
-      await acceptFriendRequest(requestId);
+      await acceptFriendRequest(username);
       toast.success("Đã chấp nhận lời mời kết bạn");
       loadFriendRequests();
-      loadFriends();
+      // Tải lại danh sách bạn bè sau khi chấp nhận lời mời
+      setActiveTab("friends");
     } catch (error) {
+      console.error("Lỗi khi chấp nhận lời mời kết bạn:", error);
       toast.error("Không thể chấp nhận lời mời kết bạn");
     }
   };
 
-  const handleRejectRequest = async (requestId: number) => {
+  const handleRejectRequest = async (username: string) => {
     try {
-      await rejectFriendRequest(requestId);
+      await rejectFriendRequest(username);
       toast.success("Đã từ chối lời mời kết bạn");
       loadFriendRequests();
     } catch (error) {
+      console.error("Lỗi khi từ chối lời mời kết bạn:", error);
       toast.error("Không thể từ chối lời mời kết bạn");
     }
   };
 
-  const handleCancelRequest = async (requestId: number) => {
+  const handleCancelRequest = async (username: string) => {
     try {
-      await cancelFriendRequest(requestId);
+      await cancelFriendRequest(username);
       toast.success("Đã hủy lời mời kết bạn");
       loadFriendRequests();
     } catch (error) {
+      console.error("Lỗi khi hủy lời mời kết bạn:", error);
       toast.error("Không thể hủy lời mời kết bạn");
     }
   };
 
-  const handleUnfriend = async (friendId: number) => {
+  const handleUnfriend = async (username: string) => {
     try {
-      await unfriend(friendId);
+      await unfriend(username);
       toast.success("Đã hủy kết bạn");
       loadFriends();
     } catch (error) {
+      console.error("Lỗi khi hủy kết bạn:", error);
       toast.error("Không thể hủy kết bạn");
     }
   };
@@ -210,19 +223,24 @@ const Friends = () => {
                       {friends.map((friend) => (
                         <div key={friend.id} className="bg-white rounded-lg shadow-sm p-4">
                           <div className="flex flex-col items-center">
-                            <Avatar className="h-20 w-20 mb-2">
-                              <img
-                                src={friend.friend.profile_picture_url || "/avatardefaut.png"}
-                                alt={friend.friend.full_name}
-                                className="rounded-full"
-                              />
-                            </Avatar>
+                            <a href={`/profile/${friend.friend.username}`} className="block group">
+                              <Avatar className="h-20 w-20 mb-2">
+                                <img
+                                  src={friend.friend.profile_picture_url || "/avatardefaut.png"}
+                                  alt={friend.friend.full_name}
+                                  className="rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/avatardefaut.png";
+                                  }}
+                                />
+                              </Avatar>
+                            </a>
                             <h3 className="font-semibold text-center">{friend.friend.full_name}</h3>
                             <Button
                               variant="outline"
                               size="sm"
                               className="mt-2 text-red-500 hover:text-red-600"
-                              onClick={() => handleUnfriend(friend.friend.id)}
+                              onClick={() => handleUnfriend(friend.friend.username)}
                             >
                               <UserMinus className="h-4 w-4 mr-1" />
                               {t("friends.unfriend") || "Hủy kết bạn"}
@@ -230,6 +248,11 @@ const Friends = () => {
                           </div>
                         </div>
                       ))}
+                      {friends.length === 0 && (
+                        <p className="text-center text-gray-500 col-span-full">
+                          {t("friends.noFriends") || "Bạn chưa có người bạn nào"}
+                        </p>
+                      )}
                     </div>
                   )}
                 </TabsContent>
@@ -243,19 +266,24 @@ const Friends = () => {
                       {incomingRequests.map((request) => (
                         <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
                           <div className="flex flex-col items-center">
-                            <Avatar className="h-20 w-20 mb-2">
-                              <img
-                                src={request.friend.profile_picture_url || "/avatardefaut.png"}
-                                alt={request.friend.full_name}
-                                className="rounded-full"
-                              />
-                            </Avatar>
+                            <a href={`/profile/${request.friend.username}`} className="block group">
+                              <Avatar className="h-20 w-20 mb-2">
+                                <img
+                                  src={request.friend.profile_picture_url || "/avatardefaut.png"}
+                                  alt={request.friend.full_name}
+                                  className="rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/avatardefaut.png";
+                                  }}
+                                />
+                              </Avatar>
+                            </a>
                             <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
                             <div className="flex space-x-2 mt-2">
                               <Button
                                 size="sm"
                                 className="bg-green-500 hover:bg-green-600"
-                                onClick={() => handleAcceptRequest(request.id)}
+                                onClick={() => handleAcceptRequest(request.friend.username)}
                               >
                                 <UserCheck className="h-4 w-4 mr-1" />
                                 {t("friends.accept") || "Chấp nhận"}
@@ -264,7 +292,7 @@ const Friends = () => {
                                 variant="outline"
                                 size="sm"
                                 className="text-red-500 hover:text-red-600"
-                                onClick={() => handleRejectRequest(request.id)}
+                                onClick={() => handleRejectRequest(request.friend.username)}
                               >
                                 <UserX className="h-4 w-4 mr-1" />
                                 {t("friends.reject") || "Từ chối"}
@@ -291,19 +319,24 @@ const Friends = () => {
                       {outgoingRequests.map((request) => (
                         <div key={request.id} className="bg-white rounded-lg shadow-sm p-4">
                           <div className="flex flex-col items-center">
-                            <Avatar className="h-20 w-20 mb-2">
-                              <img
-                                src={request.friend.profile_picture_url || "/avatardefaut.png"}
-                                alt={request.friend.full_name}
-                                className="rounded-full"
-                              />
-                            </Avatar>
+                            <a href={`/profile/${request.friend.username}`} className="block group">
+                              <Avatar className="h-20 w-20 mb-2">
+                                <img
+                                  src={request.friend.profile_picture_url || "/avatardefaut.png"}
+                                  alt={request.friend.full_name}
+                                  className="rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/avatardefaut.png";
+                                  }}
+                                />
+                              </Avatar>
+                            </a>
                             <h3 className="font-semibold text-center">{request.friend.full_name}</h3>
                             <Button
                               variant="outline"
                               size="sm"
                               className="mt-2 text-red-500 hover:text-red-600"
-                              onClick={() => handleCancelRequest(request.id)}
+                              onClick={() => handleCancelRequest(request.friend.username)}
                             >
                               <UserX className="h-4 w-4 mr-1" />
                               {t("friends.cancel") || "Hủy yêu cầu"}
@@ -329,18 +362,23 @@ const Friends = () => {
                       {suggestions.map((suggestion) => (
                         <div key={suggestion.id} className="bg-white rounded-lg shadow-sm p-4">
                           <div className="flex flex-col items-center">
-                            <Avatar className="h-20 w-20 mb-2">
-                              <img
-                                src={suggestion.profile_picture_url || "/avatardefaut.png"}
-                                alt={suggestion.full_name}
-                                className="rounded-full"
-                              />
-                            </Avatar>
+                            <a href={`/profile/${suggestion.username}`} className="block group">
+                              <Avatar className="h-20 w-20 mb-2">
+                                <img
+                                  src={suggestion.profile_picture_url || "/avatardefaut.png"}
+                                  alt={suggestion.full_name}
+                                  className="rounded-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = "/avatardefaut.png";
+                                  }}
+                                />
+                              </Avatar>
+                            </a>
                             <h3 className="font-semibold text-center">{suggestion.full_name}</h3>
                             <Button
                               size="sm"
                               className="mt-2"
-                              onClick={() => handleSendRequest(suggestion.id)}
+                              onClick={() => handleSendRequest(suggestion.username)}
                             >
                               <UserPlus className="h-4 w-4 mr-1" />
                               {t("friends.addFriend") || "Kết bạn"}
