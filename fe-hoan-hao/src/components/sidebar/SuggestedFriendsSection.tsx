@@ -36,7 +36,7 @@ interface Friend {
 
 interface SuggestedFriendsSectionProps {
   onSeeAll?: () => void;
-  onAddFriend?: (id: number) => void;
+  onAddFriend?: (username: string) => void;
 }
 
 const SuggestedFriendsSection = ({
@@ -48,7 +48,7 @@ const SuggestedFriendsSection = ({
   const [friends, setFriends] = useState<Friend[]>([]);
   const [suggestions, setSuggestions] = useState<FriendSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pendingActions, setPendingActions] = useState<number[]>([]);
+  const [pendingActions, setPendingActions] = useState<string[]>([]);
 
   // Load danh sách bạn bè
   const loadFriends = async () => {
@@ -108,20 +108,20 @@ const SuggestedFriendsSection = ({
     });
   };
 
-  const handleAddFriend = async (id: number) => {
+  const handleAddFriend = async (username: string) => {
     try {
-      setPendingActions(prev => [...prev, id]);
-      await sendFriendRequest(id);
+      setPendingActions(prev => [...prev, username]);
+      await sendFriendRequest(username);
       toast.success("Đã gửi lời mời kết bạn");
       // Cập nhật lại danh sách gợi ý
       loadSuggestions();
       if (onAddFriend) {
-        onAddFriend(id);
+        onAddFriend(username);
       }
     } catch (error) {
       toast.error("Không thể gửi lời mời kết bạn");
     } finally {
-      setPendingActions(prev => prev.filter(friendId => friendId !== id));
+      setPendingActions(prev => prev.filter(pendingUsername => pendingUsername !== username));
     }
   };
 
@@ -259,10 +259,10 @@ const SuggestedFriendsSection = ({
               <Button
                 size="sm"
                 className="bg-[#f2a2d2] hover:bg-pink-400 text-white"
-                onClick={() => handleAddFriend(friend.id)}
-                disabled={pendingActions.includes(friend.id)}
+                onClick={() => handleAddFriend(friend.username)}
+                disabled={pendingActions.includes(friend.username)}
               >
-                {pendingActions.includes(friend.id) ? (
+                {pendingActions.includes(friend.username) ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   t("friends.add") || "Kết bạn"
