@@ -22,6 +22,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import PhotoViewer from "./PhotoViewer";
 import { Comment, Reply } from "./types";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 interface PhotoGalleryPostProps {
   author: {
@@ -188,6 +189,21 @@ const PhotoGalleryPost = ({
     navigate(profileUrl);
   };
 
+  // Hàm xử lý khi bấm vào nút chia sẻ để copy link
+  const handleShare = () => {
+    const postUrl = `${window.location.origin}/post/${author.username || author.name.toLowerCase().replace(/ /g, "-")}/${postId}`;
+    
+    // Copy URL vào clipboard
+    navigator.clipboard.writeText(postUrl)
+      .then(() => {
+        toast.success(t("post.linkCopied") || "Đã sao chép liên kết vào bộ nhớ tạm");
+      })
+      .catch((error) => {
+        console.error("Không thể sao chép:", error);
+        toast.error(t("post.copyFailed") || "Không thể sao chép liên kết");
+      });
+  };
+
   return (
     <Card className="w-full mb-4 overflow-hidden bg-white">
       <div className="p-4">
@@ -307,6 +323,7 @@ const PhotoGalleryPost = ({
           <Button
             variant="ghost"
             className="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-pink-50"
+            onClick={handleShare}
           >
             <Share2 className="h-5 w-5" />
             <span className="text-xs ml-1">{shares}</span>
