@@ -21,6 +21,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import PhotoViewer from "./PhotoViewer";
 import { Comment, Reply } from "./types";
+import { useNavigate } from "react-router-dom";
 
 interface PhotoGalleryPostProps {
   author: {
@@ -56,6 +57,7 @@ const PhotoGalleryPost = ({
   postId,
 }: PhotoGalleryPostProps) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [initialPhotoIndex, setInitialPhotoIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
@@ -179,18 +181,26 @@ const PhotoGalleryPost = ({
     setLiked(!liked);
   };
 
+  // Hàm xử lý khi bấm vào avatar để chuyển đến trang profile
+  const handleAvatarClick = () => {
+    const profileUrl = `/profile/${author.name.toLowerCase().replace(/ /g, "-")}`;
+    navigate(profileUrl);
+  };
+
   return (
     <Card className="w-full mb-4 overflow-hidden bg-white">
       <div className="p-4">
         {/* Post Header with Author Info and Menu */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-[#f2a2d2]">
-              <AvatarImage src={author.avatar || "/avatardefaut.png"} alt={author.name} />
-              <AvatarFallback className="bg-primary-light/20 text-primary">
-                {author.name?.substring(0, 2).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <div onClick={handleAvatarClick} className="cursor-pointer">
+              <Avatar className="h-10 w-10 border-2 border-[#f2a2d2]">
+                <AvatarImage src={author.avatar || "/avatardefaut.png"} alt={author.name} />
+                <AvatarFallback className="bg-primary-light/20 text-primary">
+                  {author.name?.substring(0, 2).toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+            </div>
 
             <div>
               <a
