@@ -60,7 +60,10 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
   // State để lưu trữ thông tin phân trang API
   const [apiOffset, setApiOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 3; // Giống limit trong API
+  const ITEMS_PER_PAGE = 5; // Giống limit trong API
+
+  // Hàm tạo độ trễ
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Hàm lấy bài đăng từ API
   const fetchPosts = useCallback(async (reset = false) => {
@@ -86,6 +89,9 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
         limit: ITEMS_PER_PAGE,
         offset: currentOffset
       };
+      
+      // Thêm độ trễ 1 giây trước khi gọi API
+      await delay(1000);
       
       const response = await getFeed(params);
       
