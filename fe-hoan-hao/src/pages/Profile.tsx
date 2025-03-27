@@ -11,7 +11,7 @@ import {
 } from "../components/ui/tabs";
 import { Card, CardContent } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
-import PostFeed from "../components/post/PostFeed";
+import UserPostFeed from "../components/post/UserPostFeed";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -551,17 +551,11 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   // Basic states
   const [isLoading, setIsLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfileData | null>(null);
-  const [userPosts, setUserPosts] = useState<UserPost[]>([]);
   const [userFriends, setUserFriends] = useState<Friend[]>([]);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [friendshipStatus, setFriendshipStatus] = useState<string>("none");
-  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [postsOffset, setPostsOffset] = useState(0);
-  const postsPerPage = 5;
-  const postsLoaderRef = useRef<HTMLDivElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -725,118 +719,6 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
       toast.error("Không thể thực hiện hành động này");
     }
   };
-
-  // Hàm chuyển đổi dữ liệu API thành định dạng UserPost hiện tại
-  const convertApiPostToUserPost = (apiPost: PostFeedResponse['posts'][0]): UserPost => {
-    const hasMedia = apiPost.media && apiPost.media.length > 0;
-    
-    return {
-      id: apiPost.uuid,
-      type: hasMedia ? "gallery" : "regular",
-      author: {
-        name: apiPost.author.full_name,
-        avatar: apiPost.author.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=default",
-        timestamp: new Date(apiPost.created_at).toLocaleString(),
-      },
-      content: apiPost.content,
-      engagement: {
-        likes: apiPost.total_likes,
-        comments: apiPost.total_comments,
-        shares: apiPost.total_shares,
-      },
-      ...(hasMedia && {
-        images: apiPost.media.map(m => m.media_url),
-        totalImages: apiPost.media.length
-      }),
-      commentsList: []
-    };
-  };
-
-  // Load bài viết của user
-  const fetchUserPosts = useCallback(async (reset = false) => {
-    if (!userProfile?.username) return;
-    
-    try {
-      setIsLoadingPosts(true);
-      
-      // Nếu đã đánh dấu không còn bài đăng và không phải đang reset, dừng lại
-      if (!hasMorePosts && !reset) {
-        setIsLoadingPosts(false);
-        return;
-      }
-      
-      // Tính toán offset
-      const currentOffset = reset ? 0 : postsOffset;
-      
-      // Gọi API để lấy danh sách bài đăng
-      const response = await getUserPosts(userProfile.username, postsPerPage, currentOffset);
-      
-      // Chuyển đổi dữ liệu API thành định dạng UserPost
-      const convertedPosts = response.posts.map(convertApiPostToUserPost);
-      
-      // Nếu không còn bài đăng nào nữa, đánh dấu là không còn trang nào
-      if (convertedPosts.length === 0 || convertedPosts.length < postsPerPage) {
-        setHasMorePosts(false);
-      }
-      
-      // Cập nhật state
-      if (reset || currentOffset === 0) {
-        setUserPosts(convertedPosts);
-      } else {
-        setUserPosts(prev => [...prev, ...convertedPosts]);
-      }
-      
-      // Cập nhật offset mới
-      if (convertedPosts.length > 0) {
-        setPostsOffset(currentOffset + convertedPosts.length);
-      }
-      
-    } catch (error) {
-      // console.error("Không thể lấy bài đăng của người dùng:", error);
-      // toast.error("Không thể tải bài đăng");
-      
-      // Reset danh sách nếu đang reset
-      if (reset) {
-        setUserPosts([]);
-      }
-      
-      // Đặt hasMorePosts thành false khi xảy ra lỗi để tránh gọi API liên tục
-      setHasMorePosts(false);
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  }, [userProfile?.username, postsOffset, hasMorePosts]);
-
-  // Load bài viết khi profile được tải hoặc khi chuyển tab 
-  useEffect(() => {
-    if (userProfile && activeTab === "posts") {
-      fetchUserPosts(true);
-    }
-  }, [userProfile, activeTab]);
-
-  // Xử lý intersection observer để tải thêm bài đăng khi cuộn
-  useEffect(() => {
-    if (activeTab !== "posts") return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isLoadingPosts && hasMorePosts) {
-          fetchUserPosts();
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (postsLoaderRef.current) {
-      observer.observe(postsLoaderRef.current);
-    }
-
-    return () => {
-      if (postsLoaderRef.current) {
-        observer.unobserve(postsLoaderRef.current);
-      }
-    };
-  }, [isLoadingPosts, hasMorePosts, fetchUserPosts, activeTab]);
 
   // Load danh sách bạn bè khi chuyển đến tab bạn bè
   useEffect(() => {
@@ -1117,33 +999,16 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                 </TabsList>
 
                 <TabsContent value="posts" className="mt-4">
-                  {userPosts.length > 0 ? (
-                      <>
-                        <PostFeed posts={userPosts} showFilters={false} />
-                        {/* Loader hiển thị khi đang tải thêm bài đăng */}
-                        {hasMorePosts && (
-                          <div 
-                            ref={postsLoaderRef} 
-                            className="flex justify-center p-4"
-                          >
-                            {isLoadingPosts && (
-                              <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
-                            )}
-                          </div>
-                        )}
-                      </>
+                  {userProfile ? (
+                    <UserPostFeed username={userProfile.username} />
                   ) : (
-                      <Card>
-                        <CardContent className="p-6 text-center">
-                          {isLoadingPosts ? (
-                            <div className="flex justify-center py-4">
-                              <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
-                            </div>
-                          ) : (
-                            <p className="text-gray-500">Chưa có bài viết nào</p>
-                          )}
-                        </CardContent>
-                      </Card>
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                 </TabsContent>
 
