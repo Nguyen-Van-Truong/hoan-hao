@@ -831,7 +831,28 @@ func GetFeed(svc service.PostService) gin.HandlerFunc {
 			return
 		}
 
-		mode := c.DefaultQuery("mode", "latest")
+		// Lấy và xác thực giá trị của param mode
+		mode := c.DefaultQuery("mode", "newest")
+		validModes := map[string]bool{
+			"newest":        true,
+			"latest":        true, // legacy mode, giữ tương thích ngược
+			"popular":       true,
+			"popular_today": true,
+			"popular_week":  true,
+			"popular_month": true,
+			"popular_year":  true,
+		}
+
+		// Nếu mode không hợp lệ, sử dụng newest
+		if !validModes[mode] {
+			mode = "newest"
+		}
+
+		// Chuyển đổi legacy mode 'latest' sang 'newest'
+		if mode == "latest" {
+			mode = "newest"
+		}
+
 		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 		offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 

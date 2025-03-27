@@ -111,10 +111,36 @@ func (r *postRepository) FindFeed(userID uint64, mode string, limit, offset int)
 		return nil, 0, err
 	}
 
-	// Mặc định sắp xếp theo thời gian tạo mới nhất
-	if mode == "popular" {
-		query = query.Order("created_at DESC") // Sẽ sắp xếp lại sau khi tính điểm số
-	} else {
+	// Áp dụng các bộ lọc dựa trên mode
+	switch mode {
+	case "newest":
+		// Sắp xếp theo thời gian tạo mới nhất (giống latest)
+		query = query.Order("created_at DESC")
+	case "popular_today":
+		// Lấy bài đăng trong ngày hôm nay và sắp xếp theo độ phổ biến
+		today := time.Now().Truncate(24 * time.Hour)
+		query = query.Where("created_at >= ?", today)
+		query = query.Order("created_at DESC") // Sắp xếp tạm thời, sẽ sắp xếp lại theo điểm số phổ biến
+	case "popular_week":
+		// Lấy bài đăng trong tuần và sắp xếp theo độ phổ biến
+		weekAgo := time.Now().Add(-7 * 24 * time.Hour)
+		query = query.Where("created_at >= ?", weekAgo)
+		query = query.Order("created_at DESC") // Sắp xếp tạm thời
+	case "popular_month":
+		// Lấy bài đăng trong tháng và sắp xếp theo độ phổ biến
+		monthAgo := time.Now().Add(-30 * 24 * time.Hour)
+		query = query.Where("created_at >= ?", monthAgo)
+		query = query.Order("created_at DESC") // Sắp xếp tạm thời
+	case "popular_year":
+		// Lấy bài đăng trong năm và sắp xếp theo độ phổ biến
+		yearAgo := time.Now().Add(-365 * 24 * time.Hour)
+		query = query.Where("created_at >= ?", yearAgo)
+		query = query.Order("created_at DESC") // Sắp xếp tạm thời
+	case "popular":
+		// Lấy tất cả bài đăng và sắp xếp theo độ phổ biến
+		query = query.Order("created_at DESC") // Sắp xếp tạm thời
+	default:
+		// Mặc định sắp xếp theo thời gian tạo mới nhất (legacy/latest)
 		query = query.Order("created_at DESC")
 	}
 
@@ -145,8 +171,8 @@ func (r *postRepository) FindFeed(userID uint64, mode string, limit, offset int)
 		})
 	}
 
-	// Sắp xếp theo popular nếu cần
-	if mode == "popular" {
+	// Sắp xếp theo mức độ phổ biến cho các chế độ popular
+	if mode == "popular" || mode == "popular_today" || mode == "popular_week" || mode == "popular_month" || mode == "popular_year" {
 		for i := 0; i < len(postResponses)-1; i++ {
 			for j := i + 1; j < len(postResponses); j++ {
 				scoreI := postResponses[i].TotalLikes + postResponses[i].TotalComments*2 + postResponses[i].TotalShares*3
