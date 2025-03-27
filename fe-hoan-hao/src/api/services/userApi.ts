@@ -26,7 +26,8 @@ const makeApiRequest = async <T>(
 ): Promise<T> => {
   try {
     const token = getAccessToken();
-    
+    console.log("accessToken userAPI:"+token)
+
     if (requiresAuth && !token) {
       throw new Error("Bạn chưa đăng nhập");
     }
@@ -106,7 +107,7 @@ export const updateUserProfile = async (profileData: Partial<UserProfile>): Prom
 export const updateProfilePicture = async (imageFile: File): Promise<{message: string, url: string}> => {
   try {
     const token = getAccessToken();
-    
+
     if (!token) {
       throw new Error("Bạn chưa đăng nhập");
     }

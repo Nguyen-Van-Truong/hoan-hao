@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -47,16 +46,6 @@ func main() {
 
 	// Khởi tạo Gin router
 	r := gin.Default()
-
-	// Thêm middleware CORS cho frontend
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * 60 * 60, // Cache CORS preflight 12 giờ
-	}))
 
 	// Đăng ký các route HTTP
 	handler.SetupRoutes(r, repo)
