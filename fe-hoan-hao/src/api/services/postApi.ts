@@ -5,6 +5,7 @@ import { getAccessToken } from "@/utils/cookieUtils";
 const POST_ENDPOINTS = {
   FEED: "/post/feed",
   CREATE: "/post",
+  GET_BY_UUID: "/post/:uuid"
 };
 
 // Định nghĩa kiểu dữ liệu cho response từ API
@@ -155,5 +156,40 @@ export const createPost = async ({
       throw new Error(error.message);
     }
     throw new Error("Đã xảy ra lỗi khi tạo bài đăng");
+  }
+};
+
+/**
+ * Lấy chi tiết bài đăng theo UUID
+ */
+export const getPostDetail = async (uuid: string): Promise<PostFeedResponse['posts'][0]> => {
+  try {
+    const token = getAccessToken();
+    // API này không yêu cầu token, nhưng nếu có token thì gửi kèm
+    const headers: HeadersInit = {
+      "Content-Type": "application/json"
+    };
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const endpoint = POST_ENDPOINTS.GET_BY_UUID.replace(':uuid', uuid);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "GET",
+      headers
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Không thể lấy chi tiết bài đăng");
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Đã xảy ra lỗi khi lấy chi tiết bài đăng");
   }
 };

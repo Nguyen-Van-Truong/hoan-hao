@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 interface PhotoGalleryPostProps {
   author: {
     name: string;
+    username?: string;
     avatar: string;
     timestamp: string;
   };
@@ -183,7 +184,7 @@ const PhotoGalleryPost = ({
 
   // Hàm xử lý khi bấm vào avatar để chuyển đến trang profile
   const handleAvatarClick = () => {
-    const profileUrl = `/profile/${author.name.toLowerCase().replace(/ /g, "-")}`;
+    const profileUrl = `/profile/${author.username || author.name.toLowerCase().replace(/ /g, "-")}`;
     navigate(profileUrl);
   };
 
@@ -204,17 +205,17 @@ const PhotoGalleryPost = ({
 
             <div>
               <a
-                href={`/profile/${author.name.toLowerCase().replace(/ /g, "-")}`}
+                href={`/profile/${author.username || author.name.toLowerCase().replace(/ /g, "-")}`}
                 className="hover:underline"
               >
                 <h3 className="font-semibold text-sm">{author.name}</h3>
               </a>
-              <a
-                href={`/post/${author.name.toLowerCase().replace(/ /g, "-")}`}
-                className="hover:underline"
+              <div 
+                className="text-xs text-gray-500 cursor-pointer hover:underline"
+                onClick={() => navigate(`/post/${author.username || author.name.toLowerCase().replace(/ /g, "-")}/${postId}`)}
               >
-                <p className="text-xs text-gray-500">{author.timestamp}</p>
-              </a>
+                {author.timestamp}
+              </div>
             </div>
           </div>
           <DropdownMenu>
@@ -228,13 +229,8 @@ const PhotoGalleryPost = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <a
-                  href={`/post/${author.name.toLowerCase().replace(/ /g, "-")}`}
-                  className="w-full"
-                >
-                  {t("post.viewPostDetails") || "View Post Details"}
-                </a>
+              <DropdownMenuItem onClick={() => navigate(`/post/${author.username || author.name.toLowerCase().replace(/ /g, "-")}/${postId}`)}>
+                {t("post.viewPostDetails") || "View Post Details"}
               </DropdownMenuItem>
               <DropdownMenuItem>{t("post.savePost")}</DropdownMenuItem>
               <DropdownMenuItem>{t("post.hidePost")}</DropdownMenuItem>

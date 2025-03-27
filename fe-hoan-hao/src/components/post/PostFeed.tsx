@@ -32,6 +32,7 @@ const convertApiPostToPost = (apiPost: PostFeedResponse['posts'][0]): Post => {
     type: hasMedia ? "gallery" : "regular",
     author: {
       name: apiPost.author.full_name,
+      username: apiPost.author.username,
       avatar: apiPost.author.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=default",
       timestamp: new Date(apiPost.created_at).toLocaleString(),
     },

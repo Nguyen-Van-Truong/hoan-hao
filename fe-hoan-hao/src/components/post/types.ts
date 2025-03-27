@@ -26,6 +26,7 @@ export interface PostData {
   type: "regular" | "gallery" | string;
   author: {
     name: string;
+    username?: string;
     avatar: string;
     timestamp: string;
   };
