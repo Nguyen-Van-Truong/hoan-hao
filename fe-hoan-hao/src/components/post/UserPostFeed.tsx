@@ -98,8 +98,8 @@ const UserPostFeed = ({ username }: UserPostFeedProps) => {
         setApiOffset(currentOffset + convertedPosts.length);
       }
     } catch (error) {
-      console.error("Không thể lấy bài đăng của người dùng:", error);
-      toast.error("Không thể tải bài đăng");
+      // console.error("Không thể lấy bài đăng của người dùng:", error);
+      // toast.error("Không thể tải bài đăng");
       
       // Nếu reset, thiết lập danh sách rỗng
       if (reset) {
