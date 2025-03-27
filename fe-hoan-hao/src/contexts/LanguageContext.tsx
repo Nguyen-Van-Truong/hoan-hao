@@ -440,6 +440,7 @@ const translations: Record<Language, Record<string, string>> = {
         "post.sortBy": "Sort by",
         "post.timeRange": "Time range",
         "post.loadingPosts": "Loading Posts",
+        "post.noMorePosts": "No More Posts",
 
         // Friends Page
         "friends.title": "Friends",
@@ -954,7 +955,7 @@ const translations: Record<Language, Record<string, string>> = {
         "post.sortBy": "Sắp xếp theo",
         "post.timeRange": "Khoảng thời gian",
         "post.loadingPosts": "Đang tải bài viết",
-
+        "post.noMorePosts": "Không còn bài viết nào nữa",
         // Friends Page
         "friends.title": "Bạn bè",
         "friends.friends": "Bạn bè",

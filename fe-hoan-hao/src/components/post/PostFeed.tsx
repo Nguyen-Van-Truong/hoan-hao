@@ -67,9 +67,16 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
     try {
       setLoading(true);
       
+      // Nếu đã đánh dấu không còn bài đăng và không phải đang reset, dừng lại
+      if (!hasMore && !reset) {
+        setLoading(false);
+        return;
+      }
+      
       // Nếu reset, đặt lại offset về 0
       if (reset) {
         setApiOffset(0);
+        setHasMore(true); // Reset lại hasMore khi tải lại từ đầu
       }
       
       const currentOffset = reset ? 0 : apiOffset;
@@ -85,10 +92,8 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
       const convertedPosts = response.posts.map(convertApiPostToPost);
       
       // Nếu không còn bài đăng nào nữa, đánh dấu là không còn trang nào
-      if (convertedPosts.length < ITEMS_PER_PAGE) {
+      if (convertedPosts.length === 0 || convertedPosts.length < ITEMS_PER_PAGE) {
         setHasMore(false);
-      } else {
-        setHasMore(true);
       }
       
       // Nếu đang reset hoặc đang tải trang đầu tiên
@@ -101,8 +106,10 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
         setFilteredPosts(prev => [...prev, ...convertedPosts]);
       }
       
-      // Cập nhật offset mới
-      setApiOffset(currentOffset + convertedPosts.length);
+      // Cập nhật offset mới chỉ khi có bài đăng mới
+      if (convertedPosts.length > 0) {
+        setApiOffset(currentOffset + convertedPosts.length);
+      }
     } catch (error) {
       console.error("Không thể lấy bài đăng:", error);
       toast.error("Không thể tải bài đăng");
@@ -112,10 +119,13 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
         setPosts([]);
         setFilteredPosts([]);
       }
+      
+      // Đặt hasMore thành false khi xảy ra lỗi để tránh gọi API liên tục
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, apiOffset]);
+  }, [sortBy, apiOffset, hasMore]);
 
   // Lấy bài đăng khi component được tải lần đầu
   useEffect(() => {
@@ -327,16 +337,16 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
                   {t("post.newest") || "Mới nhất"}
                 </SelectItem>
                 <SelectItem value="popular_today">
-                  {t("post.popular_today") || "Phổ biến hôm nay"}
+                  {t("post.popularToday") || "Phổ biến hôm nay"}
                 </SelectItem>
                 <SelectItem value="popular_week">
-                  {t("post.popular_week") || "Phổ biến tuần này"}
+                  {t("post.popularThisWeek") || "Phổ biến tuần này"}
                 </SelectItem>
                 <SelectItem value="popular_month">
-                  {t("post.popular_month") || "Phổ biến tháng này"}
+                  {t("post.popularThisMonth") || "Phổ biến tháng này"}
                 </SelectItem>
                 <SelectItem value="popular_year">
-                  {t("post.popular_year") || "Phổ biến năm nay"}
+                  {t("post.popularThisYear") || "Phổ biến năm nay"}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -382,6 +392,14 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
             <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
             <p className="text-sm text-gray-500 mt-2">
               {t("post.loadingMorePosts") || "Đang tải bài đăng..."}
+            </p>
+          </div>
+        )}
+        
+        {!loading && filteredPosts.length > 0 && !hasMore && (
+          <div className="text-center">
+            <p className="text-sm text-gray-500">
+              {t("post.noMorePosts") || "Đã hiển thị tất cả bài đăng"}
             </p>
           </div>
         )}
