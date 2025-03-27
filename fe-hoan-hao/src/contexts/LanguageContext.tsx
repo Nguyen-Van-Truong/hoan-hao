@@ -407,6 +407,7 @@ const translations: Record<Language, Record<string, string>> = {
         "post.replyTo": "Reply to",
         "post.loadingMorePosts": "Loading more posts...",
         "post.noPosts": "No posts to show yet.",
+        "post.createPostDescription": "Tạo mô tả bài đăng.",
 
         // Post Actions
         "post.like": "Like",
@@ -922,6 +923,7 @@ const translations: Record<Language, Record<string, string>> = {
         "post.replyTo": "Phản hồi cho",
         "post.loadingMorePosts": "Đang tải thêm bài viết...",
         "post.noPosts": "Chưa có bài viết nào để hiển thị.",
+        "post.createPostDescription": "Create Post Description.",
 
         // Post Actions
         "post.like": "Thích",

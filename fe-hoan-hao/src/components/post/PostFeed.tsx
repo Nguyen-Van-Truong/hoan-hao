@@ -14,6 +14,7 @@ import {
 import { PostData } from "./types";
 import { getFeed, PostFeedResponse, GetFeedParams } from "@/api/services/postApi";
 import { toast } from "react-hot-toast";
+import PostCreator from "./PostCreator";
 
 type Post = PostData;
 
@@ -319,8 +320,16 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
     setSortBy(value);
   };
 
+  // Hàm refresh feed khi có bài đăng mới
+  useCallback(() => {
+    // Chỉ refresh nếu không có posts từ props
+    if (!propPosts) {
+      fetchPosts(true);
+    }
+  }, [propPosts, fetchPosts]);
   return (
     <div className="w-full space-y-4 bg-gray-50 p-4">
+
       {showFilters && (
         <div className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm mb-4">
           <h2 className="text-lg font-medium text-gray-700">
