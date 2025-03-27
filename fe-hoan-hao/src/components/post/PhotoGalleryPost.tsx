@@ -23,85 +23,37 @@ import PhotoViewer from "./PhotoViewer";
 import { Comment, Reply } from "./types";
 
 interface PhotoGalleryPostProps {
-  author?: {
+  author: {
     name: string;
     avatar: string;
     timestamp: string;
   };
-  content?: string;
+  content: string;
   images?: string[];
   totalImages?: number;
-  likes?: number;
-  comments?: number;
-  shares?: number;
+  likes: number;
+  comments: number;
+  shares: number;
   commentsList?: Comment[];
   onCommentAdded?: (newComment: Comment) => void;
   onCommentLiked?: (commentId: string) => void;
   onReplyAdded?: (commentId: string, reply: Reply) => void;
-  postId?: string;
+  postId: string;
 }
 
 const PhotoGalleryPost = ({
-  author = {
-    name: "Jane Smith",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-    timestamp: "2 hours ago",
-  },
-  content = "Just had an amazing weekend with friends! Here are some highlights from our trip to the mountains. The views were breathtaking and the weather was perfect!",
-  images = [
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80",
-    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=500&q=80",
-    "https://images.unsplash.com/photo-1485470733090-0aae1788d5af?w=500&q=80",
-    "https://images.unsplash.com/photo-1491555103944-7c647fd857e6?w=500&q=80",
-    "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80",
-    "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?w=500&q=80",
-    "https://images.unsplash.com/photo-1485470733090-0aae1788d5af?w=500&q=80",
-    "https://images.unsplash.com/photo-1491555103944-7c647fd857e6?w=500&q=80",
-  ],
-  totalImages = 8,
-  likes = 124,
-  comments = 43,
-  shares = 12,
-  commentsList = [
-    {
-      id: "1",
-      author: {
-        name: "Alex Johnson",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-      },
-      content: "Looks amazing! Where was this?",
-      timestamp: "1 hour ago",
-      likes: 3,
-      replies: [
-        {
-          id: "1-1",
-          author: {
-            name: "Jane Smith",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-          },
-          content:
-            "This was in the Rocky Mountains! We went to Aspen last weekend.",
-          timestamp: "45 minutes ago",
-          likes: 1,
-        },
-      ],
-    },
-    {
-      id: "2",
-      author: {
-        name: "Sarah Miller",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-      },
-      content: "Beautiful day indeed! I went hiking today.",
-      timestamp: "45 minutes ago",
-      likes: 2,
-      replies: [],
-    },
-  ],
+  author,
+  content,
+  images,
+  totalImages = 0,
+  likes,
+  comments,
+  shares,
+  commentsList = [],
   onCommentAdded,
   onCommentLiked,
   onReplyAdded,
-  postId = "default-post",
+  postId,
 }: PhotoGalleryPostProps) => {
   const { t } = useLanguage();
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
