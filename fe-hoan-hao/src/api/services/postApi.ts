@@ -5,7 +5,8 @@ import { getAccessToken } from "@/utils/cookieUtils";
 const POST_ENDPOINTS = {
   FEED: "/post/feed",
   CREATE: "/post",
-  GET_BY_UUID: "/post/:uuid"
+  GET_BY_UUID: "/post/:uuid",
+  GET_USER_POSTS: "/post/user/username/:username/posts"
 };
 
 // Định nghĩa kiểu dữ liệu cho response từ API
@@ -191,5 +192,44 @@ export const getPostDetail = async (uuid: string): Promise<PostFeedResponse['pos
       throw new Error(error.message);
     }
     throw new Error("Đã xảy ra lỗi khi lấy chi tiết bài đăng");
+  }
+};
+
+/**
+ * Lấy danh sách bài đăng của một người dùng theo username
+ */
+export const getUserPosts = async (username: string, limit = 5, offset = 0): Promise<PostFeedResponse> => {
+  try {
+    const token = getAccessToken();
+    // API này không bắt buộc phải có token, nhưng nếu có token thì gửi kèm
+    const headers: HeadersInit = {
+      "Content-Type": "application/json"
+    };
+    
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const endpoint = POST_ENDPOINTS.GET_USER_POSTS.replace(':username', username);
+    const url = new URL(`${API_BASE_URL}${endpoint}`);
+    url.searchParams.append('limit', limit.toString());
+    url.searchParams.append('offset', offset.toString());
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Không thể lấy danh sách bài đăng của người dùng");
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error("Đã xảy ra lỗi khi lấy danh sách bài đăng của người dùng");
   }
 };

@@ -119,8 +119,8 @@ const PostFeed = ({ posts: propPosts, showFilters = true }: PostFeedProps) => {
         setApiOffset(currentOffset + convertedPosts.length);
       }
     } catch (error) {
-      console.error("Không thể lấy bài đăng:", error);
-      toast.error("Không thể tải bài đăng");
+      // console.error("Không thể lấy bài đăng:", error);
+      // toast.error("Không thể tải bài đăng");
       
       // Nếu reset, thiết lập danh sách rỗng để không hiển thị dữ liệu mẫu
       if (reset) {

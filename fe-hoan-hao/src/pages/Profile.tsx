@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import LazyThreeColumnLayout from "../components/layout/LazyThreeColumnLayout";
 import { Avatar } from "../components/ui/avatar";
@@ -26,6 +26,7 @@ import {
   blockUser,
   unblockUser
 } from "@/api/services/userApi";
+import { getUserPosts, PostFeedResponse } from "@/api/services/postApi";
 import {
   Camera,
   Image,
@@ -556,6 +557,11 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("posts");
   const [friendshipStatus, setFriendshipStatus] = useState<string>("none");
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [postsOffset, setPostsOffset] = useState(0);
+  const postsPerPage = 5;
+  const postsLoaderRef = useRef<HTMLDivElement>(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -720,54 +726,117 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     }
   };
 
+  // Hàm chuyển đổi dữ liệu API thành định dạng UserPost hiện tại
+  const convertApiPostToUserPost = (apiPost: PostFeedResponse['posts'][0]): UserPost => {
+    const hasMedia = apiPost.media && apiPost.media.length > 0;
+    
+    return {
+      id: apiPost.uuid,
+      type: hasMedia ? "gallery" : "regular",
+      author: {
+        name: apiPost.author.full_name,
+        avatar: apiPost.author.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=default",
+        timestamp: new Date(apiPost.created_at).toLocaleString(),
+      },
+      content: apiPost.content,
+      engagement: {
+        likes: apiPost.total_likes,
+        comments: apiPost.total_comments,
+        shares: apiPost.total_shares,
+      },
+      ...(hasMedia && {
+        images: apiPost.media.map(m => m.media_url),
+        totalImages: apiPost.media.length
+      }),
+      commentsList: []
+    };
+  };
+
   // Load bài viết của user
-  useEffect(() => {
-    if (userProfile) {
-      // Ở đây sẽ gọi API để lấy bài viết của user
-      // Mock data cho demo
-      setUserPosts([
-        {
-          id: "u1",
-          type: "gallery",
-          author: {
-            name: userProfile.full_name,
-            avatar: userProfile.profile_picture_url || "/avatardefaut.png",
-            timestamp: "2 giờ trước",
-          },
-          content: "Một ngày đẹp trời tại bãi biển! #Weekend #Ocean",
-          engagement: {
-            likes: 87,
-            comments: 23,
-            shares: 7,
-          },
-          images: [
-            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80",
-            "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=500&q=80",
-            "https://images.unsplash.com/photo-1473186578172-c141e6798cf4?w=500&q=80",
-          ],
-          totalImages: 3,
-          commentsList: [],
-        },
-        {
-          id: "u2",
-          type: "regular",
-          author: {
-            name: userProfile.full_name,
-            avatar: userProfile.profile_picture_url || "/avatardefaut.png",
-            timestamp: "Hôm qua",
-          },
-          content:
-              "Vừa đọc xong một cuốn sách tuyệt vời! Tôi rất khuyên các bạn đọc 'The Midnight Library' của Matt Haig. Ai đã đọc cuốn này chưa? #BookRecommendations #Reading",
-          engagement: {
-            likes: 42,
-            comments: 15,
-            shares: 3,
-          },
-          commentsList: [],
-        },
-      ]);
+  const fetchUserPosts = useCallback(async (reset = false) => {
+    if (!userProfile?.username) return;
+    
+    try {
+      setIsLoadingPosts(true);
+      
+      // Nếu đã đánh dấu không còn bài đăng và không phải đang reset, dừng lại
+      if (!hasMorePosts && !reset) {
+        setIsLoadingPosts(false);
+        return;
+      }
+      
+      // Tính toán offset
+      const currentOffset = reset ? 0 : postsOffset;
+      
+      // Gọi API để lấy danh sách bài đăng
+      const response = await getUserPosts(userProfile.username, postsPerPage, currentOffset);
+      
+      // Chuyển đổi dữ liệu API thành định dạng UserPost
+      const convertedPosts = response.posts.map(convertApiPostToUserPost);
+      
+      // Nếu không còn bài đăng nào nữa, đánh dấu là không còn trang nào
+      if (convertedPosts.length === 0 || convertedPosts.length < postsPerPage) {
+        setHasMorePosts(false);
+      }
+      
+      // Cập nhật state
+      if (reset || currentOffset === 0) {
+        setUserPosts(convertedPosts);
+      } else {
+        setUserPosts(prev => [...prev, ...convertedPosts]);
+      }
+      
+      // Cập nhật offset mới
+      if (convertedPosts.length > 0) {
+        setPostsOffset(currentOffset + convertedPosts.length);
+      }
+      
+    } catch (error) {
+      // console.error("Không thể lấy bài đăng của người dùng:", error);
+      // toast.error("Không thể tải bài đăng");
+      
+      // Reset danh sách nếu đang reset
+      if (reset) {
+        setUserPosts([]);
+      }
+      
+      // Đặt hasMorePosts thành false khi xảy ra lỗi để tránh gọi API liên tục
+      setHasMorePosts(false);
+    } finally {
+      setIsLoadingPosts(false);
     }
-  }, [userProfile]);
+  }, [userProfile?.username, postsOffset, hasMorePosts]);
+
+  // Load bài viết khi profile được tải hoặc khi chuyển tab 
+  useEffect(() => {
+    if (userProfile && activeTab === "posts") {
+      fetchUserPosts(true);
+    }
+  }, [userProfile, activeTab]);
+
+  // Xử lý intersection observer để tải thêm bài đăng khi cuộn
+  useEffect(() => {
+    if (activeTab !== "posts") return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingPosts && hasMorePosts) {
+          fetchUserPosts();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (postsLoaderRef.current) {
+      observer.observe(postsLoaderRef.current);
+    }
+
+    return () => {
+      if (postsLoaderRef.current) {
+        observer.unobserve(postsLoaderRef.current);
+      }
+    };
+  }, [isLoadingPosts, hasMorePosts, fetchUserPosts, activeTab]);
 
   // Load danh sách bạn bè khi chuyển đến tab bạn bè
   useEffect(() => {
@@ -1049,11 +1118,30 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
 
                 <TabsContent value="posts" className="mt-4">
                   {userPosts.length > 0 ? (
-                      <PostFeed posts={userPosts} />
+                      <>
+                        <PostFeed posts={userPosts} showFilters={false} />
+                        {/* Loader hiển thị khi đang tải thêm bài đăng */}
+                        {hasMorePosts && (
+                          <div 
+                            ref={postsLoaderRef} 
+                            className="flex justify-center p-4"
+                          >
+                            {isLoadingPosts && (
+                              <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+                            )}
+                          </div>
+                        )}
+                      </>
                   ) : (
                       <Card>
                         <CardContent className="p-6 text-center">
-                          <p className="text-gray-500">Chưa có bài viết nào</p>
+                          {isLoadingPosts ? (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="h-6 w-6 animate-spin text-pink-500" />
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">Chưa có bài viết nào</p>
+                          )}
                         </CardContent>
                       </Card>
                   )}
