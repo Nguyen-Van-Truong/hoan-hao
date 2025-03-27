@@ -82,6 +82,10 @@ const PhotoGalleryPost = ({
   const [replyImage, setReplyImage] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replyFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Thêm state để hiển thị hình ảnh trong comment và reply
+  const [commentPhotoViewerOpen, setCommentPhotoViewerOpen] = useState(false);
+  const [currentCommentImage, setCurrentCommentImage] = useState<string>("");
 
   // Number of images to display in the gallery
   const hasImages = images && images.length > 0;
@@ -444,6 +448,12 @@ const PhotoGalleryPost = ({
     }
   };
 
+  // Hàm mở PhotoViewer cho hình ảnh trong comment
+  const openCommentPhotoViewer = (imageUrl: string) => {
+    setCurrentCommentImage(imageUrl);
+    setCommentPhotoViewerOpen(true);
+  };
+
   return (
     <Card className="w-full mb-4 overflow-hidden bg-white">
       <div className="p-4">
@@ -535,6 +545,16 @@ const PhotoGalleryPost = ({
             onClose={() => setPhotoViewerOpen(false)}
             images={images}
             initialIndex={initialPhotoIndex}
+          />
+        )}
+
+        {/* Photo Viewer cho ảnh comment */}
+        {commentPhotoViewerOpen && (
+          <PhotoViewer
+            isOpen={commentPhotoViewerOpen}
+            onClose={() => setCommentPhotoViewerOpen(false)}
+            images={[currentCommentImage]}
+            initialIndex={0}
           />
         )}
 
@@ -702,7 +722,7 @@ const PhotoGalleryPost = ({
                                 src={comment.media_url}
                                 alt="Comment"
                                 className="max-h-[200px] rounded-lg cursor-pointer"
-                                onClick={() => window.open(comment.media_url, '_blank')}
+                                onClick={() => openCommentPhotoViewer(comment.media_url)}
                               />
                             </div>
                           )}
@@ -875,7 +895,7 @@ const PhotoGalleryPost = ({
                                       src={reply.media_url}
                                       alt="Reply"
                                       className="max-h-[150px] rounded-lg cursor-pointer"
-                                      onClick={() => window.open(reply.media_url, '_blank')}
+                                      onClick={() => openCommentPhotoViewer(reply.media_url)}
                                     />
                                   </div>
                                 )}

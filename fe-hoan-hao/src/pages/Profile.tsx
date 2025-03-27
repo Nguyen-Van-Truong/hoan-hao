@@ -70,6 +70,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import PhotoViewer from "@/components/post/PhotoViewer";
 
 interface UserProfileData {
   id?: number;
@@ -557,6 +558,11 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
   const [activeTab, setActiveTab] = useState("posts");
   const [friendshipStatus, setFriendshipStatus] = useState<string>("none");
 
+  // Thêm state cho PhotoViewer
+  const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
+  const [photoViewerImages, setPhotoViewerImages] = useState<string[]>([]);
+  const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -746,6 +752,24 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
     setCurrentPage(page);
   };
 
+  // Hàm mở PhotoViewer để xem ảnh đại diện
+  const openProfilePicture = () => {
+    if (!userProfile?.profile_picture_url) return;
+    
+    setPhotoViewerImages([userProfile.profile_picture_url]);
+    setPhotoViewerIndex(0);
+    setPhotoViewerOpen(true);
+  };
+
+  // Hàm mở PhotoViewer để xem ảnh bìa
+  const openCoverPicture = () => {
+    if (!userProfile?.cover_picture_url) return;
+    
+    setPhotoViewerImages([userProfile.cover_picture_url]);
+    setPhotoViewerIndex(0);
+    setPhotoViewerOpen(true);
+  };
+
   // Hiển thị trạng thái loading
   if (isLoading) {
     return (
@@ -780,8 +804,9 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
               <img
                   src={userProfile.cover_picture_url || "/coverphotodefault.png"}
                   alt="Cover"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-pointer"
                   loading="lazy"
+                  onClick={() => userProfile.cover_picture_url && openCoverPicture()}
                   onError={(e) => {
                     e.currentTarget.src = "/coverphotodefault.png";
                   }}
@@ -802,17 +827,22 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
             {/* Profile Info */}
             <div className="relative bg-white rounded-lg shadow-sm -mt-16 mx-4 p-4">
               <div className="flex flex-col md:flex-row items-center md:items-end">
-                <Avatar className="h-32 w-32 border-4 border-white -mt-20 md:-mt-24 mb-2 md:mb-0">
-                  <img
-                      src={userProfile.profile_picture_url || "/avatardefaut.png"}
-                      alt={userProfile.full_name}
-                      className="rounded-full"
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.src = "/avatardefaut.png";
-                      }}
-                  />
-                </Avatar>
+                <div 
+                  className="cursor-pointer"
+                  onClick={() => userProfile.profile_picture_url && openProfilePicture()}
+                >
+                  <Avatar className="h-32 w-32 border-4 border-white -mt-20 md:-mt-24 mb-2 md:mb-0">
+                    <img
+                        src={userProfile.profile_picture_url || "/avatardefaut.png"}
+                        alt={userProfile.full_name}
+                        className="rounded-full"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = "/avatardefaut.png";
+                        }}
+                    />
+                  </Avatar>
+                </div>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between w-full md:ml-4">
                   <div className="text-center md:text-left">
@@ -1146,27 +1176,33 @@ const Profile = ({ isCurrentUser = false }: ProfileProps) => {
                 </TabsContent>
               </Tabs>
             </div>
-
-            {/* Edit Profile Dialog */}
-            {isSelfProfile && userProfile && (
-                <EditProfileDialog
-                    open={isEditDialogOpen}
-                    onOpenChange={setIsEditDialogOpen}
-                    onProfileUpdate={handleProfileUpdate}
-                    initialData={{
-                      name: userProfile.full_name,
-                      bio: userProfile.bio || "",
-                      location: userProfile.location || "",
-                      work: userProfile.work || "",
-                      education: userProfile.education || "",
-                      relationship: userProfile.relationship || "",
-                      avatar: userProfile.profile_picture_url || "",
-                      coverPhoto: userProfile.cover_picture_url || "",
-                    }}
-                />
-            )}
           </div>
         </LazyThreeColumnLayout>
+        
+        {/* PhotoViewer for avatar and cover photo */}
+        <PhotoViewer
+          isOpen={photoViewerOpen}
+          onClose={() => setPhotoViewerOpen(false)}
+          images={photoViewerImages}
+          initialIndex={photoViewerIndex}
+        />
+        
+        {/* Edit Profile Dialog */}
+        <EditProfileDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onProfileUpdate={handleProfileUpdate}
+          initialData={{
+            name: userProfile.full_name,
+            bio: userProfile.bio || "",
+            location: userProfile.location || "",
+            work: userProfile.work || "",
+            education: userProfile.education || "",
+            relationship: userProfile.relationship || "",
+            avatar: userProfile.profile_picture_url || "",
+            coverPhoto: userProfile.cover_picture_url || "",
+          }}
+        />
       </div>
   );
 };
