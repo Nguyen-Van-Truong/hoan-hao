@@ -8,23 +8,34 @@ import (
 	"postservice/internal/repository"
 	"postservice/internal/util"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PostService interface {
 	GetPostByID(id uint64) (*model.PostResponse, error)
+	GetPostByUUID(uuid string) (*model.PostResponse, error)
 	CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	UpdatePost(id uint64, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
+	UpdatePostByUUID(uuid string, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error)
 	DeletePost(id uint64, userID uint64) error
+	DeletePostByUUID(uuid string, userID uint64) error
 	CreateComment(postID, userID uint64, content string, parentID *uint64, files []interface{}) (*model.Comment, error)
+	CreateCommentByUUID(uuid string, userID uint64, content string, parentID *uint64, files []interface{}) (*model.Comment, error)
 	UpdateComment(id uint64, userID uint64, content string) (*model.Comment, error)
 	GetCommentsByPostID(postID uint64, limit, offset int) ([]model.Comment, int64, error)
+	GetCommentsByPostUUID(uuid string, limit, offset int) ([]model.Comment, int64, error)
 	DeleteComment(id uint64, userID uint64) error
 	LikePost(postID, userID uint64) error
+	LikePostByUUID(uuid string, userID uint64) error
 	UnlikePost(postID, userID uint64) error
+	UnlikePostByUUID(uuid string, userID uint64) error
 	LikeComment(commentID, userID uint64) error
 	UnlikeComment(commentID, userID uint64) error
 	SharePost(postID, userID uint64, content string) (*model.PostShare, error)
+	SharePostByUUID(uuid string, userID uint64, content string) (*model.PostShare, error)
 	GetSharesByPostID(postID uint64, limit, offset int) ([]model.PostShare, int64, error)
+	GetSharesByPostUUID(uuid string, limit, offset int) ([]model.PostShare, int64, error)
 	GetPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error)
 	GetCommentByID(id uint64) (*model.Comment, error)
 	GetFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error)
@@ -50,6 +61,7 @@ func NewPostService(repo repository.PostRepository) PostService {
 func (s *postService) CreatePost(userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error) {
 	post := &model.Post{
 		UserID:     userID,
+		UUID:       uuid.New().String(),
 		Content:    req.Content,
 		Visibility: req.Visibility,
 		CreatedAt:  time.Now(),
@@ -383,4 +395,215 @@ func (s *postService) GetFeed(userID uint64, mode string, limit, offset int) ([]
 		return posts, total, nil
 	}
 	return result, total, nil
+}
+
+// Các phương thức mới sử dụng UUID
+func (s *postService) GetPostByUUID(uuid string) (*model.PostResponse, error) {
+	post, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+	result, err := util.PopulateSingleUserInfo(*post, post.UserID)
+	if err != nil {
+		return post, nil
+	}
+	return &result, nil
+}
+
+func (s *postService) UpdatePostByUUID(uuid string, userID uint64, req model.CreatePostRequest, files []interface{}) (*model.PostResponse, error) {
+	// Tìm bài đăng hiện tại
+	postResp, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+	if postResp.UserID != userID {
+		return nil, errors.New("forbidden")
+	}
+
+	// Tạo đối tượng post mới để cập nhật
+	post := &model.Post{
+		ID:         postResp.ID,
+		UUID:       uuid,
+		UserID:     postResp.UserID,
+		Content:    req.Content,
+		Visibility: req.Visibility,
+		CreatedAt:  postResp.CreatedAt,
+		UpdatedAt:  time.Now(),
+		IsDeleted:  false,
+	}
+
+	// Lấy danh sách media hiện tại
+	currentMedia := postResp.Media
+
+	// Nếu có file ảnh mới
+	if len(files) > 0 {
+		// Xóa toàn bộ media cũ trên Cloudinary
+		for _, oldMedia := range currentMedia {
+			if err := s.cloudinaryUploader.DeleteImage(oldMedia.MediaURL); err != nil {
+				log.Printf("Failed to delete old image %s from Cloudinary: %v", oldMedia.MediaURL, err)
+				// Tiếp tục xử lý dù có lỗi xóa Cloudinary, không return lỗi
+			}
+		}
+
+		// Xóa toàn bộ media cũ trong database
+		if err := s.repo.DeletePostMedia(postResp.ID); err != nil {
+			log.Printf("Failed to delete old media from database for post %s: %v", uuid, err)
+			return nil, fmt.Errorf("failed to delete old media from database: %v", err)
+		}
+
+		// Upload ảnh mới lên Cloudinary
+		urls, err := s.cloudinaryUploader.UploadImages(files)
+		if err != nil {
+			return nil, errors.New("failed to upload new images: " + err.Error())
+		}
+		for _, url := range urls {
+			post.Media = append(post.Media, model.PostMedia{
+				MediaURL:  url,
+				MediaType: "IMAGE",
+				CreatedAt: time.Now(),
+			})
+		}
+	} else {
+		// Nếu không có file mới, giữ nguyên media cũ hoặc dùng MediaURLs từ request
+		if len(req.MediaURLs) > 0 {
+			// Xóa media cũ trên Cloudinary nếu có MediaURLs mới
+			for _, oldMedia := range currentMedia {
+				if err := s.cloudinaryUploader.DeleteImage(oldMedia.MediaURL); err != nil {
+					log.Printf("Failed to delete old image %s from Cloudinary: %v", oldMedia.MediaURL, err)
+				}
+			}
+
+			// Xóa media cũ trong database
+			if err := s.repo.DeletePostMedia(postResp.ID); err != nil {
+				log.Printf("Failed to delete old media from database for post %s: %v", uuid, err)
+				return nil, fmt.Errorf("failed to delete old media from database: %v", err)
+			}
+
+			// Thêm MediaURLs mới
+			for _, url := range req.MediaURLs {
+				post.Media = append(post.Media, model.PostMedia{
+					MediaURL:  url,
+					MediaType: "IMAGE",
+					CreatedAt: time.Now(),
+				})
+			}
+		} else {
+			// Không có file mới và không có MediaURLs, giữ nguyên media cũ
+			post.Media = currentMedia
+		}
+	}
+
+	// Cập nhật bài đăng trong database
+	if err := s.repo.UpdatePost(post); err != nil {
+		return nil, err
+	}
+
+	// Lấy bài đăng đã cập nhật và trả về
+	updatedPost, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := util.PopulateSingleUserInfo(*updatedPost, userID)
+	if err != nil {
+		log.Printf("Failed to populate user info: %v", err)
+		return updatedPost, nil
+	}
+
+	return &result, nil
+}
+
+func (s *postService) DeletePostByUUID(uuid string, userID uint64) error {
+	// Kiểm tra quyền
+	post, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return err
+	}
+	if post.UserID != userID {
+		return errors.New("forbidden")
+	}
+
+	return s.repo.DeletePostByUUID(uuid)
+}
+
+func (s *postService) CreateCommentByUUID(uuid string, userID uint64, content string, parentID *uint64, files []interface{}) (*model.Comment, error) {
+	// Tìm post theo UUID
+	post, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sử dụng ID nội bộ để tạo comment
+	return s.CreateComment(post.ID, userID, content, parentID, files)
+}
+
+func (s *postService) GetCommentsByPostUUID(uuid string, limit, offset int) ([]model.Comment, int64, error) {
+	comments, total, err := s.repo.FindCommentsByPostUUID(uuid, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Tương tự như GetCommentsByPostID, thêm thông tin user
+	enrichedComments, err := util.PopulateCommentsUserInfo(comments)
+	if err != nil {
+		log.Printf("Failed to populate user info for comments: %v", err)
+		return comments, total, nil
+	}
+
+	return enrichedComments, total, nil
+}
+
+func (s *postService) LikePostByUUID(uuid string, userID uint64) error {
+	return s.repo.CreatePostLikeByUUID(uuid, userID)
+}
+
+func (s *postService) UnlikePostByUUID(uuid string, userID uint64) error {
+	return s.repo.DeletePostLikeByUUID(uuid, userID)
+}
+
+func (s *postService) SharePostByUUID(uuid string, userID uint64, content string) (*model.PostShare, error) {
+	// Kiểm tra xem post có tồn tại
+	post, err := s.repo.FindByUUID(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	share := &model.PostShare{
+		PostID:        post.ID,
+		UserID:        userID,
+		SharedContent: content,
+		CreatedAt:     time.Now(),
+	}
+
+	if err := s.repo.CreateShare(share); err != nil {
+		return nil, err
+	}
+
+	// Tìm share vừa tạo
+	share.Author = &model.UserInfo{ID: userID}
+
+	// Thêm thông tin user
+	enrichedShare, err := util.PopulateSingleShareUserInfo(*share)
+	if err != nil {
+		log.Printf("Failed to populate user info for share: %v", err)
+		return share, nil
+	}
+
+	return &enrichedShare, nil
+}
+
+func (s *postService) GetSharesByPostUUID(uuid string, limit, offset int) ([]model.PostShare, int64, error) {
+	shares, total, err := s.repo.FindSharesByPostUUID(uuid, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Tương tự như GetSharesByPostID, thêm thông tin user
+	enrichedShares, err := util.PopulateSharesUserInfo(shares)
+	if err != nil {
+		log.Printf("Failed to populate user info for shares: %v", err)
+		return shares, total, nil
+	}
+
+	return enrichedShares, total, nil
 }

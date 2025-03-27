@@ -79,3 +79,18 @@ func PopulateSingleUserInfo[T any](item T, userID uint64) (T, error) {
 	}
 	return result[0], nil
 }
+
+// PopulateCommentsUserInfo thêm thông tin user cho danh sách comments
+func PopulateCommentsUserInfo(comments []model.Comment) ([]model.Comment, error) {
+	return PopulateUserInfo(comments, func(c model.Comment) uint64 { return c.UserID })
+}
+
+// PopulateSingleShareUserInfo thêm thông tin user cho một share
+func PopulateSingleShareUserInfo(share model.PostShare) (model.PostShare, error) {
+	return PopulateSingleUserInfo(share, share.UserID)
+}
+
+// PopulateSharesUserInfo thêm thông tin user cho danh sách shares
+func PopulateSharesUserInfo(shares []model.PostShare) ([]model.PostShare, error) {
+	return PopulateUserInfo(shares, func(s model.PostShare) uint64 { return s.UserID })
+}

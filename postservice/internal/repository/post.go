@@ -3,27 +3,35 @@ package repository
 import (
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"postservice/internal/model"
+
+	"github.com/jinzhu/gorm"
 )
 
 type PostRepository interface {
 	FindByID(id uint64) (*model.PostResponse, error)
+	FindByUUID(uuid string) (*model.PostResponse, error)
 	CreatePost(post *model.Post) error
 	UpdatePost(post *model.Post) error
 	DeletePost(id uint64) error
+	DeletePostByUUID(uuid string) error
 	DeletePostMedia(postID uint64) error
 	CreateComment(comment *model.Comment) error
 	FindCommentsByPostID(postID uint64, limit, offset int) ([]model.Comment, int64, error)
+	FindCommentsByPostUUID(uuid string, limit, offset int) ([]model.Comment, int64, error)
 	FindCommentByID(id uint64, comment *model.Comment) error
 	UpdateComment(comment *model.Comment) error
 	DeleteComment(id uint64) error
 	CreatePostLike(postID, userID uint64) error
+	CreatePostLikeByUUID(uuid string, userID uint64) error
 	DeletePostLike(postID, userID uint64) error
+	DeletePostLikeByUUID(uuid string, userID uint64) error
 	CreateCommentLike(commentID, userID uint64) error
 	DeleteCommentLike(commentID, userID uint64) error
 	CreateShare(share *model.PostShare) error
+	CreateShareByUUID(uuid string, userID uint64, sharedContent string) error
 	FindSharesByPostID(postID uint64, limit, offset int) ([]model.PostShare, int64, error)
+	FindSharesByPostUUID(uuid string, limit, offset int) ([]model.PostShare, int64, error)
 	FindPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error)
 	FindFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error)
 }
@@ -49,6 +57,35 @@ func (r *postRepository) FindByID(id uint64) (*model.PostResponse, error) {
 
 	postResponse := &model.PostResponse{
 		ID:            post.ID,
+		UUID:          post.UUID,
+		UserID:        post.UserID,
+		Content:       post.Content,
+		Visibility:    post.Visibility,
+		CreatedAt:     post.CreatedAt,
+		UpdatedAt:     post.UpdatedAt,
+		Media:         post.Media,
+		TotalLikes:    int(totalLikes),
+		TotalComments: int(totalComments),
+		TotalShares:   int(totalShares),
+	}
+
+	return postResponse, nil
+}
+
+func (r *postRepository) FindByUUID(uuid string) (*model.PostResponse, error) {
+	var post model.Post
+	if err := r.db.Preload("Media").Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return nil, err
+	}
+
+	var totalLikes, totalComments, totalShares int64
+	r.db.Model(&model.PostLike{}).Where("post_id = ?", post.ID).Count(&totalLikes)
+	r.db.Model(&model.Comment{}).Where("post_id = ? AND is_deleted = false", post.ID).Count(&totalComments)
+	r.db.Model(&model.PostShare{}).Where("post_id = ?", post.ID).Count(&totalShares)
+
+	postResponse := &model.PostResponse{
+		ID:            post.ID,
+		UUID:          post.UUID,
 		UserID:        post.UserID,
 		Content:       post.Content,
 		Visibility:    post.Visibility,
@@ -95,6 +132,7 @@ func (r *postRepository) FindFeed(userID uint64, mode string, limit, offset int)
 
 		postResponses = append(postResponses, model.PostResponse{
 			ID:            post.ID,
+			UUID:          post.UUID,
 			UserID:        post.UserID,
 			Content:       post.Content,
 			Visibility:    post.Visibility,
@@ -235,6 +273,7 @@ func (r *postRepository) FindPostsByUserID(userID uint64, limit, offset int) ([]
 
 		postResponses = append(postResponses, model.PostResponse{
 			ID:            post.ID,
+			UUID:          post.UUID,
 			UserID:        post.UserID,
 			Content:       post.Content,
 			Visibility:    post.Visibility,
@@ -248,4 +287,59 @@ func (r *postRepository) FindPostsByUserID(userID uint64, limit, offset int) ([]
 	}
 
 	return postResponses, total, nil
+}
+
+// Triển khai các phương thức mới
+func (r *postRepository) DeletePostByUUID(uuid string) error {
+	var post model.Post
+	if err := r.db.Where("uuid = ?", uuid).First(&post).Error; err != nil {
+		return err
+	}
+	return r.db.Model(&model.Post{}).Where("uuid = ?", uuid).Update("is_deleted", true).Error
+}
+
+func (r *postRepository) FindCommentsByPostUUID(uuid string, limit, offset int) ([]model.Comment, int64, error) {
+	var post model.Post
+	if err := r.db.Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return nil, 0, err
+	}
+	return r.FindCommentsByPostID(post.ID, limit, offset)
+}
+
+func (r *postRepository) CreatePostLikeByUUID(uuid string, userID uint64) error {
+	var post model.Post
+	if err := r.db.Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return err
+	}
+	return r.CreatePostLike(post.ID, userID)
+}
+
+func (r *postRepository) DeletePostLikeByUUID(uuid string, userID uint64) error {
+	var post model.Post
+	if err := r.db.Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return err
+	}
+	return r.DeletePostLike(post.ID, userID)
+}
+
+func (r *postRepository) CreateShareByUUID(uuid string, userID uint64, sharedContent string) error {
+	var post model.Post
+	if err := r.db.Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return err
+	}
+	share := &model.PostShare{
+		PostID:        post.ID,
+		UserID:        userID,
+		SharedContent: sharedContent,
+		CreatedAt:     time.Now(),
+	}
+	return r.db.Create(share).Error
+}
+
+func (r *postRepository) FindSharesByPostUUID(uuid string, limit, offset int) ([]model.PostShare, int64, error) {
+	var post model.Post
+	if err := r.db.Where("uuid = ? AND is_deleted = false", uuid).First(&post).Error; err != nil {
+		return nil, 0, err
+	}
+	return r.FindSharesByPostID(post.ID, limit, offset)
 }

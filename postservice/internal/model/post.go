@@ -13,6 +13,7 @@ type UserInfo struct {
 // Post ánh xạ bảng posts
 type Post struct {
 	ID         uint64      `json:"id" gorm:"primary_key"`
+	UUID       string      `json:"uuid" gorm:"type:varchar(36);unique;not null;index"`
 	UserID     uint64      `json:"user_id" gorm:"not null"`
 	Content    string      `json:"content" gorm:"type:text;not null"`
 	Visibility string      `json:"visibility" gorm:"type:enum('PUBLIC','FRIENDS','PRIVATE');default:'PUBLIC'"`
@@ -29,6 +30,7 @@ func (Post) TableName() string {
 // PostResponse dùng để trả về dữ liệu bài đăng với thông tin bổ sung
 type PostResponse struct {
 	ID            uint64      `json:"id"`
+	UUID          string      `json:"uuid"`
 	UserID        uint64      `json:"user_id"`
 	Author        *UserInfo   `json:"author"` // Thêm thông tin user
 	Content       string      `json:"content"`
