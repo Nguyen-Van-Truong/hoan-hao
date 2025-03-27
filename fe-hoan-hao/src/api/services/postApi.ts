@@ -8,6 +8,7 @@ const POST_ENDPOINTS = {
   GET_BY_UUID: "/post/:uuid",
   GET_USER_POSTS: "/post/user/username/:username/posts",
   GET_POST_COMMENTS: (postId: string) => `${API_BASE_URL}/post/${postId}/comments`,
+  CREATE_COMMENT: (postId: string) => `${API_BASE_URL}/post/${postId}/comment`
 };
 
 // Định nghĩa kiểu dữ liệu cho response từ API
@@ -79,7 +80,9 @@ export interface CommentResponse {
   id: string | number;
   content: string;
   created_at: string;
+  updated_at: string;
   parent_comment_id: string | number | null;
+  media_url?: string; // URL hình ảnh đính kèm với comment
   author: {
     id: string | number;
     username: string;
@@ -271,6 +274,7 @@ export const getPostComments = async (
   offset: number = 0
 ): Promise<CommentsListResponse> => {
   try {
+    const token = getAccessToken();
     // Tạo URL với các tham số query
     const url = new URL(POST_ENDPOINTS.GET_POST_COMMENTS(postId));
     url.searchParams.append('limit', limit.toString());
@@ -281,9 +285,9 @@ export const getPostComments = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        // Thêm token nếu cần xác thực
-        ...(localStorage.getItem('token') && {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        // Thêm token nếu có
+        ...(token && {
+          Authorization: `Bearer ${token}`,
         }),
       },
     });
@@ -291,14 +295,76 @@ export const getPostComments = async (
     // Kiểm tra response status
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch comments');
+      throw new Error(errorData.message || 'Không thể lấy bình luận');
     }
 
     // Trả về dữ liệu
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching comments:', error);
+    console.error('Lỗi khi lấy bình luận:', error);
     throw error;
+  }
+};
+
+/**
+ * Tạo bình luận mới cho bài viết
+ * @param postId - ID của bài viết
+ * @param content - Nội dung bình luận
+ * @param parentCommentId - ID của bình luận cha (nếu là reply)
+ * @param image - File hình ảnh đính kèm (nếu có)
+ * @returns Promise chứa dữ liệu bình luận mới tạo
+ */
+export const createComment = async (
+  postId: string,
+  content: string,
+  parentCommentId?: string | number | null,
+  image?: File
+): Promise<CommentResponse> => {
+  try {
+    const token = getAccessToken();
+    
+    if (!token) {
+      throw new Error("Bạn cần đăng nhập để bình luận");
+    }
+    
+    // Tạo FormData để gửi cả nội dung và hình ảnh
+    const formData = new FormData();
+    formData.append('content', content);
+    
+    // Nếu có parentCommentId (reply), thêm vào formData
+    if (parentCommentId) {
+      formData.append('parent_comment_id', parentCommentId.toString());
+    }
+    
+    // Nếu có hình ảnh, thêm vào formData
+    if (image) {
+      formData.append('image', image);
+    }
+    
+    // Gọi API
+    const response = await fetch(POST_ENDPOINTS.CREATE_COMMENT(postId), {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    
+    // Kiểm tra response status
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Không thể tạo bình luận');
+    }
+    
+    // Trả về dữ liệu comment mới
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Lỗi khi tạo bình luận:', error);
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw new Error('Đã xảy ra lỗi khi tạo bình luận');
   }
 };

@@ -10,6 +10,7 @@ export interface Comment {
   created_at?: string;
   likes: number;
   parent_comment_id?: string | number | null;
+  media_url?: string;
   replies?: Reply[];
   is_deleted?: boolean;
 }

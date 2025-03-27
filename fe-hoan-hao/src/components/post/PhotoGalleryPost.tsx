@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {Avatar, AvatarFallback, AvatarImage} from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -18,13 +18,15 @@ import {
   ChevronDown,
   X,
   Loader2,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PhotoViewer from "./PhotoViewer";
 import { Comment, Reply } from "./types";
 import { useNavigate } from "react-router-dom";
-import { getPostComments, CommentResponse } from "@/api/services/postApi";
+import { getPostComments, CommentResponse, createComment } from "@/api/services/postApi";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PhotoGalleryPostProps {
   author: {
@@ -75,6 +77,11 @@ const PhotoGalleryPost = ({
   const [commentsList, setCommentsList] = useState<Comment[]>(initialCommentsList);
   const [loadingComments, setLoadingComments] = useState(false);
   const [hasMoreComments, setHasMoreComments] = useState(true);
+  const { user } = useAuth();
+  const [commentImage, setCommentImage] = useState<File | null>(null);
+  const [replyImage, setReplyImage] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const replyFileInputRef = useRef<HTMLInputElement>(null);
 
   // Number of images to display in the gallery
   const hasImages = images && images.length > 0;
@@ -95,8 +102,9 @@ const PhotoGalleryPost = ({
       },
       content: apiComment.content,
       timestamp: new Date(apiComment.created_at).toLocaleString(),
-      created_at: apiComment.created_at, // Lưu lại created_at gốc để sắp xếp
-      likes: apiComment.likes.length,
+      created_at: apiComment.created_at,
+      media_url: apiComment.media_url,
+      likes: Array.isArray(apiComment.likes) ? apiComment.likes.length : 0,
       is_deleted: apiComment.is_deleted,
       replies: [],
     };
@@ -115,7 +123,7 @@ const PhotoGalleryPost = ({
       // Tạo bản sao của comment và đảm bảo có mảng replies
       const commentCopy = { ...comment, replies: [] };
       
-      // Thêm vào Map để truy cập nhanh sau này
+      // Thêm vào Map để tham chiếu nhanh sau này
       commentMap.set(comment.id, commentCopy);
       
       // Nếu là comment cha, thêm vào danh sách riêng
@@ -166,7 +174,7 @@ const PhotoGalleryPost = ({
       const convertedComments = response.comments.map(convertApiComment);
       
       // Kiểm tra xem còn bình luận để tải không dựa trên tổng số bình luận từ API
-      if (currentOffset + response.comments.length >= response.total) {
+      if (response.total && currentOffset + response.comments.length >= response.total) {
         setHasMoreComments(false);
       } else {
         setHasMoreComments(true);
@@ -220,31 +228,70 @@ const PhotoGalleryPost = ({
     setShowComments(!showComments);
   };
 
-  const handleAddComment = () => {
-    if (commentText.trim()) {
-      // Create a new comment
-      const newComment: Comment = {
-        id: `comment-${Date.now()}`,
-        author: {
-          name: "Current User",
-          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser",
-        },
-        content: commentText,
-        timestamp: "just now",
-        likes: 0,
-        replies: [],
-      };
+  const handleAddComment = async () => {
+    if (!postId || (!commentText.trim() && !commentImage)) {
+      return;
+    }
 
-      // Clear the input
-      setCommentText("");
-
-      // Show all comments including the new one
-      setShowComments(true);
-
-      // Call the callback if provided
-      if (onCommentAdded) {
-        onCommentAdded(newComment);
+    try {
+      // Hiển thị trạng thái loading
+      setLoadingComments(true);
+      
+      console.log("Đang gửi comment với postId:", postId);
+      console.log("Nội dung comment:", commentText.trim());
+      console.log("Có hình ảnh đính kèm:", commentImage ? "Có" : "Không");
+      
+      // Gọi API tạo comment
+      const newApiComment = await createComment(
+        postId,
+        commentText.trim(),
+        null,
+        commentImage || undefined
+      );
+      
+      console.log("Kết quả API trả về:", newApiComment);
+      
+      // Kiểm tra nếu API trả về dữ liệu thành công
+      if (newApiComment && newApiComment.id) {
+        // Chuyển đổi response thành định dạng Comment
+        const newComment = convertApiComment(newApiComment);
+        console.log("Comment đã chuyển đổi:", newComment);
+        
+        // Clear input sau khi đã tạo comment thành công
+        setCommentText("");
+        setCommentImage(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        // Hiển thị phần comments
+        setShowComments(true);
+        
+        // Thêm comment mới vào đầu danh sách
+        setCommentsList(prevComments => {
+          const updatedComments = [newComment, ...prevComments];
+          return organizeComments(updatedComments);
+        });
+        
+        // Gọi callback nếu có
+        if (onCommentAdded) {
+          onCommentAdded(newComment);
+        }
+        
+        toast.success("Đã thêm bình luận");
+      } else {
+        console.error("API trả về dữ liệu không hợp lệ:", newApiComment);
+        toast.error("Không thể thêm bình luận: Dữ liệu không hợp lệ");
       }
+    } catch (error) {
+      console.error("Lỗi chi tiết khi thêm bình luận:", error);
+      if (error instanceof Error) {
+        toast.error(`Không thể thêm bình luận: ${error.message}`);
+      } else {
+        toast.error("Không thể thêm bình luận: Lỗi không xác định");
+      }
+    } finally {
+      setLoadingComments(false);
     }
   };
 
@@ -258,49 +305,76 @@ const PhotoGalleryPost = ({
     setReplyText("");
   };
 
-  const submitReply = (commentId: string | number) => {
-    if (replyText.trim()) {
-      // In a real app, you would send this to a server
-      // For now, we'll simulate adding a reply locally
-      const updatedComments = [...commentsList];
-      const commentIndex = updatedComments.findIndex((c) => c.id === commentId);
-
-      if (commentIndex !== -1) {
-        // Create a new reply
-        const newReply: Reply = {
-          id: `${commentId}-${Date.now()}`,
-          parent_id: commentId,
-          author: {
-            name: "Current User",
-            avatar:
-              "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser",
-          },
-          content: replyText,
-          timestamp: "just now",
-          likes: 0,
-        };
-
-        // Initialize replies array if it doesn't exist
-        if (!updatedComments[commentIndex].replies) {
-          updatedComments[commentIndex].replies = [];
-        }
-
-        // Add the new reply
-        updatedComments[commentIndex].replies!.push(newReply);
+  const submitReply = async (commentId: string | number) => {
+    if (!postId || (!replyText.trim() && !replyImage)) {
+      return;
+    }
+    
+    try {
+      // Hiển thị trạng thái loading
+      setLoadingComments(true);
+      
+      // Gọi API tạo reply
+      const newApiReply = await createComment(
+        postId,
+        replyText.trim(),
+        commentId,
+        replyImage || undefined
+      );
+      
+      // Kiểm tra nếu API trả về dữ liệu thành công
+      if (newApiReply && newApiReply.id) {
+        // Chuyển đổi response thành định dạng Reply
+        const newReply = convertApiComment(newApiReply) as Reply;
         
-        // Update the comments list
-        setCommentsList(updatedComments);
-
-        // Call the callback if provided
+        // Clear input sau khi đã tạo reply thành công
+        setReplyText("");
+        setReplyImage(null);
+        if (replyFileInputRef.current) {
+          replyFileInputRef.current.value = '';
+        }
+        setReplyingTo(null);
+        
+        // Cập nhật danh sách comments
+        setCommentsList(prevComments => {
+          const updatedComments = [...prevComments];
+          const commentIndex = updatedComments.findIndex(c => c.id === commentId);
+          
+          if (commentIndex !== -1) {
+            // Đảm bảo mảng replies tồn tại
+            if (!updatedComments[commentIndex].replies) {
+              updatedComments[commentIndex].replies = [];
+            }
+            
+            // Thêm reply mới
+            updatedComments[commentIndex].replies!.push(newReply);
+          }
+          
+          return updatedComments;
+        });
+        
+        // Hiển thị replies
+        toggleReplies(commentId.toString(), true);
+        
+        // Gọi callback nếu có
         if (onReplyAdded) {
           onReplyAdded(commentId.toString(), newReply);
         }
+        
+        toast.success("Đã thêm phản hồi");
+      } else {
+        console.error("API trả về dữ liệu không hợp lệ:", newApiReply);
+        toast.error("Không thể thêm phản hồi: Dữ liệu không hợp lệ");
       }
-
-      setReplyText("");
-      setReplyingTo(null);
-      // Auto-show replies for this comment
-      toggleReplies(commentId.toString(), true);
+    } catch (error) {
+      console.error("Lỗi chi tiết khi thêm phản hồi:", error);
+      if (error instanceof Error) {
+        toast.error(`Không thể thêm phản hồi: ${error.message}`);
+      } else {
+        toast.error("Không thể thêm phản hồi: Lỗi không xác định");
+      }
+    } finally {
+      setLoadingComments(false);
     }
   };
 
@@ -338,6 +412,36 @@ const PhotoGalleryPost = ({
         console.error("Không thể sao chép:", error);
         toast.error(t("post.copyFailed") || "Không thể sao chép liên kết");
       });
+  };
+
+  // Hàm xử lý khi chọn file ảnh cho comment chính
+  const handleCommentImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setCommentImage(e.target.files[0]);
+    }
+  };
+
+  // Hàm xử lý khi chọn file ảnh cho reply
+  const handleReplyImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setReplyImage(e.target.files[0]);
+    }
+  };
+
+  // Hàm hủy chọn ảnh cho comment chính
+  const cancelCommentImage = () => {
+    setCommentImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Hàm hủy chọn ảnh cho reply
+  const cancelReplyImage = () => {
+    setReplyImage(null);
+    if (replyFileInputRef.current) {
+      replyFileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -473,7 +577,7 @@ const PhotoGalleryPost = ({
             <div className="flex items-center space-x-2 mb-3">
               <Avatar className="h-8 w-8">
                 <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"
+                  src={user?.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"}
                   alt="Current User"
                   className="rounded-full"
                 />
@@ -491,17 +595,56 @@ const PhotoGalleryPost = ({
                     }
                   }}
                 />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-pink-500"
-                  onClick={handleAddComment}
-                  disabled={!commentText.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleCommentImageChange} 
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 text-gray-500"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Thêm hình ảnh"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 text-pink-500"
+                    onClick={handleAddComment}
+                    disabled={(!commentText.trim() && !commentImage) || loadingComments}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
+            
+            {/* Hiển thị hình ảnh đã chọn cho comment */}
+            {commentImage && (
+              <div className="ml-10 mb-3 relative">
+                <div className="w-20 h-20 relative rounded-lg overflow-hidden border border-gray-200">
+                  <img 
+                    src={URL.createObjectURL(commentImage)}
+                    alt="Selected" 
+                    className="w-full h-full object-cover"
+                  />
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="absolute top-0 right-0 h-5 w-5 rounded-full"
+                    onClick={cancelCommentImage}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Hiển thị trạng thái loading nếu đang tải bình luận */}
             {loadingComments && commentsList.length === 0 && (
@@ -551,6 +694,18 @@ const PhotoGalleryPost = ({
                             {comment.author.name}
                           </a>
                           <p className="text-sm">{comment.content}</p>
+                          
+                          {/* Hiển thị hình ảnh nếu có */}
+                          {comment.media_url && (
+                            <div className="mt-2">
+                              <img
+                                src={comment.media_url}
+                                alt="Comment"
+                                className="max-h-[200px] rounded-lg cursor-pointer"
+                                onClick={() => window.open(comment.media_url, '_blank')}
+                              />
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center mt-1 text-xs text-gray-500 space-x-3">
                           <span>{comment.timestamp}</span>
@@ -606,7 +761,7 @@ const PhotoGalleryPost = ({
                     <div className="flex items-start space-x-2 ml-10">
                       <Avatar className="h-7 w-7">
                         <img
-                          src="https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"
+                          src={user?.profile_picture_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"}
                           alt="Current User"
                           className="rounded-full"
                         />
@@ -626,6 +781,22 @@ const PhotoGalleryPost = ({
                           autoFocus
                         />
                         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                          <input 
+                            type="file" 
+                            ref={replyFileInputRef}
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleReplyImageChange} 
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                            onClick={() => replyFileInputRef.current?.click()}
+                            title="Thêm hình ảnh"
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
@@ -639,11 +810,32 @@ const PhotoGalleryPost = ({
                             variant="ghost"
                             className="h-6 w-6 text-pink-500"
                             onClick={() => submitReply(comment.id)}
-                            disabled={!replyText.trim()}
+                            disabled={(!replyText.trim() && !replyImage) || loadingComments}
                           >
                             <Send className="h-4 w-4" />
                           </Button>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Hiển thị hình ảnh đã chọn cho reply */}
+                  {replyingTo === comment.id && replyImage && (
+                    <div className="ml-12 mt-2 mb-2 relative">
+                      <div className="w-16 h-16 relative rounded-lg overflow-hidden border border-gray-200">
+                        <img 
+                          src={URL.createObjectURL(replyImage)}
+                          alt="Selected" 
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-0 right-0 h-5 w-5 rounded-full"
+                          onClick={cancelReplyImage}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -675,6 +867,18 @@ const PhotoGalleryPost = ({
                                   {reply.author.name}
                                 </a>
                                 <p className="text-sm">{reply.content}</p>
+                                
+                                {/* Hiển thị hình ảnh nếu có */}
+                                {reply.media_url && (
+                                  <div className="mt-2">
+                                    <img
+                                      src={reply.media_url}
+                                      alt="Reply"
+                                      className="max-h-[150px] rounded-lg cursor-pointer"
+                                      onClick={() => window.open(reply.media_url, '_blank')}
+                                    />
+                                  </div>
+                                )}
                               </div>
                               <div className="flex items-center mt-1 text-xs text-gray-500 space-x-3">
                                 <span>{reply.timestamp}</span>
