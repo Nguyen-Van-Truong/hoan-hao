@@ -6,7 +6,8 @@ const POST_ENDPOINTS = {
   FEED: "/post/feed",
   CREATE: "/post",
   GET_BY_UUID: "/post/:uuid",
-  GET_USER_POSTS: "/post/user/username/:username/posts"
+  GET_USER_POSTS: "/post/user/username/:username/posts",
+  GET_POST_COMMENTS: (postId: string) => `${API_BASE_URL}/post/${postId}/comments`,
 };
 
 // Định nghĩa kiểu dữ liệu cho response từ API
@@ -69,6 +70,29 @@ export interface CreatePostResponse {
     media_url: string;
     thumbnail_url?: string;
   }>;
+}
+
+/**
+ * Định nghĩa kiểu dữ liệu cho response của API lấy bình luận
+ */
+export interface CommentResponse {
+  id: string | number;
+  content: string;
+  created_at: string;
+  parent_comment_id: string | number | null;
+  author: {
+    id: string | number;
+    username: string;
+    full_name: string;
+    profile_picture_url: string | null;
+  };
+  likes: Array<{ id: number; user_id: number }>;
+  is_deleted: boolean;
+}
+
+export interface CommentsListResponse {
+  comments: CommentResponse[];
+  total: number;
 }
 
 /**
@@ -231,5 +255,50 @@ export const getUserPosts = async (username: string, limit = 5, offset = 0): Pro
       throw new Error(error.message);
     }
     throw new Error("Đã xảy ra lỗi khi lấy danh sách bài đăng của người dùng");
+  }
+};
+
+/**
+ * Lấy danh sách bình luận của bài viết
+ * @param postId - ID của bài viết
+ * @param limit - Số lượng bình luận tối đa trả về
+ * @param offset - Vị trí bắt đầu
+ * @returns Promise chứa dữ liệu bình luận
+ */
+export const getPostComments = async (
+  postId: string,
+  limit: number = 10,
+  offset: number = 0
+): Promise<CommentsListResponse> => {
+  try {
+    // Tạo URL với các tham số query
+    const url = new URL(POST_ENDPOINTS.GET_POST_COMMENTS(postId));
+    url.searchParams.append('limit', limit.toString());
+    url.searchParams.append('offset', offset.toString());
+
+    // Gọi API
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        // Thêm token nếu cần xác thực
+        ...(localStorage.getItem('token') && {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        }),
+      },
+    });
+
+    // Kiểm tra response status
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch comments');
+    }
+
+    // Trả về dữ liệu
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    throw error;
   }
 };

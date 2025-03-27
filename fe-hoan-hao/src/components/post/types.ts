@@ -1,24 +1,21 @@
 export interface Comment {
-  id: string;
+  id: string | number;
   author: {
     name: string;
+    username?: string;
     avatar: string;
   };
   content: string;
   timestamp: string;
+  created_at?: string;
   likes: number;
+  parent_comment_id?: string | number | null;
   replies?: Reply[];
+  is_deleted?: boolean;
 }
 
-export interface Reply {
-  id: string;
-  author: {
-    name: string;
-    avatar: string;
-  };
-  content: string;
-  timestamp: string;
-  likes: number;
+export interface Reply extends Comment {
+  parent_id?: string | number;
 }
 
 export interface PostData {

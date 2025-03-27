@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {Avatar, AvatarFallback, AvatarImage} from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -17,11 +17,14 @@ import {
   Send,
   ChevronDown,
   X,
+  Loader2,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PhotoViewer from "./PhotoViewer";
 import { Comment, Reply } from "./types";
 import { useNavigate } from "react-router-dom";
+import { getPostComments, CommentResponse } from "@/api/services/postApi";
+import { toast } from "react-hot-toast";
 
 interface PhotoGalleryPostProps {
   author: {
@@ -51,7 +54,7 @@ const PhotoGalleryPost = ({
   likes,
   comments,
   shares,
-  commentsList = [],
+  commentsList: initialCommentsList = [],
   onCommentAdded,
   onCommentLiked,
   onReplyAdded,
@@ -63,17 +66,150 @@ const PhotoGalleryPost = ({
   const [initialPhotoIndex, setInitialPhotoIndex] = useState(0);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [visibleComments, setVisibleComments] = useState(2);
+  const [visibleComments, setVisibleComments] = useState(5);
+  const [commentOffset, setCommentOffset] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState("");
   const [showReplies, setShowReplies] = useState<Record<string, boolean>>({});
+  const [commentsList, setCommentsList] = useState<Comment[]>(initialCommentsList);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
 
   // Number of images to display in the gallery
   const hasImages = images && images.length > 0;
   const displayCount = hasImages ? Math.min(6, images.length) : 0;
   const displayedImages = hasImages ? images.slice(0, displayCount) : [];
   const remainingCount = hasImages ? totalImages - displayCount : 0;
+
+  // Hàm chuyển đổi dữ liệu bình luận từ API
+  const convertApiComment = useCallback((apiComment: CommentResponse): Comment => {
+    return {
+      id: apiComment.id,
+      parent_comment_id: apiComment.parent_comment_id,
+      author: {
+        name: apiComment.author.full_name,
+        username: apiComment.author.username,
+        avatar: apiComment.author.profile_picture_url || 
+          `https://api.dicebear.com/7.x/avataaars/svg?seed=${apiComment.author.username}`,
+      },
+      content: apiComment.content,
+      timestamp: new Date(apiComment.created_at).toLocaleString(),
+      created_at: apiComment.created_at, // Lưu lại created_at gốc để sắp xếp
+      likes: apiComment.likes.length,
+      is_deleted: apiComment.is_deleted,
+      replies: [],
+    };
+  }, []);
+  
+  // Hàm tổ chức bình luận theo cấu trúc cha-con
+  const organizeComments = useCallback((comments: Comment[]): Comment[] => {
+    // Tạo một Map với key là ID của comment để truy cập nhanh
+    const commentMap = new Map<string | number, Comment>();
+    
+    // Danh sách comment cha (không có parent_comment_id)
+    const parentComments: Comment[] = [];
+    
+    // Đầu tiên, xử lý tất cả các comment
+    comments.forEach(comment => {
+      // Tạo bản sao của comment và đảm bảo có mảng replies
+      const commentCopy = { ...comment, replies: [] };
+      
+      // Thêm vào Map để truy cập nhanh sau này
+      commentMap.set(comment.id, commentCopy);
+      
+      // Nếu là comment cha, thêm vào danh sách riêng
+      if (comment.parent_comment_id === null) {
+        parentComments.push(commentCopy);
+      }
+    });
+    
+    // Sau đó, xử lý các mối quan hệ cha-con
+    comments.forEach(comment => {
+      if (comment.parent_comment_id !== null) {
+        // Tìm comment cha trong Map
+        const parentComment = commentMap.get(comment.parent_comment_id);
+        if (parentComment && parentComment.replies) {
+          // Thêm comment con vào mảng replies của cha
+          parentComment.replies.push(comment as Reply);
+        } else {
+          // Nếu không tìm thấy cha (có thể do dữ liệu không nhất quán),
+          // thêm vào danh sách comment cha để không bị mất
+          parentComments.push(commentMap.get(comment.id) || comment);
+        }
+      }
+    });
+    
+    // Sắp xếp các comment cha theo thời gian mới nhất lên trên
+    return parentComments.sort((a, b) => {
+      const dateA = new Date(a.created_at || a.timestamp);
+      const dateB = new Date(b.created_at || b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, []);
+
+  // Tải bình luận khi hiển thị phần bình luận
+  const fetchComments = useCallback(async (reset = false) => {
+    if (!postId) return;
+    
+    try {
+      setLoadingComments(true);
+      const currentOffset = reset ? 0 : commentOffset;
+      
+      // Nếu đã hiển thị tất cả bình luận và không phải reset, không cần gọi API
+      if (!hasMoreComments && !reset) {
+        setLoadingComments(false);
+        return;
+      }
+      
+      const response = await getPostComments(postId, visibleComments, currentOffset);
+      const convertedComments = response.comments.map(convertApiComment);
+      
+      // Kiểm tra xem còn bình luận để tải không dựa trên tổng số bình luận từ API
+      if (currentOffset + response.comments.length >= response.total) {
+        setHasMoreComments(false);
+      } else {
+        setHasMoreComments(true);
+      }
+      
+      // Cập nhật danh sách bình luận
+      if (reset) {
+        // Nếu reset, thay thế toàn bộ danh sách
+        const organizedComments = organizeComments(convertedComments);
+        setCommentsList(organizedComments);
+        setCommentOffset(response.comments.length);
+      } else {
+        // Nếu load more, thêm vào danh sách hiện tại
+        setCommentsList(prevComments => {
+          // Tạo Map các comment hiện tại để tránh trùng lặp
+          const existingCommentIds = new Set(prevComments.map(c => c.id.toString()));
+          
+          // Lọc ra các comment mới chưa có trong danh sách
+          const newComments = convertedComments.filter(
+            c => !existingCommentIds.has(c.id.toString())
+          );
+          
+          // Tổ chức lại toàn bộ danh sách comment (cả cũ và mới)
+          const allComments = [...prevComments, ...newComments];
+          return organizeComments(allComments);
+        });
+        
+        setCommentOffset(currentOffset + response.comments.length);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tải bình luận:", error);
+      toast.error("Không thể tải bình luận");
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [postId, commentOffset, visibleComments, hasMoreComments, convertApiComment, organizeComments]);
+
+  // Tải bình luận khi người dùng bấm vào phần bình luận
+  useEffect(() => {
+    if (showComments && commentsList.length === 0) {
+      fetchComments(true);
+    }
+  }, [showComments, commentsList.length, fetchComments]);
 
   const handleImageClick = (index: number) => {
     setInitialPhotoIndex(index);
@@ -112,7 +248,7 @@ const PhotoGalleryPost = ({
     }
   };
 
-  const handleReply = (commentId: string) => {
+  const handleReply = (commentId: string | number) => {
     setReplyingTo(commentId);
     setReplyText("");
   };
@@ -122,7 +258,7 @@ const PhotoGalleryPost = ({
     setReplyText("");
   };
 
-  const submitReply = (commentId: string) => {
+  const submitReply = (commentId: string | number) => {
     if (replyText.trim()) {
       // In a real app, you would send this to a server
       // For now, we'll simulate adding a reply locally
@@ -133,6 +269,7 @@ const PhotoGalleryPost = ({
         // Create a new reply
         const newReply: Reply = {
           id: `${commentId}-${Date.now()}`,
+          parent_id: commentId,
           author: {
             name: "Current User",
             avatar:
@@ -150,20 +287,20 @@ const PhotoGalleryPost = ({
 
         // Add the new reply
         updatedComments[commentIndex].replies!.push(newReply);
-
-        // Update the comments list locally only
-        // We don't update commentsList directly to avoid duplicate updates
+        
+        // Update the comments list
+        setCommentsList(updatedComments);
 
         // Call the callback if provided
         if (onReplyAdded) {
-          onReplyAdded(commentId, newReply);
+          onReplyAdded(commentId.toString(), newReply);
         }
       }
 
       setReplyText("");
       setReplyingTo(null);
       // Auto-show replies for this comment
-      toggleReplies(commentId, true);
+      toggleReplies(commentId.toString(), true);
     }
   };
 
@@ -175,7 +312,7 @@ const PhotoGalleryPost = ({
   };
 
   const loadMoreComments = () => {
-    setVisibleComments(commentsList.length);
+    fetchComments();
   };
 
   const toggleLike = () => {
@@ -186,6 +323,21 @@ const PhotoGalleryPost = ({
   const handleAvatarClick = () => {
     const profileUrl = `/profile/${author.username || author.name.toLowerCase().replace(/ /g, "-")}`;
     navigate(profileUrl);
+  };
+
+  // Hàm xử lý khi bấm vào nút chia sẻ để copy link
+  const handleShare = () => {
+    const postUrl = `${window.location.origin}/post/${author.username || author.name.toLowerCase().replace(/ /g, "-")}/${postId}`;
+    
+    // Copy URL vào clipboard
+    navigator.clipboard.writeText(postUrl)
+      .then(() => {
+        toast.success(t("post.linkCopied") || "Đã sao chép liên kết vào bộ nhớ tạm");
+      })
+      .catch((error) => {
+        console.error("Không thể sao chép:", error);
+        toast.error(t("post.copyFailed") || "Không thể sao chép liên kết");
+      });
   };
 
   return (
@@ -307,6 +459,7 @@ const PhotoGalleryPost = ({
           <Button
             variant="ghost"
             className="flex-1 flex items-center justify-center gap-2 text-gray-600 hover:bg-pink-50"
+            onClick={handleShare}
           >
             <Share2 className="h-5 w-5" />
             <span className="text-xs ml-1">{shares}</span>
@@ -350,17 +503,37 @@ const PhotoGalleryPost = ({
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {[...commentsList]
-                .slice(0, visibleComments)
-                .reverse()
-                .map((comment) => (
-                  <div key={comment.id} className="space-y-2">
-                    {/* Main Comment */}
+            {/* Hiển thị trạng thái loading nếu đang tải bình luận */}
+            {loadingComments && commentsList.length === 0 && (
+              <div className="flex justify-center py-4">
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+                  <p className="text-sm text-gray-500 mt-2">
+                    {t("post.loadingComments") || "Đang tải bình luận..."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Hiển thị thông báo nếu không có bình luận */}
+            {!loadingComments && commentsList.length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-gray-500">
+                  {t("post.noComments") || "Chưa có bình luận nào"}
+                </p>
+              </div>
+            )}
+
+            {/* Danh sách bình luận */}
+            <div className="space-y-3 max-h-[500px] overflow-y-auto">
+              {commentsList.map((comment) => (
+                <div key={comment.id} className="space-y-2">
+                  {/* Main Comment */}
+                  {!comment.is_deleted && (
                     <div className="flex space-x-2">
                       <Avatar className="h-8 w-8">
                         <a
-                          href={`/profile/${comment.author.name.toLowerCase().replace(/ /g, "-")}`}
+                          href={`/profile/${comment.author.username || comment.author.name.toLowerCase().replace(/ /g, "-")}`}
                         >
                           <img
                             src={comment.author.avatar}
@@ -372,7 +545,7 @@ const PhotoGalleryPost = ({
                       <div className="flex-1">
                         <div className="bg-gray-100 rounded-2xl px-3 py-2">
                           <a
-                            href={`/profile/${comment.author.name.toLowerCase().replace(/ /g, "-")}`}
+                            href={`/profile/${comment.author.username || comment.author.name.toLowerCase().replace(/ /g, "-")}`}
                             className="font-semibold text-xs hover:underline"
                           >
                             {comment.author.name}
@@ -391,9 +564,9 @@ const PhotoGalleryPost = ({
                               );
                               if (commentIndex !== -1) {
                                 updatedComments[commentIndex].likes += 1;
-                                commentsList = updatedComments;
+                                setCommentsList(updatedComments);
                                 if (onCommentLiked) {
-                                  onCommentLiked(comment.id);
+                                  onCommentLiked(comment.id.toString());
                                 }
                               }
                             }}
@@ -409,7 +582,7 @@ const PhotoGalleryPost = ({
                           {comment.replies && comment.replies.length > 0 && (
                             <button
                               className="font-semibold hover:text-gray-700 flex items-center"
-                              onClick={() => toggleReplies(comment.id)}
+                              onClick={() => toggleReplies(comment.id.toString())}
                             >
                               {showReplies[comment.id]
                                 ? t("post.hideReplies") || "Hide replies"
@@ -419,105 +592,114 @@ const PhotoGalleryPost = ({
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    {/* Reply Input */}
-                    {replyingTo === comment.id && (
-                      <div className="flex items-start space-x-2 ml-10">
-                        <Avatar className="h-7 w-7">
-                          <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"
-                            alt="Current User"
-                            className="rounded-full"
-                          />
-                        </Avatar>
-                        <div className="flex-1 relative">
-                          <Textarea
-                            placeholder={`${t("post.replyTo") || "Reply to"} ${comment.author.name}...`}
-                            className="min-h-[36px] py-2 pr-16 resize-none rounded-full bg-gray-100 border-0 focus-visible:ring-0 text-sm"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                submitReply(comment.id);
-                              }
-                            }}
-                            autoFocus
-                          />
-                          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6 text-gray-400 hover:text-gray-600"
-                              onClick={cancelReply}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-6 w-6 text-pink-500"
-                              onClick={() => submitReply(comment.id)}
-                              disabled={!replyText.trim()}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </div>
+                  {/* Thông báo bình luận đã bị xóa */}
+                  {comment.is_deleted && (
+                    <div className="text-center text-gray-500 text-sm italic py-1">
+                      {t("post.commentDeleted") || "Bình luận này đã bị xóa"}
+                    </div>
+                  )}
+
+                  {/* Reply Input */}
+                  {replyingTo === comment.id && (
+                    <div className="flex items-start space-x-2 ml-10">
+                      <Avatar className="h-7 w-7">
+                        <img
+                          src="https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser"
+                          alt="Current User"
+                          className="rounded-full"
+                        />
+                      </Avatar>
+                      <div className="flex-1 relative">
+                        <Textarea
+                          placeholder={`${t("post.replyTo") || "Reply to"} ${comment.author.name}...`}
+                          className="min-h-[36px] py-2 pr-16 resize-none rounded-full bg-gray-100 border-0 focus-visible:ring-0 text-sm"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              submitReply(comment.id);
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-gray-400 hover:text-gray-600"
+                            onClick={cancelReply}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-pink-500"
+                            onClick={() => submitReply(comment.id)}
+                            disabled={!replyText.trim()}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Replies */}
-                    {comment.replies &&
-                      comment.replies.length > 0 &&
-                      showReplies[comment.id] && (
-                        <div className="ml-10 space-y-2">
-                          {comment.replies.map((reply) => (
-                            <div key={reply.id} className="flex space-x-2">
-                              <Avatar className="h-7 w-7">
+                  {/* Replies */}
+                  {comment.replies &&
+                    comment.replies.length > 0 &&
+                    showReplies[comment.id] && (
+                      <div className="ml-10 space-y-2">
+                        {comment.replies.map((reply) => (
+                          <div key={reply.id} className="flex space-x-2">
+                            <Avatar className="h-7 w-7">
+                              <a
+                                href={`/profile/${reply.author.username || reply.author.name.toLowerCase().replace(/ /g, "-")}`}
+                              >
+                                <img
+                                  src={reply.author.avatar}
+                                  alt={reply.author.name}
+                                  className="rounded-full"
+                                />
+                              </a>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="bg-gray-100 rounded-2xl px-3 py-2">
                                 <a
-                                  href={`/profile/${reply.author.name.toLowerCase().replace(/ /g, "-")}`}
+                                  href={`/profile/${reply.author.username || reply.author.name.toLowerCase().replace(/ /g, "-")}`}
+                                  className="font-semibold text-xs hover:underline"
                                 >
-                                  <img
-                                    src={reply.author.avatar}
-                                    alt={reply.author.name}
-                                    className="rounded-full"
-                                  />
+                                  {reply.author.name}
                                 </a>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="bg-gray-100 rounded-2xl px-3 py-2">
-                                  <a
-                                    href={`/profile/${reply.author.name.toLowerCase().replace(/ /g, "-")}`}
-                                    className="font-semibold text-xs hover:underline"
+                                <p className="text-sm">{reply.content}</p>
+                              </div>
+                              <div className="flex items-center mt-1 text-xs text-gray-500 space-x-3">
+                                <span>{reply.timestamp}</span>
+                                <button className="font-semibold hover:text-gray-700">
+                                  {t("post.like") || "Like"}
+                                </button>
+                                {!replyingTo && (
+                                  <button
+                                    className="font-semibold hover:text-gray-700"
+                                    onClick={() => handleReply(comment.id)}
                                   >
-                                    {reply.author.name}
-                                  </a>
-                                  <p className="text-sm">{reply.content}</p>
-                                </div>
-                                <div className="flex items-center mt-1 text-xs text-gray-500 space-x-3">
-                                  <span>{reply.timestamp}</span>
-                                  <button className="font-semibold hover:text-gray-700">
-                                    {t("post.like") || "Like"}
+                                    {t("post.reply") || "Reply"}
                                   </button>
-                                  {!replyingTo && (
-                                    <button
-                                      className="font-semibold hover:text-gray-700"
-                                      onClick={() => handleReply(comment.id)}
-                                    >
-                                      {t("post.reply") || "Reply"}
-                                    </button>
-                                  )}
-                                </div>
+                                )}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                  </div>
-                ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              ))}
 
-              {commentsList.length > visibleComments && (
+              {/* Nút tải thêm bình luận */}
+              {hasMoreComments && !loadingComments && commentsList.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -525,8 +707,15 @@ const PhotoGalleryPost = ({
                   onClick={loadMoreComments}
                 >
                   <ChevronDown className="h-4 w-4 mr-1" />
-                  {t("post.viewMoreComments") || "View more comments"}
+                  {t("post.loadMoreComments") || "Tải thêm bình luận"}
                 </Button>
+              )}
+              
+              {/* Hiển thị trạng thái đang tải thêm bình luận */}
+              {loadingComments && commentsList.length > 0 && (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-pink-500" />
+                </div>
               )}
             </div>
           </div>
