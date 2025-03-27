@@ -15,6 +15,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -32,6 +33,9 @@ import java.util.logging.Logger;
 public class AuthService implements IAuthService {
 
     private static final Logger logger = Logger.getLogger(AuthService.class.getName());
+
+    @Value("${USER_SERVICE_URL}")
+    private String userServiceUrl;
 
     @Autowired
     private UserRepository userRepository;
@@ -211,7 +215,6 @@ public class AuthService implements IAuthService {
         userRoleEntity.setRole(userRole);
         userRoleRepository.save(userRoleEntity);
 
-        String userServiceUrl = "http://localhost:8081/user/createProfile";
         UserProfileRequestDto userProfileRequest = new UserProfileRequestDto(
                 savedUser.getId(),
                 userDto.getUsername(),
@@ -222,7 +225,8 @@ public class AuthService implements IAuthService {
                 userDto.getPhoneNumber()
         );
         try {
-            restTemplate.postForObject(userServiceUrl, userProfileRequest, Void.class);
+            String createProfileUrl = userServiceUrl + "/user/createProfile";
+            restTemplate.postForObject(createProfileUrl, userProfileRequest, Void.class);
         } catch (Exception e) {
             logger.severe("Failed to create user profile in UserService: " + e.getMessage());
             throw new RuntimeException("Failed to create user profile in UserService, rolling back registration.", e);
