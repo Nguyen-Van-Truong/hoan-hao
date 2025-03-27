@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Avatar } from "../ui/avatar";
+import {Avatar, AvatarFallback, AvatarImage} from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Textarea } from "../ui/textarea";
@@ -186,12 +186,12 @@ const PhotoGalleryPost = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-[#f2a2d2]">
-              <a
-                href={`/profile/${author.name.toLowerCase().replace(/ /g, "-")}`}
-              >
-                <img src={author.avatar} alt={author.name} />
-              </a>
+              <AvatarImage src={author.avatar || "/avatardefaut.png"} alt={author.name} />
+              <AvatarFallback className="bg-primary-light/20 text-primary">
+                {author.name?.substring(0, 2).toUpperCase() || "U"}
+              </AvatarFallback>
             </Avatar>
+
             <div>
               <a
                 href={`/profile/${author.name.toLowerCase().replace(/ /g, "-")}`}
