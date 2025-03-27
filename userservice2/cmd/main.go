@@ -56,6 +56,15 @@ func main() {
 		cloudinaryUploader = nil
 	}
 
+	// Khởi tạo kết nối gRPC client cho UserService
+	client := utils.GetUserGRPCClient()
+	if client == nil {
+		log.Printf("Warning: Failed to initialize UserService gRPC client. Some features may not work properly.")
+	} else {
+		log.Println("UserService gRPC client initialized successfully")
+		defer utils.CloseUserGRPCConnection()
+	}
+
 	// Enable Gin release mode in production
 	env := os.Getenv("ENV")
 	if env == "production" {

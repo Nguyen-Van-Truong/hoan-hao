@@ -22,6 +22,7 @@ func SetupRoutes(r *gin.Engine, repo repository.PostRepository) {
 	r.GET("/post/:uuid/comments", GetCommentsByUUID(svc))
 	r.GET("/post/:uuid/shares", GetSharesByUUID(svc))
 	r.GET("/post/user/:user_id/posts", GetUserPosts(svc))
+	r.GET("/post/user/username/:username/posts", GetPostsByUsername(svc))
 
 	// Giữ các route legacy tương thích ngược nếu cần
 	r.GET("/post/id/:id", GetPostByID(svc))
@@ -1012,5 +1013,32 @@ func UnlikeComment(svc service.PostService) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Comment unliked"})
+	}
+}
+
+// GetPostsByUsername lấy danh sách bài đăng theo username
+func GetPostsByUsername(svc service.PostService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		username := c.Param("username")
+		if username == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Username is required"})
+			return
+		}
+
+		limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+		offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+
+		posts, total, err := svc.GetPostsByUsername(username, limit, offset)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Failed to get posts: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"limit":  limit,
+			"offset": offset,
+			"posts":  posts,
+			"total":  total,
+		})
 	}
 }

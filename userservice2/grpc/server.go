@@ -7,9 +7,10 @@ import (
 	"net"
 	_ "strconv"
 
-	"google.golang.org/grpc"
 	"userservice2/proto"
 	"userservice2/services"
+
+	"google.golang.org/grpc"
 )
 
 // UserGRPCServer triển khai interface của gRPC server
@@ -55,6 +56,31 @@ func (s *UserGRPCServer) GetUsersByIDs(ctx context.Context, req *proto.GetUsersB
 	}
 
 	log.Printf("Returning %d users for gRPC request", len(response.Users))
+	return response, nil
+}
+
+// GetUserIDByUsername xử lý request lấy user_id từ username
+func (s *UserGRPCServer) GetUserIDByUsername(ctx context.Context, req *proto.GetUserIDByUsernameRequest) (*proto.GetUserIDByUsernameResponse, error) {
+	log.Printf("Received gRPC request for GetUserIDByUsername with username: %s", req.Username)
+
+	// Gọi service để lấy thông tin user từ username
+	user, err := s.userService.GetUserByUsername(ctx, req.Username)
+	if err != nil {
+		log.Printf("Error getting user by username: %v", err)
+		return nil, err
+	}
+
+	if user == nil {
+		log.Printf("User with username %s not found", req.Username)
+		return nil, fmt.Errorf("user with username %s not found", req.Username)
+	}
+
+	// Trả về user_id
+	response := &proto.GetUserIDByUsernameResponse{
+		UserId: uint64(user.ID),
+	}
+
+	log.Printf("Returning user_id %d for username %s", response.UserId, req.Username)
 	return response, nil
 }
 

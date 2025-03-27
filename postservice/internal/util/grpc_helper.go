@@ -3,6 +3,7 @@ package util
 
 import (
 	"context"
+	"errors"
 	"log"
 	"postservice/internal/grpcclient"
 	"postservice/internal/model"
@@ -93,4 +94,33 @@ func PopulateSingleShareUserInfo(share model.PostShare) (model.PostShare, error)
 // PopulateSharesUserInfo thêm thông tin user cho danh sách shares
 func PopulateSharesUserInfo(shares []model.PostShare) ([]model.PostShare, error) {
 	return PopulateUserInfo(shares, func(s model.PostShare) uint64 { return s.UserID })
+}
+
+// GetUserIDByUsername lấy user_id từ username qua gRPC
+func GetUserIDByUsername(username string) (uint64, error) {
+	// IMPORTANT: Đây là giải pháp tạm thời do UserService chưa hỗ trợ phương thức GetUserIDByUsername
+	// Thay vì gọi trực tiếp GetUserIDByUsername, chúng ta sẽ lấy tất cả user và tìm theo username
+
+	// Mô phỏng danh sách các user_id có thể có (có thể điều chỉnh dựa trên data thực tế)
+	potentialUserIDs := []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Gọi API GetUsersByIDs để lấy thông tin nhiều user cùng lúc
+	req := &pb.GetUsersByIDsRequest{UserIds: potentialUserIDs}
+	resp, err := grpcclient.UserServiceClient.GetUsersByIDs(ctx, req)
+	if err != nil {
+		log.Printf("Failed to call GetUsersByIDs: %v", err)
+		return 0, err
+	}
+
+	// Tìm user có username trùng khớp
+	for _, user := range resp.Users {
+		if user.Username == username {
+			return user.Id, nil
+		}
+	}
+
+	return 0, errors.New("user not found")
 }

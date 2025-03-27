@@ -37,6 +37,7 @@ type PostService interface {
 	GetSharesByPostID(postID uint64, limit, offset int) ([]model.PostShare, int64, error)
 	GetSharesByPostUUID(uuid string, limit, offset int) ([]model.PostShare, int64, error)
 	GetPostsByUserID(userID uint64, limit, offset int) ([]model.PostResponse, int64, error)
+	GetPostsByUsername(username string, limit, offset int) ([]model.PostResponse, int64, error)
 	GetCommentByID(id uint64) (*model.Comment, error)
 	GetFeed(userID uint64, mode string, limit, offset int) ([]model.PostResponse, int64, error)
 }
@@ -606,4 +607,16 @@ func (s *postService) GetSharesByPostUUID(uuid string, limit, offset int) ([]mod
 	}
 
 	return enrichedShares, total, nil
+}
+
+// GetPostsByUsername lấy danh sách bài đăng theo username
+func (s *postService) GetPostsByUsername(username string, limit, offset int) ([]model.PostResponse, int64, error) {
+	// Lấy userID từ username qua gRPC
+	userID, err := util.GetUserIDByUsername(username)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get user ID from username: %v", err)
+	}
+
+	// Sử dụng hàm có sẵn để lấy bài đăng theo userID
+	return s.GetPostsByUserID(userID, limit, offset)
 }

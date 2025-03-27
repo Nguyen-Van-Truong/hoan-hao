@@ -6,6 +6,7 @@ option go_package = "/proto"; // Đường dẫn cho generated code trong UserSe
 
 service UserService {
   rpc GetUsersByIDs (GetUsersByIDsRequest) returns (GetUsersByIDsResponse);
+  rpc GetUserIDByUsername (GetUserIDByUsernameRequest) returns (GetUserIDByUsernameResponse);
 }
 
 message GetUsersByIDsRequest {
@@ -21,4 +22,12 @@ message UserProfile {
 
 message GetUsersByIDsResponse {
   repeated UserProfile users = 1;
+}
+
+message GetUserIDByUsernameRequest {
+  string username = 1;
+}
+
+message GetUserIDByUsernameResponse {
+  uint64 user_id = 1;
 } 
