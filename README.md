@@ -1,166 +1,342 @@
-# Hoàn Hảo - Nền tảng Mạng xã hội dựa trên Kiến trúc Microservices
+# 🌟 Hoàn Hảo - Social Networking Platform with Microservices Architecture
+
+> [🇻🇳 Phiên bản tiếng Việt/Vietnamese version](README.vi.md)
 
 <p align="center">
   <img src="fe-hoan-hao/public/logointab.png" alt="Hoàn Hảo Logo" width="200" />
 </p>
 
-## Tổng quan
-
-Hoàn Hảo là một nền tảng mạng xã hội hiện đại được phát triển với kiến trúc microservices, cung cấp các tính năng toàn diện cho tương tác xã hội, quản lý nhóm, nhắn tin và trò chơi. Dự án này được xây dựng với các công nghệ tiên tiến và các phương pháp tốt nhất trong phát triển phần mềm.
-
-## Kiến trúc Microservices
-
 <p align="center">
-  <img src="https://miro.medium.com/v2/resize:fit:1400/1*d6YkPXrGm4MXIf6BHsu3Rw.png" alt="Microservices Architecture" width="700" />
+  <a href="#overview">Overview</a> •
+  <a href="#microservices-architecture">Architecture</a> •
+  <a href="#key-features">Features</a> •
+  <a href="#technology-stack">Technology</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#api-endpoints">API</a> •
+  <a href="#contact-and-contributions">Contribute</a>
 </p>
 
-### Kong API Gateway
-- **Ngôn ngữ/Công nghệ**: Kong Gateway, Docker
-- **Chức năng**: Quản lý và điều phối các yêu cầu API đến các microservices, xử lý xác thực JWT, CORS, và định tuyến.
-- **Tính năng chính**:
-  - Định tuyến API dựa trên đường dẫn
-  - Xác thực JWT
-  - Quản lý CORS
-  - Logging và monitoring
+## 📋 Overview
 
-### AuthService
-- **Ngôn ngữ/Công nghệ**: Spring Boot, MySQL
-- **Chức năng**: Xử lý xác thực người dùng, đăng nhập, đăng ký, quản lý token.
-- **Tính năng chính**:
-  - Đăng ký và đăng nhập người dùng
-  - Quản lý JWT (phát hành và làm mới token)
-  - Quên mật khẩu và đặt lại mật khẩu
-  - Đổi mật khẩu
+**Hoàn Hảo** is a modern social networking platform developed with a microservices architecture, providing comprehensive features for social interaction, user profile management, and content posting. This project applies the most advanced technologies and methodologies in modern software development, with a roadmap for developing additional advanced features.
 
-### UserService
-- **Ngôn ngữ/Công nghệ**: Golang (Gin framework), MySQL
-- **Chức năng**: Quản lý thông tin người dùng, mối quan hệ bạn bè, và nhóm.
-- **Tính năng chính**:
-  - Quản lý hồ sơ người dùng
-  - Quản lý mối quan hệ bạn bè (kết bạn, hủy kết bạn, chặn)
-  - Tạo và quản lý nhóm
-  - Gợi ý bạn bè
+<p align="center">
+  <img src="https://img.shields.io/badge/Backend-Golang%20%7C%20Spring%20Boot-blue" alt="Backend" />
+  <img src="https://img.shields.io/badge/Frontend-React%20%7C%20TypeScript-brightgreen" alt="Frontend" />
+  <img src="https://img.shields.io/badge/Database-MySQL-orange" alt="Database" />
+  <img src="https://img.shields.io/badge/API%20Gateway-Kong-red" alt="API Gateway" />
+  <img src="https://img.shields.io/badge/Deployment-Docker-informational" alt="Deployment" />
+</p>
 
-### PostService
-- **Ngôn ngữ/Công nghệ**: Golang (Gin framework), MySQL
-- **Chức năng**: Quản lý bài đăng, bình luận, thích và chia sẻ.
-- **Tính năng chính**:
-  - Tạo, cập nhật, xóa bài đăng
-  - Quản lý bình luận và phản hồi
-  - Tính năng thích và chia sẻ bài đăng
-  - Tải lên và quản lý phương tiện (hình ảnh, video)
+## 🏗️ Microservices Architecture
 
-### Frontend
-- **Ngôn ngữ/Công nghệ**: React, TypeScript, Vite, Tailwind CSS
-- **Chức năng**: Giao diện người dùng tương tác và phản hồi.
-- **Tính năng chính**:
-  - Giao diện người dùng hiện đại và trực quan
-  - Tương thích với nhiều thiết bị
-  - Tích hợp với các API microservices
-  - Quản lý trạng thái và xác thực người dùng
+```
+┌─────────────┐     
+│   Browser   │     
+│   Client    │     
+└──────┬──────┘     
+        │           
+        │           
+        │           
+        ▼           
+┌─────────────────────────────────┐
+│                                 │
+│       Kong API Gateway          │
+│  (JWT Auth, Routing, Security)  │
+│                                 │
+└───────┬───────────┬─────────────┘
+        │           │           │
+        │           │           │
+        ▼           ▼           ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│                 │ │                 │ │                 │
+│   AuthService   │ │   UserService   │ │   PostService   │
+│  (Spring Boot)  │ │  (Golang/Gin)   │ │  (Golang/Gin)   │
+│                 │ │                 │ │                 │
+└─────────┬───────┘ └─────────┬───────┘ └─────────┬───────┘
+          │                   │                   │
+          ▼                   ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│                 │ │                 │ │                 │
+│  Auth Database  │ │  User Database  │ │  Post Database  │
+│     (MySQL)     │ │     (MySQL)     │ │     (MySQL)     │
+│                 │ │                 │ │                 │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+```
 
-## Tính năng chính
+### 🌐 Kong API Gateway [✓ Implemented]
+- **Language/Technology**: Kong Gateway, Docker
+- **Function**: Single entry point for all API requests, handling authentication and routing to appropriate microservices.
+- **Main Features**:
+  - ✅ Smart routing based on paths and HTTP methods
+  - ✅ Centralized JWT authentication
+  - ✅ System-wide CORS management
+  - ✅ Rate limiting and API protection
+  - ✅ Centralized logging
 
-### Xác thực & Bảo mật
-- Luồng xác thực người dùng đầy đủ (Đăng nhập, Đăng ký, Quên mật khẩu, Đặt lại mật khẩu)
-- Bảo vệ các tuyến đường cho người dùng đã xác thực
-- Xác thực JWT thông qua Kong Gateway
+### 🔐 AuthService [✓ Implemented]
+- **Language/Technology**: Spring Boot, Spring Security, MySQL, JWT
+- **Function**: Manages the entire user authentication process and security
+- **Main Features**:
+  - ✅ Registration, login, and session management
+  - ✅ Issuing and refreshing JWT tokens
+  - ✅ Forgot password and password reset via email
+  - ✅ Password change and login information management
+  - 🔜 Two-factor authentication (2FA) [In Development]
+  - 🔜 OAuth2 integration (Google, Facebook) [In Development]
 
-### Tương tác xã hội
-- Bảng tin với bài đăng và phương tiện
-- Tạo bài đăng với hỗ trợ phương tiện phong phú
-- Bình luận và phản ứng
-- Hồ sơ người dùng với tùy chọn tùy chỉnh
-- Gợi ý bạn bè thông minh
+### 👥 UserService [✓ Partially Implemented]
+- **Language/Technology**: Golang (Gin framework), MySQL
+- **Function**: Manages user information and friend relationships
+- **Main Features**:
+  - ✅ User profile management (personal info, avatar, cover)
+  - ✅ Basic friend system (friend requests, unfriending, blocking)
+  - ✅ User search
+  - 🔜 Group creation and management with permissions [In Development]
+  - 🔜 Smart friend suggestions [In Development]
+  - 🔜 Caching with Redis for fast queries [Planned]
 
-### Nhóm
-- Tạo và tham gia nhóm
-- Tùy chọn nhóm công khai và riêng tư
-- Quản lý nhóm (cài đặt, thành viên, quy tắc)
-- Các sự kiện và thảo luận trong nhóm
-- Kiểm soát quản trị viên và người điều hành
+### 📝 PostService [✓ Implemented]
+- **Language/Technology**: Golang (Gin framework), MySQL
+- **Function**: Handles all user-generated content (posts, comments, reactions)
+- **Main Features**:
+  - ✅ Full CRUD for posts with privacy permissions
+  - ✅ Comment system with replies
+  - ✅ Likes/reactions functionality
+  - ✅ Post sharing
+  - ✅ Media upload and management (images)
+  - 🔜 Personalized newsfeed algorithm [In Development]
 
-### Nhắn tin
-- Nhắn tin riêng tư thời gian thực
-- Quản lý cuộc trò chuyện
-- Khả năng chia sẻ phương tiện
+### 💻 Frontend [✓ Implemented]
+- **Language/Technology**: React, TypeScript, Vite, Tailwind CSS
+- **Function**: Modern user interface and smooth experience
+- **Main Features**:
+  - ✅ Modern UI/UX with Tailwind and Shadcn UI
+  - ✅ Responsive design for all devices
+  - ✅ Efficient state management
+  - 🔜 WebSocket integration for real-time messages and notifications [Planned]
+  - 🔜 Lazy loading and code splitting for optimized performance [In Development]
+  - 🔜 Multilingual support (i18n) [Planned]
 
-### Trò chơi
-- Nền tảng trò chơi tích hợp
-- Nhiều loại trò chơi (trình duyệt, nhúng, máy tính để bàn)
-- Theo dõi trạng thái trò chơi
-- Bảng xếp hạng
+### 📱 Features In Development
+- **💬 Chat Service**: Real-time messaging system with WebSocket
+- **🎮 Game Service**: Integrated gaming platform for users
+- **🔔 Notification Service**: Real-time notification system
 
-## Công nghệ sử dụng
+## ✨ Key Features
+
+### 🔐 Authentication & Security [✓ Implemented]
+- ✅ Complete user authentication flow (Login, Register, Forgot Password)
+- ✅ Route and API protection for authenticated users
+- ✅ Centralized JWT authentication via Kong Gateway
+- 🔜 Session locking after multiple failed login attempts [In Development]
+- 🔜 OAuth2 authentication with Google and Facebook [In Development]
+
+### 🌐 Social Interaction [✓ Partially Implemented]
+- ✅ Post creation with media support (images)
+- ✅ Basic comment and reaction system
+- ✅ Customizable user profiles
+- 🔜 Newsfeed with personalized algorithm [In Development]
+- 🔜 Friend suggestions based on network [In Development]
+
+### 👨‍👩‍👧‍👦 Groups & Communities [🔜 In Development]
+- 🔜 Create and join groups with privacy options
+- 🔜 Group management (settings, members, group rules)
+- 🔜 Group discussions
+- 🔜 Admin and moderator permissions
+
+### 💬 Messaging & Communication [🔜 Planned]
+- 🔜 Private messaging
+- 🔜 Group chat and conversation management
+- 🔜 Media and file sharing
+
+### 🎮 Games & Entertainment [🔜 Planned]
+- 🔜 Integrated gaming platform
+- 🔜 Multiple game types (casual, multiplayer)
+- 🔜 Leaderboards
+- 🔜 Integration with friend system for multiplayer
+
+## 🚀 Technology Stack
 
 ### Backend
-- **Kong Gateway**: API Gateway, xác thực và định tuyến
-- **Spring Boot**: Dịch vụ xác thực, quản lý JWT
-- **Golang (Gin)**: Dịch vụ người dùng và bài đăng
-- **MySQL**: Lưu trữ dữ liệu chính
-- **Docker & Docker Compose**: Containerization và triển khai
+- **Kong Gateway**: API Gateway, authentication and routing
+- **Spring Boot**: Authentication service, JWT management with Spring Security
+- **Golang (Gin)**: Lightweight and high-performance microservices
+- **MySQL**: Primary database for each microservice
+- **Docker**: Containerization and deployment
+- 🔜 **Redis**: Caching and messaging support [Planned]
+- 🔜 **gRPC**: Efficient communication between microservices [Planned]
 
 ### Frontend
-- **React & TypeScript**: Phát triển giao diện người dùng
-- **Vite**: Build tool và server phát triển
-- **Tailwind CSS**: Styling dựa trên utility-first
-- **Shadcn UI**: Các thành phần UI có thể tùy chỉnh
-- **React Router**: Định tuyến phía máy khách
-- **React Hook Form & Zod**: Xử lý biểu mẫu và xác thực
+- **React**: Modern UI library with Hooks
+- **TypeScript**: Typed JavaScript for safer development
+- **Vite**: Super-fast build tool and hot module replacement
+- **Tailwind CSS**: Utility-first CSS framework
+- **Shadcn UI**: Highly customizable UI components
+- 🔜 **Redux Toolkit**: State management with simplified syntax [Planned]
+- 🔜 **React Query**: Data fetching and caching [Planned]
+- 🔜 **Socket.io Client**: WebSockets for real-time communication [Planned]
 
-## Khởi động dự án
+## 🔧 Getting Started
 
-### Yêu cầu
-- Docker và Docker Compose
-- Node.js (v16 hoặc cao hơn)
+### Requirements
+- Docker and Docker Compose
+- Node.js (v16 or higher)
 - Go 1.16+
 - JDK 17+
 - MySQL 5.7+
 
-### Cài đặt và chạy
+### Installation & Running
 
-1. **Cài đặt Kong Gateway**:
+#### 1. Clone Repository
+```bash
+git clone https://github.com/yourusername/hoan-hao.git
+cd hoan-hao
+```
+
+#### 2. Start the Entire System with Docker Compose
+```bash
+# Set up the entire system with one command
+docker-compose up -d
+```
+
+#### 3. Or Start Each Service Separately
+
+**Kong Gateway**:
 ```bash
 cd kong
 docker-compose up -d
-./setup-kong.ps1 # hoặc ./setup-kong.sh trên Linux/Mac
+./setup-kong.ps1 # or ./setup-kong.sh on Linux/Mac
 ```
 
-2. **Khởi động AuthService**:
+**AuthService**:
 ```bash
 cd authservice
 ./gradlew bootRun
+# Or with Docker
+docker build -t authservice .
+docker run -p 8080:8080 authservice
 ```
 
-3. **Khởi động UserService**:
+**UserService**:
 ```bash
 cd userservice2
 go run cmd/main.go
+# Or with Docker
+docker build -t userservice .
+docker run -p 8081:8081 userservice
 ```
 
-4. **Khởi động PostService**:
+**PostService**:
 ```bash
 cd postservice
 go run cmd/server/main.go
+# Or with Docker
+docker build -t postservice .
+docker run -p 8082:8082 postservice
 ```
 
-5. **Khởi động Frontend**:
+**Frontend**:
 ```bash
 cd fe-hoan-hao
 npm install
 npm run dev
+# Build for production
+npm run build
 ```
 
-## Liên hệ và đóng góp
+## 📘 API Endpoints
 
-Dự án Hoàn Hảo được phát triển bởi một nhóm các nhà phát triển đam mê. Chúng tôi luôn chào đón đóng góp và phản hồi!
+### 🔐 Auth API
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Log in and receive a JWT token
+- `POST /auth/refresh-token` - Refresh access token
+- `POST /auth/forgot-password` - Request password reset
+- `POST /auth/reset-password` - Reset password
+- `POST /auth/change-password` - Change password
 
-1. Fork repository
-2. Tạo nhánh tính năng (`git checkout -b feature/amazing-feature`)
-3. Commit thay đổi của bạn (`git commit -m 'Add some amazing feature'`)
-4. Push lên nhánh (`git push origin feature/amazing-feature`)
-5. Tạo Pull Request
+### 👤 User API
+- `GET /users/me` - Get personal information (JWT protected)
+- `PUT /users/me` - Update personal information
+- `GET /users/:id` - Get user information by ID
+- `GET /users/search` - Search for users
 
-## Giấy phép
+### 👥 Friends API
+- `GET /users/friends` - Get friends list
+- `GET /users/friends/suggestions` - Get friend suggestions
+- `GET /users/friends/requests` - Get friend requests
+- `POST /users/friends/request/:userId` - Send friend request
+- `PUT /users/friends/accept/:userId` - Accept friend request
+- `DELETE /users/friends/:userId` - Unfriend
+- `POST /users/friends/block/:userId` - Block user
 
-Dự án này được cấp phép theo Giấy phép MIT - xem tệp LICENSE để biết chi tiết.
+### 📝 Post API
+- `GET /post` - Get list of posts
+- `POST /post` - Create a new post (JWT protected)
+- `GET /post/:uuid` - Get post by UUID
+- `PUT /post/:uuid` - Update post
+- `DELETE /post/:uuid` - Delete post
+- `POST /post/:uuid/like` - Like post
+- `DELETE /post/:uuid/like` - Unlike post
+- `GET /post/:uuid/comments` - Get post comments
+- `POST /post/:uuid/comment` - Add comment
+- `GET /post/user/:userId/posts` - Get posts by user
+
+## 🔮 Development Roadmap
+
+Hoàn Hảo is actively being developed with the following roadmap:
+
+### Phase 1: Core Foundation ✓ [Completed]
+- ✅ User authentication
+- ✅ User profile management
+- ✅ Post management and basic interactions
+- ✅ API Gateway and security
+
+### Phase 2: Advanced Social Features 🔄 [In Progress]
+- 🔄 Group and community features
+- 🔄 Improved newsfeed algorithm
+- 🔄 Smart friend suggestions
+- 🔄 Advanced integrations and performance optimization
+
+### Phase 3: Feature Expansion 📅 [Q3 2023]
+- 📅 Real-time messaging system
+- 📅 Real-time notifications
+- 📅 Multilingual support
+- 📅 OAuth2 integration
+
+### Phase 4: Enhanced User Experience 📅 [Q4 2023]
+- 📅 Gaming platform
+- 📅 Enhanced personalization capabilities
+- 📅 Streaming integration
+- 📅 Mobile app with React Native
+
+## 🤝 Contact and Contributions
+
+The Hoàn Hảo project is developed by a team of professional developers and always welcomes contributions from the community!
+
+### Contribution Process
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add: amazing feature'`)
+4. Push to your branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request with a detailed description
+
+### Coding Standards
+- Adhere to code style rules for each language
+- Write unit tests for new code
+- Ensure all CI checks pass
+- Update documentation as necessary
+
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgements
+
+We'd like to express our gratitude to all the open-source libraries and tools that have helped make Hoàn Hảo a reality. Special thanks to:
+
+- [Kong](https://konghq.com/) for API Gateway
+- [Spring Boot](https://spring.io/projects/spring-boot) for AuthService
+- [Golang](https://golang.org/) and [Gin](https://gin-gonic.com/) for microservices
+- [React](https://reactjs.org/) and [Tailwind CSS](https://tailwindcss.com/) for frontend
+- [Docker](https://www.docker.com/) for container deployment
