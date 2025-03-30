@@ -35,7 +35,7 @@ func Load() *Config {
 		DBUsername:      os.Getenv("DB_USERNAME"),
 		DBPassword:      os.Getenv("DB_PASSWORD"),
 		DBName:          os.Getenv("DB_NAME"),
-		ServerPort:      getEnvOrDefault("SERVER_PORT", ":8000"),                 // Default port nếu không có
+		ServerPort:      getEnvOrDefault("SERVER_PORT", ":8082"),                 // Default port nếu không có
 		UserServiceAddr: getEnvOrDefault("USER_SERVICE_ADDR", "localhost:50051"), // Default gRPC addr
 	}
 }
