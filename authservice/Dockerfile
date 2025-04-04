@@ -28,7 +28,7 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Tạo .env file từ biến môi trường
-ENV DB_HOST=rdsmysql-hoanhaotest.c9626yc46mtg.ap-southeast-1.rds.amazonaws.com \
+ENV DB_HOST=hoanhao.cn2qakqoyq4d.ap-southeast-1.rds.amazonaws.com \
     DB_PORT=3306 \
     DB_NAME=hoanhao_auth \
     DB_USERNAME=admin \
