@@ -1,0 +1,44 @@
+# Thư mục và file hệ thống
+.git
+.github
+.idea
+.vscode
+**/.DS_Store
+**/Thumbs.db
+
+# Thư mục build và dependencies
+**/node_modules
+**/target
+**/build
+**/.gradle
+**/out
+**/dist
+**/bin
+
+# Log files
+**/logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Các file tạm thời
+**/*.swp
+**/*.swo
+**/*~
+**/*.bak
+**/*.orig
+
+# Các file cấu hình IDE và môi trường
+**/.project
+**/.classpath
+**/.settings
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# Các file Docker khác
+**/docker-compose*.yml
+**/Dockerfile*
+**/.dockerignore 

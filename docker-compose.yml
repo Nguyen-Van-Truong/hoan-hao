@@ -1,11 +1,12 @@
 version: '3.9'
 services:
   kong-database:
+    container_name: hoanhao-kong-db
     image: postgres:13-alpine
     environment:
-      - POSTGRES_USER=kong
-      - POSTGRES_PASSWORD=ga123456.
-      - POSTGRES_DB=kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: ga123456.
+      POSTGRES_DB: kong
     volumes:
       - kong_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,6 +19,7 @@ services:
       - hoanhao-network
 
   kong-migrations:
+    container_name: hoanhao-kong-migrations
     build:
       context: ./kong-config
       dockerfile: Dockerfile.kong
@@ -26,25 +28,30 @@ services:
       kong-database:
         condition: service_healthy
     environment:
-      - KONG_DATABASE=postgres
-      - KONG_PG_HOST=kong-database
-      - KONG_PG_USER=kong
-      - KONG_PG_PASSWORD=ga123456.
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ga123456.
     restart: on-failure
     networks:
       - hoanhao-network
 
   kong:
+    container_name: hoanhao-kong
     build:
       context: ./kong-config
       dockerfile: Dockerfile.kong
     environment:
-      - KONG_DATABASE=postgres
-      - KONG_PG_HOST=kong-database
-      - KONG_PG_USER=kong
-      - KONG_PG_PASSWORD=ga123456.
-      - KONG_PROXY_LISTEN=0.0.0.0:8000
-      - KONG_ADMIN_LISTEN=0.0.0.0:8001
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ga123456.
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
     ports:
       - "8000:8000"
       - "8001:8001"
@@ -53,43 +60,61 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./kong-config:/etc/kong/config
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     restart: unless-stopped
     networks:
       - hoanhao-network
 
   auth-service:
+    container_name: hoanhao-auth-service
     build:
       context: ./authservice
       dockerfile: Dockerfile
     environment:
-      - DB_HOST=rdsmysql-hoanhaotest.c9626yc46mtg.ap-southeast-1.rds.amazonaws.com
-      - DB_PORT=3306
-      - DB_NAME=hoanhao_auth
-      - DB_USERNAME=admin
-      - DB_PASSWORD=ga123456.
-      - JWT_SECRET=mysecretkeyforhs256whichislongenough
-      - SERVER_PORT=8080
+      DB_HOST: rdsmysql-hoanhaotest.c9626yc46mtg.ap-southeast-1.rds.amazonaws.com
+      DB_PORT: 3306
+      DB_NAME: hoanhao_auth
+      DB_USERNAME: admin
+      DB_PASSWORD: ga123456.
+      JWT_SECRET: mysecretkeyforhs256whichislongenough
+      SERVER_PORT: 8080
     ports:
       - "8080:8080"
+    # Vô hiệu hóa tạm thời health check
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+    #   interval: 30s
+    #   timeout: 5s
+    #   retries: 3
+    #   start_period: 40s
     restart: unless-stopped
     networks:
       - hoanhao-network
 
   kong-setup:
-    image: curlimages/curl:latest
+    container_name: hoanhao-kong-setup
+    image: alpine:latest
     volumes:
       - ./kong-config:/scripts
-    command: sh -c "chmod +x /scripts/setup-kong.sh && /scripts/setup-kong.sh"
+    command: sh -c "apk add --no-cache curl && sh /scripts/setup-kong.sh"
     depends_on:
-      - kong
-      - auth-service
+      kong:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
     restart: on-failure
     networks:
       - hoanhao-network
 
 volumes:
   kong_data:
+    name: hoanhao-kong-data
 
 networks:
   hoanhao-network:
+    name: hoanhao-network
     driver: bridge 

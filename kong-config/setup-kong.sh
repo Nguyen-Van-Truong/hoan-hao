@@ -9,6 +9,22 @@ while ! curl -s http://kong:8001 > /dev/null; do
 done
 echo "Kong is running."
 
+# Đợi Auth Service sẵn sàng (sử dụng check đơn giản với nhiều thử lại hơn)
+echo "Waiting for Auth Service..."
+max_retries=20
+retry_count=0
+while ! curl -s --connect-timeout 5 http://auth-service:8080 > /dev/null && [ $retry_count -lt $max_retries ]; do
+    sleep 10
+    echo "Waiting for Auth Service... ($(($retry_count + 1))/$max_retries)"
+    retry_count=$((retry_count + 1))
+done
+
+if [ $retry_count -ge $max_retries ]; then
+    echo "WARNING: Could not connect to Auth Service after $max_retries attempts, proceeding anyway..."
+else
+    echo "Auth Service is reachable."
+fi
+
 # Bước 0: Kích hoạt CORS plugin ở cấp global
 echo "Enabling CORS plugin globally..."
 
@@ -44,19 +60,30 @@ curl -s -X POST http://kong:8001/services \
 echo "Registering UserService..."
 curl -s -X POST http://kong:8001/services \
   --data "name=user-service" \
-  --data "url=http://user-service-url:8081"
+  --data "url=http://user-service:8081"
 
 echo "Registering PostService..."
 curl -s -X POST http://kong:8001/services \
   --data "name=post-service" \
-  --data "url=http://post-service-url:8082"
+  --data "url=http://post-service:8082"
 
 # Bước 2: Đăng ký Routes
 echo "Adding route for AuthService..."
 curl -s -X POST http://kong:8001/services/auth-service/routes \
   --data "paths[]=/auth" \
+  --data "paths[]=/auth/" \
+  --data "paths[]=/auth/login" \
+  --data "paths[]=/auth/register" \
   --data "name=auth-route" \
-  --data "strip_path=false"
+  --data "strip_path=false" \
+  --data "preserve_host=true"
+
+# Thêm health check endpoint cho AuthService - comment out nếu không có
+# echo "Adding health check route for AuthService..."
+# curl -s -X POST http://kong:8001/services/auth-service/routes \
+#   --data "paths[]=/auth/actuator/health" \
+#   --data "name=auth-health-route" \
+#   --data "strip_path=false"
 
 echo "Adding public routes for UserService..."
 # Route cho public user endpoints

@@ -2,17 +2,19 @@ FROM kong:latest
 
 USER root
 
-# Cài đặt curl và bash
+# Cài đặt curl và bash (một layer duy nhất)
 RUN apt-get update && \
-    apt-get install -y curl bash && \
+    apt-get install -y --no-install-recommends curl bash ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Tạo thư mục cấu hình
-RUN mkdir -p /etc/kong/config
+# Tạo thư mục cấu hình và sao chép script
+WORKDIR /etc/kong/config
+COPY setup-kong.sh ./
+RUN chmod +x ./setup-kong.sh
 
-# Sao chép script cấu hình
-COPY setup-kong.sh /etc/kong/config/setup-kong.sh
-RUN chmod +x /etc/kong/config/setup-kong.sh
+# Health check
+HEALTHCHECK --interval=10s --timeout=10s --retries=10 \
+    CMD kong health || exit 1
 
 USER kong 
