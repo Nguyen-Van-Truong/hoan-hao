@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  user-service:
+    container_name: hoanhao-user-service
+    build:
+      context: ./userservice2
+      dockerfile: Dockerfile
+    environment:
+      ENV: production
+      PORT: 8081
+      GRPC_PORT: 50051
+      DB_HOST: hoanhao.cn2qakqoyq4d.ap-southeast-1.rds.amazonaws.com
+      DB_PORT: 3306
+      DB_USER: admin
+      DB_PASSWORD: ga123456.
+      DB_NAME: hoanhao_user2
+      JWT_SECRET: mysecretkeyforhs256whichislongenough
+      MAIL_USERNAME: truongclone232@gmail.com
+      MAIL_PASSWORD: kchl jlpx eodu phle
+      CLOUDINARY_URL: cloudinary://753895533649825:v3h2aZ6q4qOtJCLKtZSN2wRqwaU@dgncir2mb
+      USER_GRPC_HOST: user-service
+      USER_GRPC_PORT: 50051
+    ports:
+      - "8081:8081"
+      - "50051:50051"
+    restart: unless-stopped
+    networks:
+      - hoanhao-network
+
+  post-service:
+    container_name: hoanhao-post-service
+    build:
+      context: ./postservice
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: hoanhao.cn2qakqoyq4d.ap-southeast-1.rds.amazonaws.com
+      DB_PORT: 3306
+      DB_USERNAME: admin
+      DB_PASSWORD: ga123456.
+      DB_NAME: hoanhao_post
+      SERVER_PORT: :8082
+      USER_SERVICE_ADDR: user-service:50051
+      MAIL_USERNAME: truongclone232@gmail.com
+      MAIL_PASSWORD: kchl jlpx eodu phle
+      CLOUDINARY_URL: cloudinary://753895533649825:v3h2aZ6q4qOtJCLKtZSN2wRqwaU@dgncir2mb
+    ports:
+      - "8082:8082"
+    depends_on:
+      - user-service
+    restart: unless-stopped
+    networks:
+      - hoanhao-network
+
+networks:
+  hoanhao-network:
+    driver: bridge 
