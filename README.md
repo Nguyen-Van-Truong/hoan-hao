@@ -1,5 +1,11 @@
 # 🌟 Hoàn Hảo - Social Networking Platform with Microservices Architecture
 
+<p align="center">
+  <a href="https://hoanhao.id.vn" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Official_Website-hoanhao.id.vn-blue?style=for-the-badge" alt="Official Website" />
+  </a>
+</p>
+
 > [🇻🇳 Phiên bản tiếng Việt/Vietnamese version](README.vi.md)
 
 <p align="center">
