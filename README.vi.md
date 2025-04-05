@@ -1,6 +1,12 @@
 # 🌟 Hoàn Hảo - Nền Tảng Mạng Xã Hội Với Kiến Trúc Microservices
 
 <p align="center">
+  <a href="https://hoanhao.id.vn" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Trang_Web_Chính_Thức-hoanhao.id.vn-blue?style=for-the-badge" alt="Trang Web Chính Thức" />
+  </a>
+</p>
+
+<p align="center">
   <img src="fe-hoan-hao/public/logointab.png" alt="Hoàn Hảo Logo" width="200" />
 </p>
 
